@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Options Strategy Matrix — IV Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+–bg: #0a0c0f;
+–surface: #111418;
+–border: #1e2530;
+–bull: #00d4aa;
+–bear: #ff4e6a;
+–neutral: #f5c842;
+–text: #e8edf2;
+–muted: #5a6a7a;
+–iv-low: #82ccdd;
+–iv-med: #f5c842;
+–iv-high: #ff9f43;
+}
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Syne’, sans-serif;
+min-height: 100vh;
+padding: 28px 20px 40px;
+}
+
+header {
+text-align: center;
+margin-bottom: 28px;
+}
+
+header h1 {
+font-size: clamp(20px, 3.5vw, 32px);
+font-weight: 800;
+letter-spacing: -0.03em;
+background: linear-gradient(135deg, var(–bull), var(–neutral), var(–bear));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+
+header p {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+margin-top: 5px;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+}
+
+/* IV Tabs */
+.iv-tabs-wrapper {
+max-width: 1040px;
+margin: 0 auto 20px;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 8px;
+}
+
+.iv-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.12em;
+}
+
+.iv-tabs {
+display: flex;
+gap: 6px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 5px;
+}
+
+.iv-tab {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+font-weight: 700;
+padding: 8px 24px;
+border-radius: 7px;
+cursor: pointer;
+border: 1px solid transparent;
+transition: all 0.2s ease;
+text-transform: uppercase;
+letter-spacing: 0.08em;
+color: var(–muted);
+background: none;
+}
+
+.iv-tab:hover { color: var(–text); }
+
+.iv-tab.active[data-iv=“low”] {
+background: rgba(130, 204, 221, 0.12);
+border-color: rgba(130, 204, 221, 0.3);
+color: var(–iv-low);
+}
+.iv-tab.active[data-iv=“med”] {
+background: rgba(245, 200, 66, 0.12);
+border-color: rgba(245, 200, 66, 0.3);
+color: var(–iv-med);
+}
+.iv-tab.active[data-iv=“high”] {
+background: rgba(255, 159, 67, 0.12);
+border-color: rgba(255, 159, 67, 0.3);
+color: var(–iv-high);
+}
+
+.iv-description {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+text-align: center;
+padding: 6px 16px;
+border-radius: 6px;
+max-width: 600px;
+line-height: 1.6;
+}
+
+.iv-description.low { background: rgba(130,204,221,0.07); color: var(–iv-low); border: 1px solid rgba(130,204,221,0.15); }
+.iv-description.med { background: rgba(245,200,66,0.07); color: var(–iv-med); border: 1px solid rgba(245,200,66,0.15); }
+.iv-description.high { background: rgba(255,159,67,0.07); color: var(–iv-high); border: 1px solid rgba(255,159,67,0.15); }
+
+/* Matrix layout */
+.matrix-wrapper {
+max-width: 1040px;
+margin: 0 auto;
+}
+
+.layout {
+display: flex;
+gap: 0;
+align-items: stretch;
+}
+
+.y-labels {
+display: flex;
+flex-direction: column;
+justify-content: space-around;
+width: 86px;
+flex-shrink: 0;
+padding-right: 10px;
+}
+
+.y-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 8px;
+text-align: right;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+line-height: 1.3;
+}
+
+.y-label .mag { font-weight: 700; margin-bottom: 2px; }
+.y-label .sub { font-size: 7px; color: #3a4a5a; }
+
+.y-label-high .mag { color: #ff9f43; }
+.y-label-med-high .mag { color: #f5c842; }
+.y-label-med .mag { color: #82ccdd; }
+.y-label-low .mag { color: #a8b8c8; }
+
+.grid-area { flex: 1; }
+
+.y-axis-title {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.1em;
+text-align: center;
+margin-bottom: 10px;
+}
+
+.x-axis {
+display: flex;
+align-items: center;
+margin-bottom: 6px;
+gap: 8px;
+}
+
+.x-axis-bar {
+flex: 1;
+height: 3px;
+border-radius: 2px;
+background: linear-gradient(90deg, var(–bear), #2a3540 40%, #2a3540 60%, var(–bull));
+position: relative;
+}
+
+.x-axis-bar::after {
+content: ‘’;
+position: absolute;
+left: 50%;
+top: 50%;
+transform: translate(-50%,-50%);
+width: 7px; height: 7px;
+background: var(–neutral);
+border-radius: 50%;
+box-shadow: 0 0 8px var(–neutral);
+}
+
+.x-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+white-space: nowrap;
+}
+
+.x-label.left { color: var(–bear); }
+.x-label.right { color: var(–bull); }
+
+/* Grid */
+.grid {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 3px;
+}
+
+.cell {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 9px 9px 8px;
+cursor: pointer;
+transition: all 0.15s ease;
+min-height: 78px;
+display: flex;
+flex-direction: column;
+justify-content: flex-start;
+position: relative;
+overflow: hidden;
+}
+
+.cell::after {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+opacity: 0;
+transition: opacity 0.2s;
+border-radius: 6px 6px 0 0;
+}
+
+.cell.bull::after { background: var(–bull); }
+.cell.bear::after { background: var(–bear); }
+.cell.neutral::after { background: var(–neutral); }
+
+.cell:hover {
+transform: translateY(-2px);
+box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+z-index: 2;
+}
+
+.cell:hover::after { opacity: 1; }
+
+.cell.bull:hover { border-color: rgba(0,212,170,0.35); background: rgba(0,212,170,0.03); }
+.cell.bear:hover { border-color: rgba(255,78,106,0.35); background: rgba(255,78,106,0.03); }
+.cell.neutral:hover { border-color: rgba(245,200,66,0.35); background: rgba(245,200,66,0.03); }
+
+.cell-strategy {
+font-size: clamp(8px, 1.1vw, 10.5px);
+font-weight: 700;
+letter-spacing: 0.01em;
+line-height: 1.25;
+margin-bottom: 4px;
+}
+
+.cell.bull .cell-strategy { color: var(–bull); }
+.cell.bear .cell-strategy { color: var(–bear); }
+.cell.neutral .cell-strategy { color: var(–neutral); }
+
+.cell-sub {
+font-family: ‘Space Mono’, monospace;
+font-size: 7px;
+color: var(–muted);
+line-height: 1.4;
+flex: 1;
+}
+
+.cell-tags {
+display: flex;
+gap: 3px;
+margin-top: 5px;
+flex-wrap: wrap;
+}
+
+.tag {
+font-family: ‘Space Mono’, monospace;
+font-size: 6.5px;
+padding: 1px 4px;
+border-radius: 3px;
+text-transform: uppercase;
+letter-spacing: 0.04em;
+}
+
+.tag-debit { background: rgba(100,160,255,0.12); color: #7ab0ff; }
+.tag-credit { background: rgba(200,130,255,0.12); color: #c87aff; }
+.tag-mixed { background: rgba(180,180,180,0.1); color: #aaa; }
+
+/* IV suitability dot */
+.cell-iv-dots {
+position: absolute;
+top: 6px; right: 6px;
+display: flex; gap: 2px;
+}
+
+.iv-dot {
+width: 5px; height: 5px;
+border-radius: 50%;
+opacity: 0.25;
+}
+
+.iv-dot.active { opacity: 1; }
+.iv-dot.low { background: var(–iv-low); }
+.iv-dot.med { background: var(–iv-med); }
+.iv-dot.high { background: var(–iv-high); }
+
+/* Detail panel */
+.detail-panel {
+max-width: 1040px;
+margin: 16px auto 0;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 20px 24px;
+display: none;
+animation: slideUp 0.2s ease;
+}
+
+.detail-panel.visible { display: block; }
+
+@keyframes slideUp {
+from { opacity: 0; transform: translateY(6px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+.detail-header {
+display: flex;
+align-items: center;
+gap: 10px;
+margin-bottom: 12px;
+flex-wrap: wrap;
+}
+
+.detail-name { font-size: 17px; font-weight: 800; }
+
+.detail-badge {
+font-family: ‘Space Mono’, monospace;
+font-size: 8px;
+padding: 2px 8px;
+border-radius: 4px;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+}
+
+.badge-bull { background: rgba(0,212,170,0.12); color: var(–bull); }
+.badge-bear { background: rgba(255,78,106,0.12); color: var(–bear); }
+.badge-neutral { background: rgba(245,200,66,0.12); color: var(–neutral); }
+
+.detail-iv-tag {
+font-family: ‘Space Mono’, monospace;
+font-size: 8px;
+padding: 2px 8px;
+border-radius: 4px;
+text-transform: uppercase;
+letter-spacing: 0.1em;
+margin-left: auto;
+}
+
+.close-btn {
+background: none;
+border: 1px solid var(–border);
+color: var(–muted);
+width: 24px; height: 24px;
+border-radius: 50%;
+cursor: pointer;
+font-size: 13px;
+display: flex; align-items: center; justify-content: center;
+transition: all 0.15s;
+flex-shrink: 0;
+}
+
+.close-btn:hover { background: var(–border); color: var(–text); }
+
+.detail-desc {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+color: #8a9aaa;
+line-height: 1.75;
+border-top: 1px solid var(–border);
+padding-top: 12px;
+margin-bottom: 12px;
+}
+
+.detail-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+gap: 8px;
+}
+
+.detail-item {
+background: rgba(255,255,255,0.02);
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 9px 11px;
+}
+
+.detail-item-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 7px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.1em;
+margin-bottom: 3px;
+}
+
+.detail-item-value {
+font-size: 11px;
+font-weight: 600;
+}
+
+.iv-note {
+margin-top: 10px;
+padding: 8px 12px;
+border-radius: 6px;
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+line-height: 1.6;
+}
+
+.iv-note.low { background: rgba(130,204,221,0.08); color: var(–iv-low); border: 1px solid rgba(130,204,221,0.15); }
+.iv-note.med { background: rgba(245,200,66,0.08); color: var(–iv-med); border: 1px solid rgba(245,200,66,0.15); }
+.iv-note.high { background: rgba(255,159,67,0.08); color: var(–iv-high); border: 1px solid rgba(255,159,67,0.15); }
+
+/* Legend */
+.legend {
+max-width: 1040px;
+margin: 14px auto 0;
+display: flex;
+gap: 16px;
+flex-wrap: wrap;
+justify-content: center;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+gap: 5px;
+font-family: ‘Space Mono’, monospace;
+font-size: 8px;
+color: var(–muted);
+text-transform: uppercase;
+letter-spacing: 0.05em;
+}
+
+.legend-dot { width: 7px; height: 7px; border-radius: 2px; }
+
+.hint {
+text-align: center;
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+color: #3a4a5a;
+margin-top: 10px;
+letter-spacing: 0.05em;
+}
+
+@media (max-width: 580px) {
+.y-labels { width: 64px; }
+.cell { min-height: 64px; padding: 6px 7px; }
+.cell-strategy { font-size: 7.5px; }
+.cell-sub, .cell-tags, .cell-iv-dots { display: none; }
+.iv-tab { padding: 6px 14px; font-size: 10px; }
+}
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>Options Strategy Matrix</h1>
+  <p>Directional Bias × Magnitude × Implied Volatility → Strategy</p>
+</header>
+
+<!-- IV Tabs -->
+
+<div class="iv-tabs-wrapper">
+  <div class="iv-label">Select Implied Volatility Environment ↓</div>
+  <div class="iv-tabs">
+    <button class="iv-tab" data-iv="low" onclick="setIV('low')">📉 Low IV</button>
+    <button class="iv-tab" data-iv="med" onclick="setIV('med')">⚡ Medium IV</button>
+    <button class="iv-tab active" data-iv="high" onclick="setIV('high')">🔥 High IV</button>
+  </div>
+  <div class="iv-description" id="ivDesc"></div>
+</div>
+
+<div class="matrix-wrapper">
+  <div class="layout">
+    <div class="y-labels" id="yLabels"></div>
+    <div class="grid-area">
+      <p class="y-axis-title">↑ Magnitude of Expected Move ↑</p>
+      <div class="x-axis">
+        <span class="x-label left">◀ Strong Bear</span>
+        <div class="x-axis-bar"></div>
+        <span class="x-label right">Strong Bull ▶</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<p class="hint">Click any cell for full strategy detail · Dots = IV suitability (blue=low · gold=med · orange=high)</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--bull)"></div>Bullish</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--neutral)"></div>Neutral</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--bear)"></div>Bearish</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7ab0ff"></div>Debit</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c87aff"></div>Credit</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--iv-low)"></div>Best in Low IV</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--iv-med)"></div>Best in Med IV</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--iv-high)"></div>Best in High IV</div>
+</div>
+
+<div class="detail-panel" id="detailPanel">
+  <div class="detail-header">
+    <div class="detail-name" id="dName"></div>
+    <div class="detail-badge" id="dBadge"></div>
+    <div class="detail-iv-tag" id="dIVTag"></div>
+    <button class="close-btn" onclick="closeDetail()">×</button>
+  </div>
+  <div class="detail-desc" id="dDesc"></div>
+  <div class="detail-grid" id="dGrid"></div>
+  <div class="iv-note" id="dIVNote"></div>
+</div>
+
+<script>
+const rows = [
+  { label: "Extreme", sub: ">15% move", cls: "y-label-high" },
+  { label: "Large", sub: "8–15% move", cls: "y-label-med-high" },
+  { label: "Moderate", sub: "3–8% move", cls: "y-label-med" },
+  { label: "Small", sub: "0–3% move", cls: "y-label-low" },
+];
+
+const ivDescriptions = {
+  low:  "Low IV (VIX <15 or stock IV Rank <25): Options are cheaply priced. Premiums are low — ideal to BUY options (long calls, puts, spreads, straddles). Selling premium is less rewarding.",
+  med:  "Medium IV (VIX 15–25 or IV Rank 25–60): Balanced environment. Both buying and selling strategies work. Spreads are well-priced. Good for defined-risk trades in both directions.",
+  high: "High IV (VIX >25 or IV Rank >60): Options are expensively priced. Premium is rich — ideal to SELL options (credit spreads, iron condors, covered calls). IV crush works in your favour post-event."
+};
+
+// Strategy data: each cell has an object per IV regime
+// [row0..row3][col0..col4] = { low, med, high }
+// Each IV regime entry: { name, dir, cost, setup, max_profit, max_loss, breakeven, desc, ivNote, ivFit: ['low','med','high'] }
+
+const data = [
+  // ROW 0 — Extreme move (>15%)
+  [
+    // Col 0: Strong Bear
+    {
+      low:  { name:"Long Put", dir:"bear", cost:"debit", setup:"Buy ATM/OTM put", max_profit:"Unlimited (to zero)", max_loss:"Premium paid", breakeven:"Strike − Premium", desc:"With IV low, puts are cheap — this is the ideal time to buy them outright. Buy an ATM or slight OTM put for a sharp crash. Low theta damage early on. Full leveraged downside capture.", ivNote:"✅ Low IV is the perfect entry point for long puts. You're buying cheap and positioning before IV expands on the move down.", ivFit:["low"] },
+      med:  { name:"Long Put", dir:"bear", cost:"debit", setup:"Buy ATM put", max_profit:"Unlimited (to zero)", max_loss:"Premium paid", breakeven:"Strike − Premium", desc:"Still viable but premium is moderate. Ensure your expected move justifies the cost. ATM put with enough DTE to absorb theta.", ivNote:"⚠️ Medium IV: Long put works but is more expensive. Consider a bear put spread to reduce cost.", ivFit:["low","med"] },
+      high: { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy higher put + Sell lower put", max_profit:"Spread width − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"High IV makes naked puts expensive. A bear put spread reduces your cost by selling a lower-strike put, but caps max profit. IV crush post-event can still hurt your long put — the spread partially offsets this.", ivNote:"🔥 High IV: Prefer the spread over naked long put. IV crush will erode the long put — the short put offsets this drag.", ivFit:["high"] },
+    },
+    // Col 1: Mild Bear
+    {
+      low:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Mild bearish with big expected move — buy the spread cheap in low IV. Wider spread to capture the range. The sold put funds your purchase while keeping cost low.", ivNote:"✅ Low IV is ideal to buy debit spreads — you pay less for the long option.", ivFit:["low","med"] },
+      med:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Solid choice in medium IV. The spread structure manages cost vs. reward well. Choose strikes that bracket your expected move zone.", ivNote:"⚡ Medium IV: Bear put spread is well-balanced here — not too expensive, good risk/reward.", ivFit:["low","med"] },
+      high: { name:"Bear Call Spread (short)", dir:"bear", cost:"credit", setup:"Sell lower call + Buy higher call", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike + Credit", desc:"In high IV, sell premium rather than buying. A bear call spread (selling the closer strike, buying further OTM) collects rich premium and profits if the stock falls or stays flat. IV crush adds extra profit.", ivNote:"🔥 High IV: Sell credit spreads instead of buying debit spreads. The premium is rich and IV crush benefits short positions.", ivFit:["high"] },
+    },
+    // Col 2: Neutral — extreme move
+    {
+      low:  { name:"Long Straddle", dir:"neutral", cost:"debit", setup:"Buy ATM call + Buy ATM put (same expiry)", max_profit:"Unlimited both ways", max_loss:"Both premiums", breakeven:"Strike ± Combined premium", desc:"The classic big-move, no-direction play. With IV low, you buy both the ATM call and put cheaply. Profits explosively if the stock moves big in either direction. Loses only if it sits still.", ivNote:"✅ Low IV is ideal for long straddles — you buy volatility cheap before it expands. Classic pre-earnings entry when IV hasn't yet spiked.", ivFit:["low"] },
+      med:  { name:"Long Strangle", dir:"neutral", cost:"debit", setup:"Buy OTM call + Buy OTM put", max_profit:"Unlimited both ways", max_loss:"Both premiums", breakeven:"Each strike ± Premiums", desc:"Similar to straddle but using OTM options — cheaper. Requires a larger move but costs less. Better choice than straddle when medium IV makes ATM options moderately priced.", ivNote:"⚡ Medium IV: A strangle is cheaper than a straddle and still captures a large move. ATM straddle is getting expensive here.", ivFit:["med"] },
+      high: { name:"Long Strangle (small) / Wait", dir:"neutral", cost:"debit", setup:"Far OTM call + Far OTM put", max_profit:"Unlimited", max_loss:"Both premiums", breakeven:"Wide breakevens", desc:"With IV very high, buying premium for a straddle/strangle is expensive and IV crush can devastate the position even if the stock moves. Use far OTM options as a cheap lottery, or wait for IV to subside before entering.", ivNote:"🔥 High IV Warning: Buying straddles/strangles in high IV is risky — you're paying peak prices. The move needs to be massive to overcome premium paid. Consider waiting.", ivFit:["low","med"] },
+    },
+    // Col 3: Mild Bull
+    {
+      low:  { name:"Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"In low IV, buy the call spread cheaply. Choose strikes bracketing your target. The sold higher call funds the trade and reduces IV risk. Defined risk, defined reward.", ivNote:"✅ Low IV: Ideal to buy debit spreads. You enter cheaply and benefit from the subsequent IV expansion.", ivFit:["low","med"] },
+      med:  { name:"Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Well-balanced in medium IV. The spread structure manages your cost vs. a naked call. Standard choice for a large directional play with defined risk.", ivNote:"⚡ Medium IV: Bull call spread is solid — spread structure balances cost and reward well.", ivFit:["low","med"] },
+      high: { name:"Bull Put Spread (short)", dir:"bull", cost:"credit", setup:"Sell OTM put + Buy lower put", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike − Credit", desc:"In high IV, sell rich puts below the market. Collect premium and profit if stock stays above your short put. IV crush accelerates profit. Mildly bullish with income generation.", ivNote:"🔥 High IV: Sell puts instead of buying calls. Rich premium and IV crush both work in your favour.", ivFit:["high"] },
+    },
+    // Col 4: Strong Bull
+    {
+      low:  { name:"Long Call", dir:"bull", cost:"debit", setup:"Buy ATM or slight OTM call", max_profit:"Unlimited", max_loss:"Premium paid", breakeven:"Strike + Premium", desc:"With IV low, calls are cheap — the best time to buy them outright. Pure leveraged bet on a sharp rally. Simple, clean, defined risk. Theta works against you but low premium reduces that drag.", ivNote:"✅ Low IV is the ideal entry for long calls. Cheap premium + expected IV expansion on the move up = double benefit.", ivFit:["low"] },
+      med:  { name:"Long Call / Call Backspread", dir:"bull", cost:"debit/credit", setup:"Buy ATM call OR: Sell 1 ATM call + Buy 2 OTM calls", max_profit:"Unlimited", max_loss:"Debit or small credit", breakeven:"Strike + Premium (call) / Complex (backspread)", desc:"Long call still viable in medium IV. Call backspread (sell 1, buy 2 OTM) offers explosive upside and can be entered for a small debit or credit — particularly good if you expect a breakout.", ivNote:"⚡ Medium IV: Long call works but consider a call backspread for better upside leverage at lower cost.", ivFit:["low","med"] },
+      high: { name:"Bull Call Spread (tight)", dir:"bull", cost:"debit", setup:"Buy call + Sell slightly higher call (tight strikes)", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Naked long call in high IV is expensive and IV crush destroys value. Tight bull call spread reduces the IV exposure significantly. You sacrifice some upside but dramatically improve the odds.", ivNote:"🔥 High IV: Never buy naked long calls in high IV. The spread is essential to offset IV crush on your long leg.", ivFit:["high"] },
+    },
+  ],
+
+  // ROW 1 — Large move (8–15%)
+  [
+    {
+      low:  { name:"Long Put", dir:"bear", cost:"debit", setup:"Buy ATM put", max_profit:"Large (to zero)", max_loss:"Premium paid", breakeven:"Strike − Premium", desc:"Low IV makes puts cheap. For a large expected move, go ATM or slightly ITM for higher delta. Full directional exposure to a substantial drop.", ivNote:"✅ Low IV: Buy puts outright. They're cheap and will benefit from both delta and IV expansion.", ivFit:["low"] },
+      med:  { name:"Bear Put Spread (wide)", dir:"bear", cost:"debit", setup:"Buy higher put + Sell lower put (wider strikes)", max_profit:"Wide spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Wider spread captures a bigger potential drop. Medium IV means naked puts are moderately priced — spread structure improves the risk/reward ratio.", ivNote:"⚡ Medium IV: Wider spread to capture more of the expected move. Spread reduces IV sensitivity.", ivFit:["med"] },
+      high: { name:"Put Backspread", dir:"bear", cost:"credit/small debit", setup:"Sell 1 ATM put + Buy 2 OTM puts", max_profit:"Unlimited (below lower strikes)", max_loss:"Small (between strikes)", breakeven:"Complex — two levels", desc:"Sell an ATM put, use proceeds to buy 2 OTM puts. Can be entered for a credit in high IV. If the stock crashes hard, the 2 long puts dominate. If it stays still you keep the credit. Explosive downside leverage.", ivNote:"🔥 High IV: Put backspread is superb — the high IV makes the short ATM put very rich, funding 2 cheap(ish) OTM puts at a net credit.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"For a meaningful but not extreme drop. Buy cheaply in low IV. Place strikes around your expected landing range.", ivNote:"✅ Low IV: Buy debit spreads when premium is cheap.", ivFit:["low","med"] },
+      med:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Solid, standard choice. Medium IV is well-suited to spread trades — not too expensive, good defined risk.", ivNote:"⚡ Medium IV: Standard bear put spread. Well balanced.", ivFit:["low","med"] },
+      high: { name:"Bear Call Spread", dir:"bear", cost:"credit", setup:"Sell lower call + Buy higher call", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike + Credit", desc:"Sell the call spread above the market. Rich premium, IV crush adds profit. Stock needs to stay below your short strike.", ivNote:"🔥 High IV: Sell premium via credit spreads. IV crush works for you.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Long Strangle", dir:"neutral", cost:"debit", setup:"Buy OTM call + Buy OTM put", max_profit:"Unlimited", max_loss:"Both premiums", breakeven:"Each strike ± Premiums", desc:"Buy OTM call and put cheaply in low IV. Needs a large move but costs less than a straddle. Pre-earnings play when you expect volatility but not direction.", ivNote:"✅ Low IV: Strangle is cheap to enter. Benefits from both the directional move and IV expansion.", ivFit:["low"] },
+      med:  { name:"Long Strangle", dir:"neutral", cost:"debit", setup:"Buy OTM call + Buy OTM put", max_profit:"Unlimited", max_loss:"Both premiums", breakeven:"Each strike ± Premiums", desc:"Still works in medium IV. OTM options limit the cost versus a straddle. Ensure expected move exceeds combined premium.", ivNote:"⚡ Medium IV: Strangle is workable but getting more expensive. Check that your expected move covers the breakevens.", ivFit:["low","med"] },
+      high: { name:"Avoid / Iron Condor (reverse)", dir:"neutral", cost:"credit", setup:"Sell OTM call spread + Sell OTM put spread", max_profit:"Net credit", max_loss:"Wing width − Credit", breakeven:"Two breakevens", desc:"In high IV, buying strangles is expensive. If you think the stock WON'T move much, sell an iron condor instead to capture IV crush. If you think it will move big, wait for IV to normalise before buying.", ivNote:"🔥 High IV: Don't buy strangles here — you'd pay peak prices. Flip the trade: sell an iron condor if you expect it to stay in range.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Standard bull spread, entered cheaply in low IV. The best risk/reward entry point.", ivNote:"✅ Low IV: Buy the spread cheap. Best entry point for debit spreads.", ivFit:["low","med"] },
+      med:  { name:"Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Solid all-rounder in medium IV. Defined risk, captures a meaningful directional move.", ivNote:"⚡ Medium IV: Reliable choice. Good balance of cost and reward.", ivFit:["low","med"] },
+      high: { name:"Bull Put Spread", dir:"bull", cost:"credit", setup:"Sell OTM put + Buy lower put", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike − Credit", desc:"Sell rich put premium in high IV. Stock stays above your short put, you keep the credit. IV crush adds to profit.", ivNote:"🔥 High IV: Sell credit spreads. Rich premium benefits sellers.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Call Backspread", dir:"bull", cost:"debit/credit", setup:"Sell 1 ATM call + Buy 2 OTM calls", max_profit:"Unlimited", max_loss:"Small or credit", breakeven:"Complex", desc:"In low IV, the OTM calls are cheap. Sell 1 ATM call, buy 2 OTM calls. Explosive payoff if stock breaks out hard. The sold ATM call nearly funds the two long calls.", ivNote:"✅ Low IV: Call backspread is especially attractive — OTM long calls are cheap, giving you explosive upside leverage.", ivFit:["low"] },
+      med:  { name:"Long Call / Wide Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy ATM call OR Buy call + Sell higher call (wide)", max_profit:"Unlimited (call) / Spread − Debit", max_loss:"Premium paid", breakeven:"Strike + Premium", desc:"Medium IV allows either a naked call or wide spread. The wide spread captures more of the expected move vs a narrow spread.", ivNote:"⚡ Medium IV: Wide spread or long call — both work. Spread reduces IV risk.", ivFit:["low","med"] },
+      high: { name:"Bull Call Spread (tight)", dir:"bull", cost:"debit", setup:"Buy call + Sell slightly higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Must use a spread in high IV to offset IV crush on the long call. The short call dramatically reduces your IV exposure.", ivNote:"🔥 High IV: Always spread when buying calls in high IV. Never buy naked calls here.", ivFit:["high"] },
+    },
+  ],
+
+  // ROW 2 — Moderate move (3–8%)
+  [
+    {
+      low:  { name:"Bear Put Spread (tight)", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put (tight)", max_profit:"Tight spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Tight spread for a modest drop. Cheap entry in low IV. High probability of reaching max profit if direction is right and move occurs as expected.", ivNote:"✅ Low IV: Tight spread is affordable. Good risk/reward for a modest expected move.", ivFit:["low","med"] },
+      med:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Standard moderate-move bear spread. Medium IV provides a reasonable entry cost.", ivNote:"⚡ Medium IV: Standard bear spread. Manageable cost for a moderate move.", ivFit:["low","med"] },
+      high: { name:"Bear Call Spread", dir:"bear", cost:"credit", setup:"Sell lower call + Buy higher call", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike + Credit", desc:"Sell the call spread above the market. Collect premium and profit from a mild drop or sideways movement. IV crush accelerates gains.", ivNote:"🔥 High IV: Sell credit spread overhead. Premium is rich. A moderate drop or flat move profits from both direction and IV crush.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Long Put (OTM)", dir:"bear", cost:"debit", setup:"Buy OTM put", max_profit:"Substantial", max_loss:"Premium paid", breakeven:"Strike − Premium", desc:"OTM put is cheap in low IV. Mild bearish tilt — needs the move to materialise but risk is low. Good for speculative bets on a moderate downside.", ivNote:"✅ Low IV: OTM puts are cheap — reasonable speculation on a moderate drop.", ivFit:["low"] },
+      med:  { name:"Bear Put Spread", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Moderate bearish spread in medium IV. Well-suited to this environment.", ivNote:"⚡ Medium IV: Bear put spread is the go-to moderate bearish trade.", ivFit:["med"] },
+      high: { name:"Bear Call Spread / Short Strangle (short side)", dir:"bear", cost:"credit", setup:"Sell call + Buy higher call (bear call spread)", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike + Credit", desc:"Sell premium above the market. In high IV the premium is rich — you can place your short strike further OTM and still collect meaningful credit.", ivNote:"🔥 High IV: Selling overhead call spreads is very attractive. Rich premium with margin to be wrong on direction.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Long Straddle / Strangle", dir:"neutral", cost:"debit", setup:"Buy ATM call + ATM put (straddle) OR OTM call + OTM put (strangle)", max_profit:"Unlimited", max_loss:"Both premiums", breakeven:"Strike ± Premiums", desc:"Moderate move with no direction — buy the straddle or strangle cheaply in low IV. Best used pre-catalyst. Low IV means you pay less for the wings.", ivNote:"✅ Low IV: If you expect a moderate move but don't know direction, buy the straddle cheap before IV expands.", ivFit:["low"] },
+      med:  { name:"Iron Condor (narrow)", dir:"neutral", cost:"credit", setup:"Sell OTM call spread + Sell OTM put spread (tight wings)", max_profit:"Net credit", max_loss:"Wing width − Credit", breakeven:"Two breakevens", desc:"Transitional — if expecting the market to stay within a moderate range, a narrow iron condor in medium IV can collect reasonable credit. Tighter than normal to stay within the expected range.", ivNote:"⚡ Medium IV: Narrow iron condor works in medium IV if you expect the stock to stay range-bound within the moderate zone.", ivFit:["med"] },
+      high: { name:"Iron Condor", dir:"neutral", cost:"credit", setup:"Sell OTM call spread + Sell OTM put spread", max_profit:"Net credit", max_loss:"Wing width − Credit", breakeven:"Two breakevens", desc:"The bread-and-butter high IV trade. Sell both an OTM call spread and OTM put spread. IV crush is your primary profit engine. Stock stays within the range and both spreads expire worthless.", ivNote:"🔥 High IV: Iron condor is the IDEAL high IV play. You sell overpriced options on both sides and profit from IV crush + theta decay.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Long Call (OTM)", dir:"bull", cost:"debit", setup:"Buy OTM call", max_profit:"Substantial", max_loss:"Premium paid", breakeven:"Strike + Premium", desc:"OTM call is cheap in low IV. Moderate bullish tilt. Benefits from delta and IV expansion if the move occurs.", ivNote:"✅ Low IV: Cheap OTM calls are attractive for moderate bullish bets. IV expansion adds upside.", ivFit:["low"] },
+      med:  { name:"Bull Call Spread (tight)", dir:"bull", cost:"debit", setup:"Buy call + Sell slightly higher call", max_profit:"Tight spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Tight spread for a modest upward move. Moderate IV justifies the spread structure to limit cost.", ivNote:"⚡ Medium IV: Tight spread is well-suited to moderate bullish expectations.", ivFit:["med"] },
+      high: { name:"Bull Put Spread / Cash Secured Put", dir:"bull", cost:"credit", setup:"Sell OTM put + Buy lower put (spread) OR Sell OTM put + Hold cash (CSP)", max_profit:"Net credit / Premium", max_loss:"Spread − Credit / Strike − Premium", breakeven:"Short strike − Credit", desc:"Sell rich put premium below the market. The CSP is the 'I'd buy it anyway' strategy — collect income while willing to own the stock at a discount. IV crush is pure profit. Best when bullish on a quality stock.", ivNote:"🔥 High IV: Selling puts in high IV is excellent. Rich premium + IV crush. The CSP is a clean, beginner-friendly high IV strategy.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Bull Call Spread (tight)", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call (tight)", max_profit:"Tight spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Tight spread for a modest upward move. Cheap in low IV, high probability of full profit if moderate move materialises.", ivNote:"✅ Low IV: Tight spreads are cheaply bought. Good for modest directional bets.", ivFit:["low","med"] },
+      med:  { name:"Bull Call Spread", dir:"bull", cost:"debit", setup:"Buy call + Sell higher call", max_profit:"Spread − Debit", max_loss:"Debit paid", breakeven:"Long strike + Net debit", desc:"Standard moderate-move bull spread in medium IV.", ivNote:"⚡ Medium IV: Standard choice for moderate bullish plays.", ivFit:["low","med"] },
+      high: { name:"Bull Put Spread", dir:"bull", cost:"credit", setup:"Sell OTM put + Buy lower put", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike − Credit", desc:"Sell put premium below the market in high IV. Collect rich credit. Stock needs to stay above short put strike.", ivNote:"🔥 High IV: Bull put spread is preferred to buying calls in high IV. Sell the rich premium instead.", ivFit:["high"] },
+    },
+  ],
+
+  // ROW 3 — Small/no move (0–3%)
+  [
+    {
+      low:  { name:"Short Stock / Long Put", dir:"bear", cost:"debit", setup:"Buy deep ITM put OR short stock", max_profit:"Strike − Premium", max_loss:"Unlimited (short) / Premium (put)", breakeven:"Strike − Premium", desc:"If truly bearish with minimal expected move and low IV, the trade is difficult — premiums are cheap so risk/reward for option selling is unattractive. Long deep ITM put or short stock is cleaner.", ivNote:"⚠️ Low IV + small bearish move = difficult environment. Selling premium earns little. Long deep ITM put acts stock-like with defined risk.", ivFit:["low"] },
+      med:  { name:"Bear Call Spread (tight)", dir:"bear", cost:"credit", setup:"Sell call + Buy higher call (tight, near current price)", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike + Credit", desc:"Tight bear call spread just above current price. In medium IV you can collect decent premium on a small move. Tight strikes reflect a small expected range.", ivNote:"⚡ Medium IV: Tight overhead call spread earns reasonable premium for a small bearish bias.", ivFit:["med"] },
+      high: { name:"Covered Call / Short Call Spread", dir:"bear", cost:"credit", setup:"Sell ATM call + Buy higher call (if spread needed)", max_profit:"Premium + (Strike − Entry)", max_loss:"Large (naked) / Spread − Credit", breakeven:"Entry − Premium", desc:"Very attractive in high IV — the call premium is rich even for small moves. Sell an ATM call against your stock (covered call) or as a credit spread if naked. Income generation even if stock barely moves down.", ivNote:"🔥 High IV: Rich call premium for almost no movement. Covered call is the quintessential income strategy in high IV environments.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Short Strangle (risky) / Skip", dir:"neutral", cost:"credit", setup:"Sell OTM call + Sell OTM put", max_profit:"Net credit (small)", max_loss:"Unlimited", breakeven:"Two breakevens", desc:"Low IV means poor premium for selling. The income doesn't justify the unlimited risk. Generally not attractive — consider skipping or waiting for better conditions.", ivNote:"⚠️ Low IV: Selling premium here earns little. The risk/reward is poor. Consider waiting for higher IV before initiating income strategies.", ivFit:["low"] },
+      med:  { name:"Iron Butterfly", dir:"neutral", cost:"credit", setup:"Sell ATM call + Sell ATM put + Buy OTM wings", max_profit:"Net credit (large)", max_loss:"Wing width − Credit", breakeven:"Short strike ± Net credit", desc:"Sell ATM straddle with wing protection. Medium IV provides decent premium for the short ATM position. Stock must pin near the strike at expiry. High reward but narrow profit zone.", ivNote:"⚡ Medium IV: Iron butterfly earns meaningful premium in medium IV. Best when stock is expected to stay very close to current price.", ivFit:["med"] },
+      high: { name:"Iron Condor / Short Strangle", dir:"neutral", cost:"credit", setup:"Sell OTM call spread + Sell OTM put spread (condor) OR Sell OTM call + OTM put (strangle)", max_profit:"Net credit", max_loss:"Wing − Credit (condor) / Unlimited (strangle)", breakeven:"Two breakevens", desc:"Maximum premium collection in high IV. The iron condor is the defined-risk version — sell both sides, collect rich premiums, benefit from IV crush. The naked strangle earns more but has unlimited risk. Both are best in post-event high IV environments.", ivNote:"🔥 High IV: This is the MONEY trade. Iron condor or short strangle in high IV is the classic hedge fund income strategy. IV crush drives rapid profit even without movement.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Calendar Spread", dir:"neutral", cost:"debit", setup:"Sell near-term ATM option + Buy same-strike longer-dated option", max_profit:"IV differential + theta", max_loss:"Net debit paid", breakeven:"Depends on IV differential", desc:"In low IV, a calendar spread exploits the difference in time decay rates between near-term and longer-dated options. Sell the fast-decaying front month, own the slower-decaying back month. Profits from theta and any IV increase.", ivNote:"✅ Low IV: Calendar spread is clever here. You own back-month vol cheaply. If IV rises, the long option gains more than the short loses.", ivFit:["low"] },
+      med:  { name:"Short Straddle (with hedge) / Iron Butterfly", dir:"neutral", cost:"credit", setup:"Sell ATM call + Sell ATM put + buy wings", max_profit:"Net credit", max_loss:"Wing width − Credit", breakeven:"Strike ± Net credit", desc:"Sell ATM vol in medium IV. Butterfly structure gives you defined risk while capturing theta from both sides. Profits if stock barely moves.", ivNote:"⚡ Medium IV: Iron butterfly or short straddle with wings. Decent premium for flat stock expectation.", ivFit:["med"] },
+      high: { name:"Short Straddle", dir:"neutral", cost:"credit", setup:"Sell ATM call + Sell ATM put", max_profit:"Combined premium", max_loss:"Unlimited", breakeven:"Strike ± Combined premium", desc:"Maximum premium capture. Sell both ATM options when IV is richest. Stock must stay near the strike. Very high reward but unlimited risk — use only with experience or hedge with wings. IV crush rapidly profits the position.", ivNote:"🔥 High IV: Short straddle is the most aggressive IV crush play. Enormous premium collected. Requires active management or wing hedges.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Poor Man's Covered Call (PMCC)", dir:"bull", cost:"debit", setup:"Buy deep ITM LEAP call + Sell OTM short-dated call", max_profit:"Credit from short call + LEAP appreciation", max_loss:"Net debit on LEAP", breakeven:"LEAP cost − Short call credits", desc:"With low IV, buy a cheap LEAP (long-dated call) as stock substitute, then sell short-dated OTM calls against it each month. Generates income on a stock position at a fraction of the cost. Good when IV is low enough to buy LEAPs cheaply.", ivNote:"✅ Low IV: Perfect time to buy LEAPs cheaply for PMCC. You establish the position at a low cost base.", ivFit:["low"] },
+      med:  { name:"Cash Secured Put", dir:"bull", cost:"credit", setup:"Sell OTM put + Hold cash to buy 100 shares if assigned", max_profit:"Premium received", max_loss:"Strike − Premium (vs zero)", breakeven:"Strike − Premium", desc:"Sell a put below the market and collect income. Medium IV provides decent premium. Classic 'get paid to wait to buy' strategy. If assigned, you own the stock at a discount.", ivNote:"⚡ Medium IV: CSP is attractive in medium IV. Reasonable income while expressing mild bullish bias.", ivFit:["med","high"] },
+      high: { name:"Cash Secured Put / Covered Call", dir:"bull", cost:"credit", setup:"Sell OTM put (CSP) OR Own stock + Sell OTM call (CC)", max_profit:"Premium received", max_loss:"Strike − Premium / Entry − Premium", breakeven:"Strike − Premium", desc:"High IV is the best time to run income strategies. Sell rich puts to get paid to acquire stock at a discount. Sell covered calls to generate yield on existing positions. IV crush adds extra profit beyond theta alone.", ivNote:"🔥 High IV: This is where income strategies SHINE. Rich premium for both CSPs and covered calls. IV crush + theta = fast profit even in flat markets.", ivFit:["high"] },
+    },
+    {
+      low:  { name:"Poor Man's Covered Call", dir:"bull", cost:"debit", setup:"Buy deep ITM LEAP call + Sell OTM front-month call", max_profit:"Repeating monthly income from short calls", max_loss:"Net LEAP cost", breakeven:"LEAP − Accumulated credits", desc:"Buy a cheap LEAP in low IV and generate monthly income by selling front-month calls against it. Best time to establish the LEAP leg when IV is low.", ivNote:"✅ Low IV: Ideal to buy the LEAP cheaply. Establishes low-cost basis for the strategy.", ivFit:["low"] },
+      med:  { name:"Bull Put Spread", dir:"bull", cost:"credit", setup:"Sell OTM put + Buy lower put", max_profit:"Net credit", max_loss:"Spread − Credit", breakeven:"Short strike − Credit", desc:"Sell put premium below the market. Medium IV makes this viable. Mildly bullish bias with income generation.", ivNote:"⚡ Medium IV: Bull put spread is solid for mildly bullish + small move expectations.", ivFit:["med"] },
+      high: { name:"Covered Call / Naked Put", dir:"bull", cost:"credit", setup:"Own stock + Sell OTM call OR Sell CSP", max_profit:"Premium + (Strike − Entry)", max_loss:"Entry − Premium / Strike − Premium", breakeven:"Entry − Premium", desc:"Best income environment. Own a strong stock, sell an OTM call against it for rich premium. Or sell a naked/cash-secured put to collect maximum income. IV crush will compress the sold option rapidly.", ivNote:"🔥 High IV: Covered calls and CSPs in high IV are the cornerstone of income strategies. Rich premium, rapid theta decay, IV crush all working for you.", ivFit:["high"] },
+    },
+  ],
+];
+
+let currentIV = 'high';
+let activeCell = null;
+
+const ivDescEl = document.getElementById('ivDesc');
+const yLabelsEl = document.getElementById('yLabels');
+const gridEl = document.getElementById('grid');
+
+function init() {
+  // Build Y labels
+  rows.forEach(r => {
+    const el = document.createElement('div');
+    el.className = `y-label ${r.cls}`;
+    el.innerHTML = `<div class="mag">${r.label}</div><div class="sub">${r.sub}</div>`;
+    yLabelsEl.appendChild(el);
+  });
+
+  // Build grid
+  data.forEach((row, ri) => {
+    row.forEach((cell, ci) => {
+      const el = document.createElement('div');
+      el.dataset.ri = ri;
+      el.dataset.ci = ci;
+      gridEl.appendChild(el);
+    });
+  });
+
+  setIV(currentIV);
+}
+
+function setIV(iv) {
+  currentIV = iv;
+  closeDetail();
+
+  // Update tabs
+  document.querySelectorAll('.iv-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.iv === iv);
+  });
+
+  // Update IV description
+  ivDescEl.className = `iv-description ${iv}`;
+  ivDescEl.textContent = ivDescriptions[iv];
+
+  // Update cells
+  const cells = gridEl.querySelectorAll('.cell, div[data-ri]');
+  gridEl.querySelectorAll('div[data-ri]').forEach(el => {
+    const ri = +el.dataset.ri;
+    const ci = +el.dataset.ci;
+    const s = data[ri][ci][iv];
+
+    el.className = `cell ${s.dir}`;
+    el.onclick = () => showDetail(ri, ci);
+
+    // IV dots
+    const ivFit = data[ri][ci][iv].ivFit || [];
+    const allIV = ['low','med','high'];
+    const dotsHtml = allIV.map(d =>
+      `<div class="iv-dot ${d}${ivFit.includes(d) ? ' active' : ''}"></div>`
+    ).join('');
+
+    el.innerHTML = `
+      <div class="cell-iv-dots">${dotsHtml}</div>
+      <div class="cell-strategy">${s.name}</div>
+      <div class="cell-sub">${s.setup}</div>
+      <div class="cell-tags">
+        <span class="tag tag-${s.cost.includes('credit') ? 'credit' : s.cost.includes('debit') ? 'debit' : 'mixed'}">${s.cost}</span>
+      </div>
+    `;
+  });
+}
+
+function showDetail(ri, ci) {
+  const s = data[ri][ci][currentIV];
+  document.getElementById('dName').textContent = s.name;
+
+  const badge = document.getElementById('dBadge');
+  badge.textContent = s.dir.charAt(0).toUpperCase() + s.dir.slice(1);
+  badge.className = `detail-badge badge-${s.dir}`;
+
+  const ivTag = document.getElementById('dIVTag');
+  const ivLabels = { low: '📉 Low IV', med: '⚡ Med IV', high: '🔥 High IV' };
+  const ivColors = { low: 'rgba(130,204,221,0.12)', med: 'rgba(245,200,66,0.12)', high: 'rgba(255,159,67,0.12)' };
+  const ivTextColors = { low: 'var(--iv-low)', med: 'var(--iv-med)', high: 'var(--iv-high)' };
+  ivTag.textContent = ivLabels[currentIV];
+  ivTag.style.background = ivColors[currentIV];
+  ivTag.style.color = ivTextColors[currentIV];
+  ivTag.style.border = `1px solid ${ivTextColors[currentIV]}40`;
+
+  document.getElementById('dDesc').textContent = s.desc;
+
+  const items = [
+    { label: 'Setup', value: s.setup },
+    { label: 'Max Profit', value: s.max_profit },
+    { label: 'Max Loss', value: s.max_loss },
+    { label: 'Breakeven', value: s.breakeven },
+    { label: 'Cost Type', value: s.cost },
+  ];
+
+  document.getElementById('dGrid').innerHTML = items.map(i => `
+    <div class="detail-item">
+      <div class="detail-item-label">${i.label}</div>
+      <div class="detail-item-value">${i.value}</div>
+    </div>
+  `).join('');
+
+  const ivNote = document.getElementById('dIVNote');
+  ivNote.className = `iv-note ${currentIV}`;
+  ivNote.textContent = s.ivNote;
+
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('visible');
+}
+
+init();
+</script>
+
+</body>
+</html>
