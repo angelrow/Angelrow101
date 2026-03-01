@@ -59,6 +59,21 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .chart-label{font-size:14px;font-weight:600}
 .chart-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;text-transform:uppercase;letter-spacing:.04em}
 .badge-neutral{background:var(--amber-dim);color:var(--amber)}
+.badge-live{background:var(--accent-dim);color:var(--accent)}
+.tradingview-widget-container{padding:0 0 4px}
+.journal-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.upload-btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;border:1px solid var(--border);background:none;color:var(--text-secondary);cursor:pointer;transition:all .15s ease;font-family:inherit}
+.upload-btn:hover{border-color:var(--border-hover);color:var(--text);background:rgba(255,255,255,.04)}
+.upload-btn.primary{border-color:rgba(0,212,170,.25);color:var(--accent);background:var(--accent-dim)}.upload-btn.primary:hover{background:rgba(0,212,170,.15)}
+.csv-status{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-muted)}
+/* Gauges */
+.gauge-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.gauge-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px 18px;text-align:center;transition:all .25s ease}
+.gauge-card:hover{border-color:var(--border-hover);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.gauge-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.gauge-svg{width:100%;max-width:260px;display:block;margin:0 auto}
+.gauge-fill{transition:stroke-dasharray 1.3s cubic-bezier(.25,.46,.45,.94),stroke .35s ease}
+@media(max-width:768px){.gauge-row{grid-template-columns:1fr}}
 .chart-placeholder{height:180px;margin:0 20px 20px;background:rgba(0,0,0,.25);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;border:1px dashed rgba(255,255,255,.05)}
 .market-key{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:28px}
 .market-key h3{font-size:12px;font-weight:600;margin-bottom:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
@@ -146,10 +161,36 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="page-title">Dashboard</div>
 <div class="page-subtitle">Trading analytics, strategy reference, and performance tracking.</div>
 <div class="summary-row">
-<div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value">34</div></div>
-<div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos">+$2,193</div></div>
-<div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value">70%</div></div>
-<div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos">+$5,800</div></div>
+<div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value" id="stat-total">34</div></div>
+<div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
+<div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="stat-wr">70%</div></div>
+<div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos" id="stat-best">+$5,800</div></div>
+</div>
+<div class="gauge-row">
+<div class="gauge-card">
+<div class="gauge-title">Total Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Total win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="gauge-total-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="gauge-total-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="gauge-total-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
+<div class="gauge-card">
+<div class="gauge-title">Last 7 Days Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Last week win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="gauge-week-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="gauge-week-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="gauge-week-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
 </div>
 <div class="home-grid">
 <div class="home-card" onclick="nav('market')"><div class="card-icon icon-market">📈</div><h3>The Market Today</h3><p>VIX, S&P 500 futures, Fear & Greed Index, bond yields, and key indicators with signal interpretation.</p><span class="card-arrow">→</span></div>
@@ -167,22 +208,22 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="market-key"><h3>Reading Guide</h3><div class="key-grid">
 <div class="key-item"><div class="key-dot bullish"></div>VIX below 20 — low volatility, bullish</div>
 <div class="key-item"><div class="key-dot bearish"></div>VIX above 30 — high fear, bearish</div>
-<div class="key-item"><div class="key-dot bullish"></div>Fear & Greed > 60 — greed, bullish</div>
-<div class="key-item"><div class="key-dot bearish"></div>Fear & Greed < 30 — fear, bearish</div>
+<div class="key-item"><div class="key-dot bullish"></div>CBOE Skew &lt; 110 — low tail risk, bullish</div>
+<div class="key-item"><div class="key-dot bearish"></div>CBOE Skew &gt; 135 — high tail risk, bearish</div>
 <div class="key-item"><div class="key-dot bullish"></div>ES futures up — bullish pre-market</div>
 <div class="key-item"><div class="key-dot bearish"></div>Bond yields spiking — risk-off</div>
 <div class="key-item"><div class="key-dot neutral"></div>Put/Call ratio ~0.7 — balanced</div>
 <div class="key-item"><div class="key-dot bullish"></div>Breadth > 60% — healthy rally</div>
 </div></div>
 <div class="chart-grid">
-<div class="chart-card"><div class="chart-header"><span class="chart-label">VIX — Volatility Index</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">ES — S&P 500 Mini Futures</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Fear & Greed Index</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">US 10Y Treasury Yield</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Put/Call Ratio</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Market Breadth — A/D Line</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">NQ — Nasdaq 100 Futures</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">DXY — US Dollar Index</span><span class="chart-badge badge-neutral">Placeholder</span></div><div class="chart-placeholder">Chart data pending</div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">VIX — Volatility Index</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"CBOE:VIX","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,77,106,1)","underLineColor":"rgba(255,77,106,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">ES — S&P 500 Futures</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"CME_MINI:ES1!","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(77,159,255,1)","underLineColor":"rgba(77,159,255,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">CBOE Skew — Tail Risk Index</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"CBOE:SKEW","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">US 10Y Treasury Yield</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"TVC:US10Y","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">CBOE Put/Call Ratio</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"CBOE:PCC","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,77,106,1)","underLineColor":"rgba(255,77,106,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">Market Breadth — A/D Line</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"NYSE:ADA","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(0,212,170,1)","underLineColor":"rgba(0,212,170,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">NQ — Nasdaq 100 Futures</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"CME_MINI:NQ1!","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(77,159,255,1)","underLineColor":"rgba(77,159,255,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
+<div class="chart-card"><div class="chart-header"><span class="chart-label">DXY — US Dollar Index</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"TVC:DXY","width":"100%","height":200,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div></div>
 </div>
 </section>
 
@@ -217,8 +258,17 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <section class="page" id="page-journal">
 <button class="back-btn" onclick="nav('home')">← Back to Home</button>
 <div class="page-title">Trading Journal</div>
-<div class="page-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
-<div class="month-selector">
+<div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
+<div class="journal-toolbar">
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input type="file" id="csvUpload" accept=".csv" style="display:none">
+<button class="upload-btn primary" onclick="document.getElementById('csvUpload').click()">⬆ Upload CSV</button>
+<button class="upload-btn" onclick="downloadTemplate()">⬇ Template</button>
+<span id="csvStatus" class="csv-status"></span>
+</div>
+<div style="font-size:11px;color:var(--text-muted)">Export your spreadsheet as CSV · columns: id, date, ticker, strategy, strike, contracts, entry, exit, pnl, status</div>
+</div>
+<div class="month-selector" id="monthSelector">
 <button class="month-btn active" onclick="filterMonth('all',this)">All Trades</button>
 <button class="month-btn" onclick="filterMonth('2026-02',this)">Feb 2026</button>
 <button class="month-btn" onclick="filterMonth('2026-01',this)">Jan 2026</button>
@@ -274,6 +324,151 @@ function openReport(key){
 function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow=''}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
+const GAUGE_HALF_CIRC=Math.PI*80; // ~251.3 for radius 80
+
+function gaugeColor(pct){
+  if(pct<0)return'#ff4d6a';
+  if(pct<50)return'#ffb020';
+  return'#00d4aa';
+}
+
+function setGauge(arcId,pctId,subId,pct,subText){
+  const arc=document.getElementById(arcId);
+  const pctEl=document.getElementById(pctId);
+  const subEl=document.getElementById(subId);
+  if(!arc||!pctEl)return;
+  const color=gaugeColor(pct);
+  const fill=(Math.min(Math.max(pct,0),100)/100)*GAUGE_HALF_CIRC;
+  const gap=GAUGE_HALF_CIRC-fill;
+  arc.setAttribute('stroke',color);
+  // Double rAF so CSS transition fires from initial stroke-dasharray
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    arc.style.strokeDasharray=`${fill} ${gap}`;
+  }));
+  pctEl.textContent=`${pct}%`;
+  pctEl.setAttribute('fill',color);
+  if(subEl&&subText)subEl.textContent=subText;
+}
+
+function updateGauges(){
+  // Overall win rate (closed trades only)
+  const closed=trades.filter(t=>t.pnl!==null&&t.status!=='Open');
+  const wins=closed.filter(t=>t.pnl>0);
+  const totalRate=closed.length?Math.round(wins.length/closed.length*100):0;
+  setGauge('gauge-total-arc','gauge-total-pct','gauge-total-sub',totalRate,
+    `${wins.length} wins / ${closed.length} closed`);
+
+  // Last 7 days from most recent trade date
+  if(!trades.length)return;
+  const latestDate=trades.map(t=>t.date).sort().reverse()[0];
+  const latest=new Date(latestDate+'T00:00:00');
+  const cutoff=new Date(latest);cutoff.setDate(cutoff.getDate()-7);
+  const weekTrades=trades.filter(t=>{
+    const d=new Date(t.date+'T00:00:00');
+    return d>cutoff&&t.pnl!==null&&t.status!=='Open';
+  });
+  if(weekTrades.length>0){
+    const wWins=weekTrades.filter(t=>t.pnl>0);
+    const weekRate=Math.round(wWins.length/weekTrades.length*100);
+    const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    setGauge('gauge-week-arc','gauge-week-pct','gauge-week-sub',weekRate,
+      `${fmt(cutoff)} – ${fmt(latest)} · ${weekTrades.length} trades`);
+  }else{
+    const p=document.getElementById('gauge-week-pct');
+    const s=document.getElementById('gauge-week-sub');
+    if(p){p.textContent='N/A';p.setAttribute('fill','#5a6577');}
+    if(s)s.textContent='No closed trades in period';
+  }
+}
+
+function updateDashboardStats(){
+  const closed=trades.filter(t=>t.pnl!==null&&t.status!=='Open');
+  const wins=closed.filter(t=>t.pnl>0);
+  const totalPnL=closed.reduce((s,t)=>s+t.pnl,0);
+  const bestTrade=closed.length?Math.max(...closed.map(t=>t.pnl)):0;
+  const winRate=closed.length?Math.round(wins.length/closed.length*100):0;
+  const el=id=>document.getElementById(id);
+  if(el('stat-total'))el('stat-total').textContent=trades.length;
+  if(el('stat-pnl')){el('stat-pnl').textContent=totalPnL>=0?`+$${totalPnL.toLocaleString()}`:`-$${Math.abs(totalPnL).toLocaleString()}`;el('stat-pnl').className='sc-value '+(totalPnL>=0?'pnl-pos':'pnl-neg');}
+  if(el('stat-wr'))el('stat-wr').textContent=`${winRate}%`;
+  if(el('stat-best'))el('stat-best').textContent=bestTrade>0?`+$${bestTrade.toLocaleString()}`:'$0';
+  const strats=[...new Set(trades.map(t=>t.strategy))];
+  if(el('journal-subtitle'))el('journal-subtitle').textContent=`Every position opened and closed — ${trades.length} trades across ${strats.length} strategies.`;
+}
+
+function rebuildMonthButtons(){
+  const months=[...new Set(trades.map(t=>t.date.substring(0,7)))].sort().reverse();
+  const sel=document.getElementById('monthSelector');
+  if(!sel)return;
+  sel.innerHTML='<button class="month-btn active" onclick="filterMonth(\'all\',this)">All Trades</button>';
+  months.forEach(m=>{
+    const [y,mo]=m.split('-');
+    const label=new Date(parseInt(y),parseInt(mo)-1).toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+    sel.innerHTML+=`<button class="month-btn" onclick="filterMonth('${m}',this)">${label}</button>`;
+  });
+}
+
+function parseCSVLine(line){
+  const result=[];let cell='';let inQ=false;
+  for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){result.push(cell);cell='';}else{cell+=c;}}
+  result.push(cell);return result;
+}
+
+function downloadTemplate(){
+  const headers=['id','date','ticker','strategy','strike','contracts','entry','exit','pnl','status'];
+  const example=['35','2026-03-07','AAPL','CSP','$220P','5','$2.50','$0.80','850','Win'];
+  const csv=[headers.join(','),example.join(',')].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='angelrow-journal-template.csv';a.click();
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  const input=document.getElementById('csvUpload');
+  if(!input)return;
+  input.addEventListener('change',function(e){
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        const lines=ev.target.result.trim().split('\n');
+        const headers=lines[0].toLowerCase().split(',').map(h=>h.trim());
+        const idx=k=>headers.indexOf(k);
+        const parsed=lines.slice(1).filter(l=>l.trim()).map(line=>{
+          const cols=parseCSVLine(line);
+          const pnlRaw=(cols[idx('pnl')]||'').trim();
+          const pnlNum=pnlRaw===''||pnlRaw==='—'||pnlRaw==='-'?null:parseFloat(pnlRaw.replace(/[$,]/g,''));
+          return{
+            id:parseInt(cols[idx('id')])||0,
+            date:(cols[idx('date')]||'').trim(),
+            ticker:(cols[idx('ticker')]||'').trim(),
+            strategy:(cols[idx('strategy')]||'').trim(),
+            strike:(cols[idx('strike')]||'').trim(),
+            cts:parseInt(cols[idx('contracts')])||0,
+            entry:(cols[idx('entry')]||'').trim(),
+            exit:(cols[idx('exit')]||'—').trim(),
+            pnl:isNaN(pnlNum)?null:pnlNum,
+            status:(cols[idx('status')]||'Open').trim()
+          };
+        });
+        if(parsed.length===0)throw new Error('No valid trade rows found');
+        trades.length=0;parsed.forEach(t=>trades.push(t));
+        localStorage.setItem('angelrow_trades',JSON.stringify(trades));
+        rebuildMonthButtons();
+        renderJournal('all');
+        updateDashboardStats();
+        setTimeout(updateGauges,120);
+        const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+        document.getElementById('csvStatus').textContent=`✓ ${parsed.length} trades loaded · ${now}`;
+      }catch(err){
+        document.getElementById('csvStatus').textContent=`✗ Error: ${err.message}`;
+      }
+      e.target.value='';
+    };
+    reader.readAsText(file);
+  });
+});
+
 function nav(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -283,8 +478,14 @@ function nav(page){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// Load trades from localStorage if a CSV was previously uploaded
+(function(){try{const s=localStorage.getItem('angelrow_trades');if(s){const p=JSON.parse(s);if(Array.isArray(p)&&p.length){trades.length=0;p.forEach(t=>trades.push(t));}}}catch(e){}}());
+
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+rebuildMonthButtons();
 renderJournal('all');
+updateDashboardStats();
+setTimeout(updateGauges,120);
 </script>
 </body>
 </html>
