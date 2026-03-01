@@ -66,6 +66,14 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .upload-btn:hover{border-color:var(--border-hover);color:var(--text);background:rgba(255,255,255,.04)}
 .upload-btn.primary{border-color:rgba(0,212,170,.25);color:var(--accent);background:var(--accent-dim)}.upload-btn.primary:hover{background:rgba(0,212,170,.15)}
 .csv-status{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-muted)}
+/* Gauges */
+.gauge-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.gauge-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 20px 18px;text-align:center;transition:all .25s ease}
+.gauge-card:hover{border-color:var(--border-hover);box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.gauge-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.gauge-svg{width:100%;max-width:260px;display:block;margin:0 auto}
+.gauge-fill{transition:stroke-dasharray 1.3s cubic-bezier(.25,.46,.45,.94),stroke .35s ease}
+@media(max-width:768px){.gauge-row{grid-template-columns:1fr}}
 .chart-placeholder{height:180px;margin:0 20px 20px;background:rgba(0,0,0,.25);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;border:1px dashed rgba(255,255,255,.05)}
 .market-key{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:28px}
 .market-key h3{font-size:12px;font-weight:600;margin-bottom:14px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em}
@@ -157,6 +165,32 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
 <div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="stat-wr">70%</div></div>
 <div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos" id="stat-best">+$5,800</div></div>
+</div>
+<div class="gauge-row">
+<div class="gauge-card">
+<div class="gauge-title">Total Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Total win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="gauge-total-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="gauge-total-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="gauge-total-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
+<div class="gauge-card">
+<div class="gauge-title">Last 7 Days Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Last week win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="gauge-week-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="gauge-week-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="gauge-week-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
 </div>
 <div class="home-grid">
 <div class="home-card" onclick="nav('market')"><div class="card-icon icon-market">📈</div><h3>The Market Today</h3><p>VIX, S&P 500 futures, Fear & Greed Index, bond yields, and key indicators with signal interpretation.</p><span class="card-arrow">→</span></div>
@@ -290,6 +324,63 @@ function openReport(key){
 function closeModal(){document.getElementById('modal').classList.remove('open');document.body.style.overflow=''}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
+const GAUGE_HALF_CIRC=Math.PI*80; // ~251.3 for radius 80
+
+function gaugeColor(pct){
+  if(pct<0)return'#ff4d6a';
+  if(pct<50)return'#ffb020';
+  return'#00d4aa';
+}
+
+function setGauge(arcId,pctId,subId,pct,subText){
+  const arc=document.getElementById(arcId);
+  const pctEl=document.getElementById(pctId);
+  const subEl=document.getElementById(subId);
+  if(!arc||!pctEl)return;
+  const color=gaugeColor(pct);
+  const fill=(Math.min(Math.max(pct,0),100)/100)*GAUGE_HALF_CIRC;
+  const gap=GAUGE_HALF_CIRC-fill;
+  arc.setAttribute('stroke',color);
+  // Double rAF so CSS transition fires from initial stroke-dasharray
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    arc.style.strokeDasharray=`${fill} ${gap}`;
+  }));
+  pctEl.textContent=`${pct}%`;
+  pctEl.setAttribute('fill',color);
+  if(subEl&&subText)subEl.textContent=subText;
+}
+
+function updateGauges(){
+  // Overall win rate (closed trades only)
+  const closed=trades.filter(t=>t.pnl!==null&&t.status!=='Open');
+  const wins=closed.filter(t=>t.pnl>0);
+  const totalRate=closed.length?Math.round(wins.length/closed.length*100):0;
+  setGauge('gauge-total-arc','gauge-total-pct','gauge-total-sub',totalRate,
+    `${wins.length} wins / ${closed.length} closed`);
+
+  // Last 7 days from most recent trade date
+  if(!trades.length)return;
+  const latestDate=trades.map(t=>t.date).sort().reverse()[0];
+  const latest=new Date(latestDate+'T00:00:00');
+  const cutoff=new Date(latest);cutoff.setDate(cutoff.getDate()-7);
+  const weekTrades=trades.filter(t=>{
+    const d=new Date(t.date+'T00:00:00');
+    return d>cutoff&&t.pnl!==null&&t.status!=='Open';
+  });
+  if(weekTrades.length>0){
+    const wWins=weekTrades.filter(t=>t.pnl>0);
+    const weekRate=Math.round(wWins.length/weekTrades.length*100);
+    const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    setGauge('gauge-week-arc','gauge-week-pct','gauge-week-sub',weekRate,
+      `${fmt(cutoff)} – ${fmt(latest)} · ${weekTrades.length} trades`);
+  }else{
+    const p=document.getElementById('gauge-week-pct');
+    const s=document.getElementById('gauge-week-sub');
+    if(p){p.textContent='N/A';p.setAttribute('fill','#5a6577');}
+    if(s)s.textContent='No closed trades in period';
+  }
+}
+
 function updateDashboardStats(){
   const closed=trades.filter(t=>t.pnl!==null&&t.status!=='Open');
   const wins=closed.filter(t=>t.pnl>0);
@@ -366,6 +457,7 @@ document.addEventListener('DOMContentLoaded',function(){
         rebuildMonthButtons();
         renderJournal('all');
         updateDashboardStats();
+        setTimeout(updateGauges,120);
         const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
         document.getElementById('csvStatus').textContent=`✓ ${parsed.length} trades loaded · ${now}`;
       }catch(err){
@@ -393,6 +485,7 @@ document.getElementById('headerDate').textContent=new Date().toLocaleDateString(
 rebuildMonthButtons();
 renderJournal('all');
 updateDashboardStats();
+setTimeout(updateGauges,120);
 </script>
 </body>
 </html>
