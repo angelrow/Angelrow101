@@ -1,0 +1,531 @@
+import { useState } from “react”;
+
+const SECTIONS = [
+{
+title: “1. POSITION SIZING”,
+icon: “⚖️”,
+color: “#e74c3c”,
+items: [
+{
+id: “max_risk”,
+label: “Max risk per trade defined?”,
+detail: “Use the calculator above. Two limits must pass: (1) managed risk via stop ≤ 2% of portfolio, AND (2) total notional ≤ 15% of portfolio. Both must be green before entering.”,
+},
+{
+id: “premium_trap”,
+label: “Premium trap check?”,
+detail: “If premium per contract feels ‘too low’ and you’re tempted to increase size — STOP. Low premium = low reward per unit of risk. Sizing up doesn’t fix that equation, it amplifies the downside.”,
+},
+{
+id: “assignment_ok”,
+label: “Happy to own shares at strike?”,
+detail: “If assigned, would you hold the stock at this price? For CSPs, assignment should be an acceptable outcome, not a disaster scenario.”,
+},
+],
+},
+{
+title: “2. IV & EARNINGS SETUP”,
+icon: “📊”,
+color: “#f39c12”,
+items: [
+{
+id: “ivr”,
+label: “IV Rank > 50?”,
+detail: “IVR shows where current IV sits relative to its own 52-week range. Above 50 = IV is elevated = premium is rich = edge for sellers. Below 30 = avoid selling premium.”,
+input: { type: “value”, placeholder: “IVR value” }
+},
+{
+id: “ivp”,
+label: “IV Percentile > 50?”,
+detail: “IVP shows what % of days in the past year had lower IV than today. Above 50 = more days had lower IV = today’s IV is relatively high. Confirms the IVR signal.”,
+input: { type: “value”, placeholder: “IV Percentile” }
+},
+{
+id: “earnings_date”,
+label: “Earnings date checked?”,
+detail: “Know the exact date. If selling IV crush: expiry must be AFTER earnings. If avoiding earnings: expiry must be BEFORE. No guessing — check the calendar.”,
+input: { type: “value”, placeholder: “Earnings date” }
+},
+{
+id: “earnings_strategy”,
+label: “Earnings strategy clear?”,
+detail: “IV CRUSH play: Sell premium before earnings, buy back after IV collapses post-announcement. Requires OTM strike with buffer for the expected move. AVOIDANCE: Close or don’t open positions that span earnings without a thesis.”,
+},
+{
+id: “expected_move”,
+label: “Expected move vs strike distance?”,
+detail: “Check the expected move (shown on option chain). Your strike should be OUTSIDE the expected move for IV crush plays. E.g., if expected move is ±15%, your put strike should be >15% below current price.”,
+},
+],
+},
+{
+title: “3. TECHNICAL ANALYSIS”,
+icon: “📈”,
+color: “#2ecc71”,
+items: [
+{
+id: “trend”,
+label: “Trend direction confirmed?”,
+detail: “For CSPs: price should be in an uptrend or at support, not in free-fall. Check: price above 50 & 200 SMA? Higher lows forming? Avoid selling puts into a downtrend.”,
+},
+{
+id: “support”,
+label: “Key support levels identified?”,
+detail: “Your strike should ideally be at or below a significant support level. If the stock breaks support above your strike, you’re in trouble before it even reaches you.”,
+input: { type: “value”, placeholder: “Support level ($)” }
+},
+{
+id: “rsi”,
+label: “RSI checked (not overbought/oversold)?”,
+detail: “RSI 30–70 = neutral zone, fine for CSPs. RSI > 70 = overbought, stock may pull back (increases put risk). RSI < 30 = oversold, could be opportunity OR falling knife.”,
+input: { type: “value”, placeholder: “RSI value” }
+},
+{
+id: “macd”,
+label: “MACD trend aligned?”,
+detail: “MACD above signal line = bullish momentum (good for CSPs). MACD below and diverging = bearish momentum (caution). Look for confirmation, not primary signal.”,
+},
+{
+id: “volume”,
+label: “Volume supports the move?”,
+detail: “Rising price on rising volume = conviction. Rising price on falling volume = weak rally. Check volume SMA — is current volume above or below average?”,
+},
+],
+},
+{
+title: “4. TRADE STRUCTURE”,
+icon: “🔧”,
+color: “#3498db”,
+items: [
+{
+id: “dte”,
+label: “Days to expiry appropriate?”,
+detail: “Sweet spot for premium selling: 30–45 DTE (theta decay accelerates). Under 21 DTE = gamma risk increases. For IV crush: enough time for post-earnings theta burn but not too much.”,
+input: { type: “value”, placeholder: “DTE” }
+},
+{
+id: “delta”,
+label: “Delta checked?”,
+detail: “Delta ≈ probability of expiring ITM. For CSPs: 0.15–0.30 delta = 70–85% probability of profit. Lower delta = safer but less premium. Match to your conviction level.”,
+input: { type: “value”, placeholder: “Delta” }
+},
+{
+id: “limit_order”,
+label: “Using limit order (not market)?”,
+detail: “Always. Set your entry price at the mid or slightly above. Market orders on options give away edge on the bid-ask spread, especially on less liquid names.”,
+},
+{
+id: “liquidity”,
+label: “Option liquidity adequate?”,
+detail: “HARD RULE: bid-ask spread must be < 20% of mid price. Also check: open interest > 100? Volume today? Wide spreads = slippage on entry AND exit. Low liquidity means you can’t get out when you need to. If spread is too wide, walk away regardless of setup quality.”,
+},
+],
+},
+{
+title: “5. EXIT PLAN”,
+icon: “🚪”,
+color: “#9b59b6”,
+items: [
+{
+id: “oco”,
+label: “OCO order set immediately?”,
+detail: “Set your profit target (buy-to-close limit) and stop-loss (buy stop) as an OCO the moment the trade fills. Not later. Not tomorrow. Immediately.”,
+},
+{
+id: “profit_target”,
+label: “Profit target defined?”,
+detail: “Typical: close at 50–65% of max profit. For IV crush: more aggressive target (e.g., close when premium drops 40–60% post-earnings). Don’t get greedy chasing the last 20%.”,
+input: { type: “value”, placeholder: “Target price ($)” }
+},
+{
+id: “stop_loss”,
+label: “Stop-loss defined?”,
+detail: “Typical: 2× the premium received. E.g., sold for $0.50, stop at $1.00–$1.25. This caps your loss at a defined multiple. Adjust based on conviction and IV environment.”,
+input: { type: “value”, placeholder: “Stop price ($)” }
+},
+{
+id: “assignment_plan”,
+label: “Assignment plan ready?”,
+detail: “If assigned despite stop-loss (gap down): will you hold and sell covered calls? Sell immediately? Have the plan BEFORE you enter. No improvising under pressure.”,
+},
+],
+},
+];
+
+const SCORE_THRESHOLDS = {
+excellent: { min: 18, label: “STRONG SETUP”, color: “#2ecc71”, bg: “#0a2e1a” },
+good: { min: 14, label: “ACCEPTABLE”, color: “#f39c12”, bg: “#2e2a0a” },
+weak: { min: 0, label: “REVIEW NEEDED”, color: “#e74c3c”, bg: “#2e0a0a” },
+};
+
+const InputField = ({ label, value, onChange, placeholder }) => (
+
+  <div>
+    <label style={{ fontSize: 10, color: "#666", letterSpacing: 1, textTransform: "uppercase", display: "block", marginBottom: 4 }}>{label}</label>
+    <input
+      type="number"
+      step="any"
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      style={{
+        width: "100%",
+        background: "#0a0a0f",
+        border: "1px solid #252530",
+        borderRadius: 4,
+        padding: "8px 10px",
+        color: "#fff",
+        fontSize: 14,
+        fontFamily: "inherit",
+        boxSizing: "border-box",
+      }}
+    />
+  </div>
+);
+
+const OutputRow = ({ label, value, sub, color = “#fff”, warn }) => (
+
+  <div style={{ padding: "8px 0", borderBottom: "1px solid #1a1a2e" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+      <span style={{ fontSize: 11, color: "#666", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</span>
+      <div style={{ textAlign: "right" }}>
+        <span style={{ fontSize: 16, fontWeight: 600, color }}>
+          {value}
+          {warn && <span style={{ fontSize: 11, marginLeft: 6, color: "#e74c3c" }}>{warn}</span>}
+        </span>
+        {sub && <div style={{ fontSize: 10, color: "#555", marginTop: 1 }}>{sub}</div>}
+      </div>
+    </div>
+  </div>
+);
+
+export default function OptionsChecklist() {
+const [checked, setChecked] = useState({});
+const [notes, setNotes] = useState({});
+const [collapsed, setCollapsed] = useState({});
+const [showCalc, setShowCalc] = useState(false);
+const [calc, setCalc] = useState({
+portfolio: “50000”,
+riskPct: “2”,
+notionalCapPct: “15”,
+strike: “”,
+premium: “”,
+stop: “”,
+});
+
+const totalItems = SECTIONS.reduce((sum, s) => sum + s.items.length, 0);
+const checkedCount = Object.values(checked).filter(Boolean).length;
+const threshold = checkedCount >= 18 ? SCORE_THRESHOLDS.excellent : checkedCount >= 14 ? SCORE_THRESHOLDS.good : SCORE_THRESHOLDS.weak;
+
+const updateCalc = (key, val) => setCalc((p) => ({ …p, [key]: val }));
+const toggleCheck = (id) => setChecked((prev) => ({ …prev, [id]: !prev[id] }));
+const toggleSection = (idx) => setCollapsed((prev) => ({ …prev, [idx]: !prev[idx] }));
+
+// Parse inputs
+const pf = parseFloat(calc.portfolio) || 0;
+const rp = parseFloat(calc.riskPct) || 0;
+const ncp = parseFloat(calc.notionalCapPct) || 0;
+const st = parseFloat(calc.strike) || 0;
+const pr = parseFloat(calc.premium) || 0;
+const sp = parseFloat(calc.stop) || 0;
+
+// Layer 1: Managed risk (stop-based)
+const managedLossPerContract = sp > pr ? (sp - pr) * 100 : 0;
+const maxManagedRiskDollars = pf && rp ? pf * (rp / 100) : 0;
+const maxContractsByStop = managedLossPerContract > 0 ? Math.floor(maxManagedRiskDollars / managedLossPerContract) : 0;
+
+// Layer 2: Notional cap
+const maxNotionalDollars = pf && ncp ? pf * (ncp / 100) : 0;
+const maxContractsByNotional = st > 0 ? Math.floor(maxNotionalDollars / (st * 100)) : 0;
+
+// Combined: take the lower of the two
+const bothValid = maxContractsByStop > 0 && maxContractsByNotional > 0;
+const maxContracts = bothValid
+? Math.min(maxContractsByStop, maxContractsByNotional)
+: maxContractsByStop || maxContractsByNotional;
+const bindingConstraint = bothValid
+? (maxContractsByStop <= maxContractsByNotional ? “stop” : “notional”)
+: (maxContractsByStop > 0 ? “stop” : “notional”);
+
+// Outputs at max contracts
+const totalPremium = maxContracts * pr * 100;
+const totalManagedRisk = maxContracts * managedLossPerContract;
+const totalNotional = maxContracts * st * 100;
+const notionalPct = pf ? ((totalNotional / pf) * 100).toFixed(1) : 0;
+const managedRiskPct = pf ? ((totalManagedRisk / pf) * 100).toFixed(1) : 0;
+const returnOnManagedRisk = totalManagedRisk > 0 ? ((totalPremium / totalManagedRisk) * 100).toFixed(1) : 0;
+
+const hasAllInputs = pf && rp && ncp && st && pr && sp && sp > pr;
+
+return (
+<div style={{
+minHeight: “100vh”,
+background: “#0a0a0f”,
+color: “#e8e6e1”,
+fontFamily: “‘JetBrains Mono’, ‘Fira Code’, ‘SF Mono’, monospace”,
+padding: “24px 16px”,
+maxWidth: 720,
+margin: “0 auto”,
+}}>
+{/* Header */}
+<div style={{ marginBottom: 32, borderBottom: “2px solid #1a1a2e”, paddingBottom: 24 }}>
+<div style={{ fontSize: 11, letterSpacing: 4, color: “#666”, marginBottom: 8, textTransform: “uppercase” }}>
+Angelrow Trading Systems
+</div>
+<h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: “#fff”, letterSpacing: -0.5 }}>
+CSP Pre-Trade Checklist
+</h1>
+<p style={{ fontSize: 12, color: “#666”, margin: “8px 0 0”, lineHeight: 1.5 }}>
+Complete before every entry. No exceptions. No shortcuts.
+</p>
+</div>
+
+```
+  {/* Score Bar */}
+  <div style={{
+    background: threshold.bg,
+    border: `1px solid ${threshold.color}33`,
+    borderRadius: 8,
+    padding: "16px 20px",
+    marginBottom: 28,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  }}>
+    <div>
+      <div style={{ fontSize: 11, color: "#888", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Trade Readiness</div>
+      <div style={{ fontSize: 20, fontWeight: 700, color: threshold.color }}>{threshold.label}</div>
+    </div>
+    <div style={{ textAlign: "right" }}>
+      <div style={{ fontSize: 28, fontWeight: 700, color: threshold.color }}>
+        {checkedCount}<span style={{ fontSize: 14, color: "#555" }}>/{totalItems}</span>
+      </div>
+      <div style={{ width: 120, height: 4, background: "#1a1a2e", borderRadius: 2, overflow: "hidden", marginTop: 4 }}>
+        <div style={{ width: `${(checkedCount / totalItems) * 100}%`, height: "100%", background: threshold.color, borderRadius: 2, transition: "width 0.3s ease" }} />
+      </div>
+    </div>
+  </div>
+
+  {/* Calculator Toggle */}
+  <button
+    onClick={() => setShowCalc(!showCalc)}
+    style={{
+      width: "100%",
+      background: "#111118",
+      border: "1px solid #252530",
+      borderRadius: 8,
+      padding: "12px 16px",
+      color: "#ccc",
+      fontSize: 13,
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 24,
+      fontFamily: "inherit",
+    }}
+  >
+    <span>⚖️ Position Size Calculator</span>
+    <span style={{ fontSize: 18, transform: showCalc ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+  </button>
+
+  {/* Calculator Panel */}
+  {showCalc && (
+    <div style={{
+      background: "#111118",
+      border: "1px solid #252530",
+      borderRadius: 8,
+      padding: 20,
+      marginBottom: 24,
+      marginTop: -16,
+    }}>
+      {/* Risk Parameters */}
+      <div style={{ fontSize: 10, letterSpacing: 2, color: "#666", textTransform: "uppercase", marginBottom: 10 }}>
+        Risk Parameters
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <InputField label="Portfolio ($)" value={calc.portfolio} onChange={(e) => updateCalc("portfolio", e.target.value)} placeholder="50000" />
+        <InputField label="Max Risk % (stop)" value={calc.riskPct} onChange={(e) => updateCalc("riskPct", e.target.value)} placeholder="2" />
+        <InputField label="Notional Cap %" value={calc.notionalCapPct} onChange={(e) => updateCalc("notionalCapPct", e.target.value)} placeholder="15" />
+      </div>
+
+      {/* Trade Parameters */}
+      <div style={{ fontSize: 10, letterSpacing: 2, color: "#666", textTransform: "uppercase", marginBottom: 10 }}>
+        Trade Parameters
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <InputField label="Strike ($)" value={calc.strike} onChange={(e) => updateCalc("strike", e.target.value)} placeholder="15" />
+        <InputField label="Premium ($)" value={calc.premium} onChange={(e) => updateCalc("premium", e.target.value)} placeholder="0.35" />
+        <InputField label="Stop Price ($)" value={calc.stop} onChange={(e) => updateCalc("stop", e.target.value)} placeholder="0.80" />
+      </div>
+
+      {/* Validation */}
+      {sp > 0 && pr > 0 && sp <= pr && (
+        <div style={{ padding: "10px 14px", background: "#2e0a0a", border: "1px solid #e74c3c33", borderRadius: 6, marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: "#e74c3c" }}>
+            Stop must be higher than premium. You sold at ${pr.toFixed(2)}, so your buy-to-close stop must be above this — e.g. ${(pr * 2).toFixed(2)}.
+          </div>
+        </div>
+      )}
+
+      {/* Outputs */}
+      {hasAllInputs && (
+        <div style={{
+          background: "#0a0a0f",
+          border: "1px solid #252530",
+          borderRadius: 8,
+          padding: "16px 20px",
+        }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: "#666", textTransform: "uppercase", marginBottom: 8 }}>
+            How it's calculated
+          </div>
+          <div style={{ fontSize: 11, color: "#555", lineHeight: 1.7, marginBottom: 16, borderBottom: "1px solid #1a1a2e", paddingBottom: 12 }}>
+            Loss per contract if stopped = (${sp.toFixed(2)} − ${pr.toFixed(2)}) × 100 = <span style={{ color: "#ccc" }}>${managedLossPerContract.toFixed(0)}</span>
+            <br />
+            Layer 1 — Stop risk: ${maxManagedRiskDollars.toLocaleString()} ÷ ${managedLossPerContract.toFixed(0)} = <span style={{ color: "#ccc" }}>{maxContractsByStop} contracts</span>
+            <br />
+            Layer 2 — Notional: ${maxNotionalDollars.toLocaleString()} ÷ ${(st * 100).toLocaleString()} = <span style={{ color: "#ccc" }}>{maxContractsByNotional} contracts</span>
+          </div>
+
+          <div style={{ fontSize: 10, letterSpacing: 2, color: "#666", textTransform: "uppercase", marginBottom: 8 }}>
+            Result
+          </div>
+
+          <div style={{ textAlign: "center", padding: "16px 0 12px", borderBottom: "1px solid #1a1a2e", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: 2, marginBottom: 4 }}>Max Contracts</div>
+            <div style={{ fontSize: 36, fontWeight: 700, color: "#2ecc71" }}>{maxContracts}</div>
+            <div style={{ fontSize: 10, color: "#555", marginTop: 2 }}>
+              Limited by {bindingConstraint === "stop" ? `managed risk (${rp}% stop rule)` : `notional cap (${ncp}%)`}
+            </div>
+          </div>
+
+          <OutputRow
+            label="Managed Risk (if stopped)"
+            value={`$${totalManagedRisk.toLocaleString()}`}
+            sub={`${managedRiskPct}% of portfolio`}
+            color={parseFloat(managedRiskPct) <= rp ? "#2ecc71" : "#e74c3c"}
+          />
+          <OutputRow
+            label="Notional Exposure"
+            value={`$${totalNotional.toLocaleString()}`}
+            sub={`${notionalPct}% of portfolio`}
+            color={parseFloat(notionalPct) <= ncp ? "#2ecc71" : "#e74c3c"}
+          />
+          <OutputRow
+            label="Total Premium Collected"
+            value={`$${totalPremium.toLocaleString()}`}
+          />
+          <OutputRow
+            label="Return on Managed Risk"
+            value={`${returnOnManagedRisk}%`}
+            sub="Premium ÷ risk if stopped"
+          />
+        </div>
+      )}
+    </div>
+  )}
+
+  {/* Sections */}
+  {SECTIONS.map((section, sIdx) => {
+    const sectionChecked = section.items.filter((item) => checked[item.id]).length;
+    const isCollapsed = collapsed[sIdx];
+
+    return (
+      <div key={sIdx} style={{
+        marginBottom: 16,
+        border: `1px solid ${sectionChecked === section.items.length ? section.color + "44" : "#1a1a2e"}`,
+        borderRadius: 8,
+        overflow: "hidden",
+        transition: "border-color 0.3s",
+      }}>
+        <button
+          onClick={() => toggleSection(sIdx)}
+          style={{
+            width: "100%",
+            background: sectionChecked === section.items.length ? section.color + "11" : "#111118",
+            border: "none",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>{section.icon}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#e8e6e1", letterSpacing: 0.5 }}>{section.title}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 11, color: sectionChecked === section.items.length ? section.color : "#555", fontWeight: 600 }}>
+              {sectionChecked}/{section.items.length}
+            </span>
+            <span style={{ fontSize: 14, color: "#555", transform: isCollapsed ? "rotate(-90deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+          </div>
+        </button>
+
+        {!isCollapsed && (
+          <div style={{ padding: "4px 0" }}>
+            {section.items.map((item) => (
+              <div key={item.id} style={{ padding: "12px 16px", borderBottom: "1px solid #111118" }}>
+                <div
+                  onClick={() => toggleCheck(item.id)}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}
+                >
+                  <div style={{
+                    width: 20, height: 20, minWidth: 20, borderRadius: 4,
+                    border: `2px solid ${checked[item.id] ? section.color : "#333"}`,
+                    background: checked[item.id] ? section.color + "22" : "transparent",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 12, color: section.color, transition: "all 0.2s", marginTop: 1,
+                  }}>
+                    {checked[item.id] && "✓"}
+                  </div>
+                  <div>
+                    <div style={{
+                      fontSize: 13, fontWeight: 500,
+                      color: checked[item.id] ? "#888" : "#e8e6e1",
+                      textDecoration: checked[item.id] ? "line-through" : "none",
+                      transition: "all 0.2s",
+                    }}>
+                      {item.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#555", lineHeight: 1.6, marginTop: 6 }}>
+                      {item.detail}
+                    </div>
+                  </div>
+                </div>
+                {item.input && item.input.type === "value" && (
+                  <input
+                    type="text"
+                    placeholder={item.input.placeholder}
+                    value={notes[item.id] || ""}
+                    onChange={(e) => setNotes((p) => ({ ...p, [item.id]: e.target.value }))}
+                    style={{
+                      marginTop: 8, marginLeft: 32, background: "#0a0a0f",
+                      border: "1px solid #252530", borderRadius: 4, padding: "6px 10px",
+                      color: "#fff", fontSize: 12, fontFamily: "inherit",
+                      width: "calc(100% - 48px)", boxSizing: "border-box",
+                    }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  })}
+
+  {/* Footer */}
+  <div style={{
+    marginTop: 32, padding: "16px 0", borderTop: "1px solid #1a1a2e",
+    fontSize: 10, color: "#444", textAlign: "center", letterSpacing: 1,
+  }}>
+    RULE: IF CHECKLIST SCORE &lt; 14/20 → NO TRADE &nbsp;|&nbsp; BOTH RISK LAYERS MUST PASS
+  </div>
+</div>
+```
+
+);
+}
