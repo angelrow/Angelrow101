@@ -467,18 +467,49 @@ function toggleCalc() {
 
 function updateCalc(key, value) {
   state.calc[key] = value;
-  render();
-  // Restore focus to the field that was being edited
-  const inputs = document.querySelectorAll('.calc-field input');
-  inputs.forEach(inp => {
-    const k = inp.getAttribute('oninput').match(/updateCalc\('(\w+)'/);
-    if (k && k[1] === key) {
-      inp.focus();
-      // Place cursor at end
-      const len = inp.value.length;
-      inp.setSelectionRange(len, len);
+  updateCalcOutput();
+}
+
+function updateCalcOutput() {
+  const r = calcResults();
+
+  // Update validation
+  const valEl = document.querySelector('.calc-validation');
+  if (valEl) {
+    valEl.classList.toggle('show', r.stopError);
+    if (r.stopError) {
+      valEl.textContent = `Stop must be higher than premium. You sold at $${r.pr.toFixed(2)}, so your buy-to-close stop must be above this \u2014 e.g. $${(r.pr * 2).toFixed(2)}.`;
     }
-  });
+  }
+
+  // Update output panel
+  const outEl = document.querySelector('.calc-output');
+  if (outEl) {
+    outEl.classList.toggle('show', r.hasAll);
+    if (r.hasAll) {
+      const mrColor = parseFloat(r.managedRiskPct) <= r.rp ? "#2ecc71" : "#e74c3c";
+      const nColor = parseFloat(r.notionalPct) <= r.ncp ? "#2ecc71" : "#e74c3c";
+
+      outEl.innerHTML = `
+        <div class="calc-section-label">How it's calculated</div>
+        <div class="calc-working">
+          Loss per contract if stopped = ($${r.sp.toFixed(2)} \u2212 $${r.pr.toFixed(2)}) \u00D7 100 = <span class="hl">$${r.managedLossPerContract.toFixed(0)}</span><br>
+          Layer 1 \u2014 Stop risk: $${r.maxManagedRiskDollars.toLocaleString()} \u00F7 $${r.managedLossPerContract.toFixed(0)} = <span class="hl">${r.maxContractsByStop} contracts</span><br>
+          Layer 2 \u2014 Notional: $${r.maxNotionalDollars.toLocaleString()} \u00F7 $${(r.st * 100).toLocaleString()} = <span class="hl">${r.maxContractsByNotional} contracts</span>
+        </div>
+        <div class="calc-section-label">Result</div>
+        <div class="calc-max-contracts">
+          <div class="calc-max-label">Max Contracts</div>
+          <div class="calc-max-number">${r.maxContracts}</div>
+          <div class="calc-max-binding">Limited by ${r.binding === "stop" ? `managed risk (${r.rp}% stop rule)` : `notional cap (${r.ncp}%)`}</div>
+        </div>
+        ${outputRow("Managed Risk (if stopped)", `$${r.totalManagedRisk.toLocaleString()}`, `${r.managedRiskPct}% of portfolio`, mrColor)}
+        ${outputRow("Notional Exposure", `$${r.totalNotional.toLocaleString()}`, `${r.notionalPct}% of portfolio`, nColor)}
+        ${outputRow("Total Premium Collected", `$${r.totalPremium.toLocaleString()}`, "", "#fff")}
+        ${outputRow("Return on Managed Risk", `${r.returnOnManagedRisk}%`, "Premium \u00F7 risk if stopped", "#fff")}
+      `;
+    }
+  }
 }
 
 function toggleCheck(id) {
