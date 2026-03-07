@@ -260,15 +260,6 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <button class="back-btn" onclick="nav('home')">← Back to Home</button>
 <div class="page-title">Trading Journal</div>
 <div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
-<div class="journal-toolbar">
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-<input type="file" id="csvUpload" accept=".csv" style="display:none">
-<button class="upload-btn primary" onclick="document.getElementById('csvUpload').click()">⬆ Upload CSV</button>
-<button class="upload-btn" onclick="downloadTemplate()">⬇ Template</button>
-<span id="csvStatus" class="csv-status"></span>
-</div>
-<div style="font-size:11px;color:var(--text-muted)">Export your spreadsheet as CSV · columns: id, date, ticker, strategy, strike, contracts, entry, exit, pnl, status</div>
-</div>
 <div class="month-selector" id="monthSelector">
 <button class="month-btn active" onclick="filterMonth('all',this)">All Trades</button>
 <button class="month-btn" onclick="filterMonth('2026-02',this)">Feb 2026</button>
@@ -290,7 +281,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 
 <script>
-const trades=[{id:1,date:"2026-01-19",ticker:"CRWV",strategy:"Custom Multi-leg",strike:"$102/$105/$110",cts:1,entry:"$15.64",exit:"$9.96",pnl:-568,status:"Loss"},{id:2,date:"2026-01-20",ticker:"CRWV",strategy:"Long Call",strike:"$105C",cts:1,entry:"$4.55",exit:"$7.35",pnl:280,status:"Win"},{id:3,date:"2026-01-19",ticker:"CRWV",strategy:"Custom Multi-leg",strike:"$84/$105/$115",cts:1,entry:"$50.05",exit:"$29.75",pnl:-2030,status:"Loss"},{id:4,date:"2026-01-26",ticker:"PL",strategy:"Long Call",strike:"$35C",cts:1,entry:"$0.49",exit:"$0.17",pnl:-32,status:"Loss"},{id:5,date:"2026-01-28",ticker:"GOOGL",strategy:"Bull Call Spread",strike:"$340/$350",cts:10,entry:"$28.80",exit:"—",pnl:null,status:"Open"},{id:6,date:"2026-01-28",ticker:"GOOGL",strategy:"Long Call",strike:"$340C",cts:10,entry:"$16.60",exit:"—",pnl:null,status:"Open"},{id:7,date:"2026-02-03",ticker:"CRWV",strategy:"Long Call",strike:"$100C",cts:10,entry:"$8.20",exit:"$14.00",pnl:5800,status:"Win"},{id:8,date:"2026-02-03",ticker:"GOOGL",strategy:"Long Call",strike:"$350C",cts:10,entry:"$18.70",exit:"—",pnl:null,status:"Open"},{id:9,date:"2026-02-03",ticker:"RKLB",strategy:"Long Call",strike:"$85C",cts:10,entry:"$7.40",exit:"$8.10",pnl:700,status:"Win"},{id:10,date:"2026-02-04",ticker:"RKLB",strategy:"Long Call",strike:"$85C",cts:10,entry:"$4.95",exit:"$6.50",pnl:1550,status:"Win"},{id:11,date:"2026-02-09",ticker:"ANET",strategy:"CSP",strike:"$127P",cts:1,entry:"$3.55",exit:"$1.83",pnl:172,status:"Win"},{id:12,date:"2026-02-09",ticker:"BTDR",strategy:"CSP",strike:"$10.5P",cts:10,entry:"$0.30",exit:"$0.16",pnl:140,status:"Win"},{id:13,date:"2026-02-09",ticker:"CRWV",strategy:"CSP",strike:"$80P",cts:2,entry:"$1.66",exit:"$0.90",pnl:152,status:"Win"},{id:14,date:"2026-02-09",ticker:"AR",strategy:"CSP",strike:"$32P",cts:10,entry:"$0.61",exit:"$0.31",pnl:300,status:"Win"},{id:15,date:"2026-02-10",ticker:"TMUS",strategy:"CSP",strike:"$182.5P",cts:2,entry:"$1.68",exit:"$0.18",pnl:300,status:"Win"},{id:16,date:"2026-02-10",ticker:"NBIS",strategy:"CSP",strike:"$81P",cts:2,entry:"$1.37",exit:"$2.33",pnl:-192,status:"Loss"},{id:17,date:"2026-02-16",ticker:"GLW",strategy:"CSP",strike:"$126P",cts:1,entry:"$1.31",exit:"$0.75",pnl:56,status:"Win"},{id:18,date:"2026-02-16",ticker:"HL",strategy:"CSP",strike:"$20P",cts:10,entry:"$0.30",exit:"$0.31",pnl:-10,status:"Loss"},{id:19,date:"2026-02-16",ticker:"PGEN",strategy:"Bull Call Spread",strike:"$5/$7.5",cts:1,entry:"$0.41",exit:"$0.66",pnl:25,status:"Win"},{id:20,date:"2026-02-17",ticker:"RIOT",strategy:"CSP",strike:"$14P",cts:10,entry:"$0.38",exit:"$0.15",pnl:230,status:"Win"},{id:21,date:"2026-02-17",ticker:"HL",strategy:"CSP",strike:"$20.5P",cts:10,entry:"$0.70",exit:"$0.09",pnl:610,status:"Win"},{id:22,date:"2026-02-19",ticker:"RIOT",strategy:"CSP",strike:"$14.5P",cts:192,entry:"$0.175",exit:"$0.07",pnl:2016,status:"Win"},{id:23,date:"2026-02-19",ticker:"KTOS",strategy:"CSP",strike:"$85P",cts:10,entry:"$2.235",exit:"$1.38",pnl:855,status:"Win"},{id:24,date:"2026-02-18",ticker:"NU",strategy:"CSP",strike:"$16.5P",cts:30,entry:"$0.38",exit:"$0.68",pnl:-939,status:"Loss"},{id:25,date:"2026-02-20",ticker:"RKLB",strategy:"CSP",strike:"$67P",cts:6,entry:"$1.94",exit:"$2.98",pnl:-632,status:"Loss"},{id:26,date:"2026-02-23",ticker:"CELH",strategy:"CSP",strike:"$43P",cts:12,entry:"$0.91",exit:"$0.69",pnl:248,status:"Win"},{id:27,date:"2026-02-23",ticker:"CELH",strategy:"CSP",strike:"$45P",cts:7,entry:"$1.44",exit:"$1.03",pnl:278,status:"Win"},{id:28,date:"2026-02-25",ticker:"DELL",strategy:"CSP",strike:"$114P",cts:5,entry:"$1.98",exit:"Exp.",pnl:987,status:"Win"},{id:29,date:"2026-02-25",ticker:"NFLX",strategy:"CSP",strike:"$80P",cts:5,entry:"$1.97",exit:"$1.13",pnl:414,status:"Win"},{id:30,date:"2026-02-25",ticker:"NVCR",strategy:"CSP",strike:"$13P",cts:14,entry:"$0.84",exit:"$1.78",pnl:-1334,status:"Loss"},{id:31,date:"2026-02-26",ticker:"NFLX",strategy:"Long Call",strike:"$140C",cts:39,entry:"$0.19",exit:"$0.12",pnl:-324,status:"Loss"},{id:32,date:"2026-02-26",ticker:"NFLX",strategy:"Calendar Spread",strike:"$90C Aug/May",cts:1,entry:"$11.80",exit:"$21.20",pnl:937,status:"Win"},{id:33,date:"2026-02-26",ticker:"NFLX",strategy:"CSP",strike:"$83P",cts:4,entry:"$2.51",exit:"$0.50",pnl:799,status:"Win"},{id:34,date:"2026-02-27",ticker:"GAP",strategy:"Calendar Put",strike:"$26P Mar13/6",cts:10,entry:"$1.98cr",exit:"—",pnl:25,status:"Open"}];
+const trades=[];
 
 function renderJournal(filter){
   const tbody=document.getElementById('journalBody');
@@ -415,60 +406,45 @@ function parseCSVLine(line){
   result.push(cell);return result;
 }
 
-function downloadTemplate(){
-  const headers=['id','date','ticker','strategy','strike','contracts','entry','exit','pnl','status'];
-  const example=['35','2026-03-07','AAPL','CSP','$220P','5','$2.50','$0.80','850','Win'];
-  const csv=[headers.join(','),example.join(',')].join('\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download='angelrow-journal-template.csv';a.click();
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-  const input=document.getElementById('csvUpload');
-  if(!input)return;
-  input.addEventListener('change',function(e){
-    const file=e.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=function(ev){
-      try{
-        const lines=ev.target.result.trim().split('\n');
-        const headers=lines[0].toLowerCase().split(',').map(h=>h.trim());
-        const idx=k=>headers.indexOf(k);
-        const parsed=lines.slice(1).filter(l=>l.trim()).map(line=>{
-          const cols=parseCSVLine(line);
-          const pnlRaw=(cols[idx('pnl')]||'').trim();
-          const pnlNum=pnlRaw===''||pnlRaw==='—'||pnlRaw==='-'?null:parseFloat(pnlRaw.replace(/[$,]/g,''));
-          return{
-            id:parseInt(cols[idx('id')])||0,
-            date:(cols[idx('date')]||'').trim(),
-            ticker:(cols[idx('ticker')]||'').trim(),
-            strategy:(cols[idx('strategy')]||'').trim(),
-            strike:(cols[idx('strike')]||'').trim(),
-            cts:parseInt(cols[idx('contracts')])||0,
-            entry:(cols[idx('entry')]||'').trim(),
-            exit:(cols[idx('exit')]||'—').trim(),
-            pnl:isNaN(pnlNum)?null:pnlNum,
-            status:(cols[idx('status')]||'Open').trim()
-          };
-        });
-        if(parsed.length===0)throw new Error('No valid trade rows found');
-        trades.length=0;parsed.forEach(t=>trades.push(t));
-        localStorage.setItem('angelrow_trades',JSON.stringify(trades));
-        rebuildMonthButtons();
-        renderJournal('all');
-        updateDashboardStats();
-        setTimeout(updateGauges,120);
-        const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-        document.getElementById('csvStatus').textContent=`✓ ${parsed.length} trades loaded · ${now}`;
-      }catch(err){
-        document.getElementById('csvStatus').textContent=`✗ Error: ${err.message}`;
-      }
-      e.target.value='';
+async function loadTradesCSV(){
+  const tbody=document.getElementById('journalBody');
+  if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted)">Loading trades…</td></tr>';
+  try{
+    const res=await fetch(encodeURI('Trade Log-Table 1.csv'));
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const text=await res.text();
+    const lines=text.trim().split('\n').filter(l=>l.trim());
+    if(lines.length<2)throw new Error('CSV appears empty');
+    // Normalise headers to plain lowercase with underscores
+    const raw=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
+    const find=(...names)=>raw.findIndex(h=>names.some(n=>h===n||h.includes(n)));
+    const col={
+      id:      find('id','trade_id','no','num','trade_no'),
+      date:    find('date','open_date','trade_date','entry_date'),
+      ticker:  find('ticker','symbol','stock','underlying'),
+      strategy:find('strategy','type','trade_type','strat'),
+      strike:  find('strike','strikes','strike_price'),
+      cts:     find('contracts','qty','quantity','cts','lots'),
+      entry:   find('entry','entry_price','premium','open','debit','credit'),
+      exit:    find('exit','exit_price','close','closed_at'),
+      pnl:     find('pnl','p_l','profit','gain','net','realized','profit_loss','p_and_l'),
+      status:  find('status','result','outcome','state')
     };
-    reader.readAsText(file);
-  });
-});
+    const parsed=lines.slice(1).map((line,i)=>{
+      const c=parseCSVLine(line);
+      const g=(k,fb='')=>((col[k]>=0?c[col[k]]:null)||fb).toString().trim();
+      const pRaw=g('pnl');
+      const pNum=pRaw===''||pRaw==='—'||pRaw==='-'?null:parseFloat(pRaw.replace(/[$,\s]/g,'').replace(/^\((.+)\)$/,'-$1'));
+      return{id:parseInt(g('id'))||i+1,date:g('date'),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:isNaN(pNum)?null:pNum,status:g('status','Open')};
+    }).filter(t=>t.date&&t.ticker);
+    if(!parsed.length)throw new Error('No valid rows — check column names match expected format');
+    trades.length=0;parsed.forEach(t=>trades.push(t));
+    rebuildMonthButtons();renderJournal('all');updateDashboardStats();setTimeout(updateGauges,120);
+  }catch(err){
+    console.error('Trade log load failed:',err);
+    if(tbody)tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red)">Could not load Trade Log-Table 1.csv — ${err.message}</td></tr>`;
+  }
+}
 
 function nav(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -479,14 +455,8 @@ function nav(page){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// Load trades from localStorage if a CSV was previously uploaded
-(function(){try{const s=localStorage.getItem('angelrow_trades');if(s){const p=JSON.parse(s);if(Array.isArray(p)&&p.length){trades.length=0;p.forEach(t=>trades.push(t));}}}catch(e){}}());
-
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-rebuildMonthButtons();
-renderJournal('all');
-updateDashboardStats();
-setTimeout(updateGauges,120);
+loadTradesCSV();
 </script>
 </body>
 </html>
