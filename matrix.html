@@ -11,22 +11,22 @@
 - { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-–bg: #0a0c0f;
-–surface: #111418;
-–border: #1e2530;
-–bull: #00d4aa;
-–bear: #ff4e6a;
-–neutral: #f5c842;
-–text: #e8edf2;
-–muted: #5a6a7a;
-–iv-low: #82ccdd;
-–iv-med: #f5c842;
-–iv-high: #ff9f43;
+--bg: #0a0c0f;
+--surface: #111418;
+--border: #1e2530;
+--bull: #00d4aa;
+--bear: #ff4e6a;
+--neutral: #f5c842;
+--text: #e8edf2;
+--muted: #5a6a7a;
+--iv-low: #82ccdd;
+--iv-med: #f5c842;
+--iv-high: #ff9f43;
 }
 
 body {
-background: var(–bg);
-color: var(–text);
+background: var(--bg);
+color: var(--text);
 font-family: ‘Syne’, sans-serif;
 min-height: 100vh;
 padding: 28px 20px 40px;
@@ -41,7 +41,7 @@ header h1 {
 font-size: clamp(20px, 3.5vw, 32px);
 font-weight: 800;
 letter-spacing: -0.03em;
-background: linear-gradient(135deg, var(–bull), var(–neutral), var(–bear));
+background: linear-gradient(135deg, var(--bull), var(--neutral), var(--bear));
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 background-clip: text;
@@ -50,7 +50,7 @@ background-clip: text;
 header p {
 font-family: ‘Space Mono’, monospace;
 font-size: 10px;
-color: var(–muted);
+color: var(--muted);
 margin-top: 5px;
 letter-spacing: 0.08em;
 text-transform: uppercase;
@@ -69,7 +69,7 @@ gap: 8px;
 .iv-label {
 font-family: ‘Space Mono’, monospace;
 font-size: 9px;
-color: var(–muted);
+color: var(--muted);
 text-transform: uppercase;
 letter-spacing: 0.12em;
 }
@@ -77,8 +77,8 @@ letter-spacing: 0.12em;
 .iv-tabs {
 display: flex;
 gap: 6px;
-background: var(–surface);
-border: 1px solid var(–border);
+background: var(--surface);
+border: 1px solid var(--border);
 border-radius: 10px;
 padding: 5px;
 }
@@ -94,26 +94,26 @@ border: 1px solid transparent;
 transition: all 0.2s ease;
 text-transform: uppercase;
 letter-spacing: 0.08em;
-color: var(–muted);
+color: var(--muted);
 background: none;
 }
 
-.iv-tab:hover { color: var(–text); }
+.iv-tab:hover { color: var(--text); }
 
 .iv-tab.active[data-iv=“low”] {
 background: rgba(130, 204, 221, 0.12);
 border-color: rgba(130, 204, 221, 0.3);
-color: var(–iv-low);
+color: var(--iv-low);
 }
 .iv-tab.active[data-iv=“med”] {
 background: rgba(245, 200, 66, 0.12);
 border-color: rgba(245, 200, 66, 0.3);
-color: var(–iv-med);
+color: var(--iv-med);
 }
 .iv-tab.active[data-iv=“high”] {
 background: rgba(255, 159, 67, 0.12);
 border-color: rgba(255, 159, 67, 0.3);
-color: var(–iv-high);
+color: var(--iv-high);
 }
 
 .iv-description {
@@ -126,9 +126,9 @@ max-width: 600px;
 line-height: 1.6;
 }
 
-.iv-description.low { background: rgba(130,204,221,0.07); color: var(–iv-low); border: 1px solid rgba(130,204,221,0.15); }
-.iv-description.med { background: rgba(245,200,66,0.07); color: var(–iv-med); border: 1px solid rgba(245,200,66,0.15); }
-.iv-description.high { background: rgba(255,159,67,0.07); color: var(–iv-high); border: 1px solid rgba(255,159,67,0.15); }
+.iv-description.low { background: rgba(130,204,221,0.07); color: var(--iv-low); border: 1px solid rgba(130,204,221,0.15); }
+.iv-description.med { background: rgba(245,200,66,0.07); color: var(--iv-med); border: 1px solid rgba(245,200,66,0.15); }
+.iv-description.high { background: rgba(255,159,67,0.07); color: var(--iv-high); border: 1px solid rgba(255,159,67,0.15); }
 
 /* Matrix layout */
 .matrix-wrapper {
@@ -173,7 +173,7 @@ line-height: 1.3;
 .y-axis-title {
 font-family: ‘Space Mono’, monospace;
 font-size: 9px;
-color: var(–muted);
+color: var(--muted);
 text-transform: uppercase;
 letter-spacing: 0.1em;
 text-align: center;
@@ -191,7 +191,7 @@ gap: 8px;
 flex: 1;
 height: 3px;
 border-radius: 2px;
-background: linear-gradient(90deg, var(–bear), #2a3540 40%, #2a3540 60%, var(–bull));
+background: linear-gradient(90deg, var(--bear), #2a3540 40%, #2a3540 60%, var(--bull));
 position: relative;
 }
 
@@ -202,9 +202,9 @@ left: 50%;
 top: 50%;
 transform: translate(-50%,-50%);
 width: 7px; height: 7px;
-background: var(–neutral);
+background: var(--neutral);
 border-radius: 50%;
-box-shadow: 0 0 8px var(–neutral);
+box-shadow: 0 0 8px var(--neutral);
 }
 
 .x-label {
@@ -215,8 +215,8 @@ letter-spacing: 0.05em;
 white-space: nowrap;
 }
 
-.x-label.left { color: var(–bear); }
-.x-label.right { color: var(–bull); }
+.x-label.left { color: var(--bear); }
+.x-label.right { color: var(--bull); }
 
 /* Grid */
 .grid {
@@ -226,8 +226,8 @@ gap: 3px;
 }
 
 .cell {
-background: var(–surface);
-border: 1px solid var(–border);
+background: var(--surface);
+border: 1px solid var(--border);
 border-radius: 6px;
 padding: 9px 9px 8px;
 cursor: pointer;
@@ -250,9 +250,9 @@ transition: opacity 0.2s;
 border-radius: 6px 6px 0 0;
 }
 
-.cell.bull::after { background: var(–bull); }
-.cell.bear::after { background: var(–bear); }
-.cell.neutral::after { background: var(–neutral); }
+.cell.bull::after { background: var(--bull); }
+.cell.bear::after { background: var(--bear); }
+.cell.neutral::after { background: var(--neutral); }
 
 .cell:hover {
 transform: translateY(-2px);
@@ -274,14 +274,14 @@ line-height: 1.25;
 margin-bottom: 4px;
 }
 
-.cell.bull .cell-strategy { color: var(–bull); }
-.cell.bear .cell-strategy { color: var(–bear); }
-.cell.neutral .cell-strategy { color: var(–neutral); }
+.cell.bull .cell-strategy { color: var(--bull); }
+.cell.bear .cell-strategy { color: var(--bear); }
+.cell.neutral .cell-strategy { color: var(--neutral); }
 
 .cell-sub {
 font-family: ‘Space Mono’, monospace;
 font-size: 7px;
-color: var(–muted);
+color: var(--muted);
 line-height: 1.4;
 flex: 1;
 }
@@ -320,16 +320,16 @@ opacity: 0.25;
 }
 
 .iv-dot.active { opacity: 1; }
-.iv-dot.low { background: var(–iv-low); }
-.iv-dot.med { background: var(–iv-med); }
-.iv-dot.high { background: var(–iv-high); }
+.iv-dot.low { background: var(--iv-low); }
+.iv-dot.med { background: var(--iv-med); }
+.iv-dot.high { background: var(--iv-high); }
 
 /* Detail panel */
 .detail-panel {
 max-width: 1040px;
 margin: 16px auto 0;
-background: var(–surface);
-border: 1px solid var(–border);
+background: var(--surface);
+border: 1px solid var(--border);
 border-radius: 10px;
 padding: 20px 24px;
 display: none;
@@ -362,9 +362,9 @@ text-transform: uppercase;
 letter-spacing: 0.1em;
 }
 
-.badge-bull { background: rgba(0,212,170,0.12); color: var(–bull); }
-.badge-bear { background: rgba(255,78,106,0.12); color: var(–bear); }
-.badge-neutral { background: rgba(245,200,66,0.12); color: var(–neutral); }
+.badge-bull { background: rgba(0,212,170,0.12); color: var(--bull); }
+.badge-bear { background: rgba(255,78,106,0.12); color: var(--bear); }
+.badge-neutral { background: rgba(245,200,66,0.12); color: var(--neutral); }
 
 .detail-iv-tag {
 font-family: ‘Space Mono’, monospace;
@@ -378,8 +378,8 @@ margin-left: auto;
 
 .close-btn {
 background: none;
-border: 1px solid var(–border);
-color: var(–muted);
+border: 1px solid var(--border);
+color: var(--muted);
 width: 24px; height: 24px;
 border-radius: 50%;
 cursor: pointer;
@@ -389,14 +389,14 @@ transition: all 0.15s;
 flex-shrink: 0;
 }
 
-.close-btn:hover { background: var(–border); color: var(–text); }
+.close-btn:hover { background: var(--border); color: var(--text); }
 
 .detail-desc {
 font-family: ‘Space Mono’, monospace;
 font-size: 10px;
 color: #8a9aaa;
 line-height: 1.75;
-border-top: 1px solid var(–border);
+border-top: 1px solid var(--border);
 padding-top: 12px;
 margin-bottom: 12px;
 }
@@ -409,7 +409,7 @@ gap: 8px;
 
 .detail-item {
 background: rgba(255,255,255,0.02);
-border: 1px solid var(–border);
+border: 1px solid var(--border);
 border-radius: 6px;
 padding: 9px 11px;
 }
@@ -417,7 +417,7 @@ padding: 9px 11px;
 .detail-item-label {
 font-family: ‘Space Mono’, monospace;
 font-size: 7px;
-color: var(–muted);
+color: var(--muted);
 text-transform: uppercase;
 letter-spacing: 0.1em;
 margin-bottom: 3px;
@@ -437,9 +437,9 @@ font-size: 9px;
 line-height: 1.6;
 }
 
-.iv-note.low { background: rgba(130,204,221,0.08); color: var(–iv-low); border: 1px solid rgba(130,204,221,0.15); }
-.iv-note.med { background: rgba(245,200,66,0.08); color: var(–iv-med); border: 1px solid rgba(245,200,66,0.15); }
-.iv-note.high { background: rgba(255,159,67,0.08); color: var(–iv-high); border: 1px solid rgba(255,159,67,0.15); }
+.iv-note.low { background: rgba(130,204,221,0.08); color: var(--iv-low); border: 1px solid rgba(130,204,221,0.15); }
+.iv-note.med { background: rgba(245,200,66,0.08); color: var(--iv-med); border: 1px solid rgba(245,200,66,0.15); }
+.iv-note.high { background: rgba(255,159,67,0.08); color: var(--iv-high); border: 1px solid rgba(255,159,67,0.15); }
 
 /* Legend */
 .legend {
@@ -457,7 +457,7 @@ align-items: center;
 gap: 5px;
 font-family: ‘Space Mono’, monospace;
 font-size: 8px;
-color: var(–muted);
+color: var(--muted);
 text-transform: uppercase;
 letter-spacing: 0.05em;
 }
@@ -545,14 +545,14 @@ letter-spacing: 0.05em;
 <script>
 const rows = [
   { label: "Extreme", sub: ">15% move", cls: "y-label-high" },
-  { label: "Large", sub: "8–15% move", cls: "y-label-med-high" },
-  { label: "Moderate", sub: "3–8% move", cls: "y-label-med" },
-  { label: "Small", sub: "0–3% move", cls: "y-label-low" },
+  { label: "Large", sub: "8--15% move", cls: "y-label-med-high" },
+  { label: "Moderate", sub: "3--8% move", cls: "y-label-med" },
+  { label: "Small", sub: "0--3% move", cls: "y-label-low" },
 ];
 
 const ivDescriptions = {
   low:  "Low IV (VIX <15 or stock IV Rank <25): Options are cheaply priced. Premiums are low — ideal to BUY options (long calls, puts, spreads, straddles). Selling premium is less rewarding.",
-  med:  "Medium IV (VIX 15–25 or IV Rank 25–60): Balanced environment. Both buying and selling strategies work. Spreads are well-priced. Good for defined-risk trades in both directions.",
+  med:  "Medium IV (VIX 15--25 or IV Rank 25--60): Balanced environment. Both buying and selling strategies work. Spreads are well-priced. Good for defined-risk trades in both directions.",
   high: "High IV (VIX >25 or IV Rank >60): Options are expensively priced. Premium is rich — ideal to SELL options (credit spreads, iron condors, covered calls). IV crush works in your favour post-event."
 };
 
@@ -595,7 +595,7 @@ const data = [
     },
   ],
 
-  // ROW 1 — Large move (8–15%)
+  // ROW 1 — Large move (8--15%)
   [
     {
       low:  { name:"Long Put", dir:"bear", cost:"debit", setup:"Buy ATM put", max_profit:"Large (to zero)", max_loss:"Premium paid", breakeven:"Strike − Premium", desc:"Low IV makes puts cheap. For a large expected move, go ATM or slightly ITM for higher delta. Full directional exposure to a substantial drop.", ivNote:"✅ Low IV: Buy puts outright. They're cheap and will benefit from both delta and IV expansion.", ivFit:["low"] },
@@ -624,7 +624,7 @@ const data = [
     },
   ],
 
-  // ROW 2 — Moderate move (3–8%)
+  // ROW 2 — Moderate move (3--8%)
   [
     {
       low:  { name:"Bear Put Spread (tight)", dir:"bear", cost:"debit", setup:"Buy put + Sell lower put (tight)", max_profit:"Tight spread − Debit", max_loss:"Debit paid", breakeven:"Long strike − Net debit", desc:"Tight spread for a modest drop. Cheap entry in low IV. High probability of reaching max profit if direction is right and move occurs as expected.", ivNote:"✅ Low IV: Tight spread is affordable. Good risk/reward for a modest expected move.", ivFit:["low","med"] },
@@ -653,7 +653,7 @@ const data = [
     },
   ],
 
-  // ROW 3 — Small/no move (0–3%)
+  // ROW 3 — Small/no move (0--3%)
   [
     {
       low:  { name:"Short Stock / Long Put", dir:"bear", cost:"debit", setup:"Buy deep ITM put OR short stock", max_profit:"Strike − Premium", max_loss:"Unlimited (short) / Premium (put)", breakeven:"Strike − Premium", desc:"If truly bearish with minimal expected move and low IV, the trade is difficult — premiums are cheap so risk/reward for option selling is unattractive. Long deep ITM put or short stock is cleaner.", ivNote:"⚠️ Low IV + small bearish move = difficult environment. Selling premium earns little. Long deep ITM put acts stock-like with defined risk.", ivFit:["low"] },
