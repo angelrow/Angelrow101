@@ -419,23 +419,27 @@ async function loadTradesCSV(){
     const raw=parseCSVLine(lines[0]).map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''));
     const find=(...names)=>raw.findIndex(h=>names.some(n=>h===n||h.includes(n)));
     const col={
-      id:      find('id','trade_id','no','num','trade_no'),
+      id:      find('trade','id','trade_id','no','num'),
       date:    find('date','open_date','trade_date','entry_date'),
       ticker:  find('ticker','symbol','stock','underlying'),
       strategy:find('strategy','type','trade_type','strat'),
-      strike:  find('strike','strikes','strike_price'),
+      strike:  find('strike','spread','strikes','strike_price'),
       cts:     find('contracts','qty','quantity','cts','lots'),
-      entry:   find('entry','entry_price','premium','open','debit','credit'),
-      exit:    find('exit','exit_price','close','closed_at'),
-      pnl:     find('pnl','p_l','profit','gain','net','realized','profit_loss','p_and_l'),
-      status:  find('status','result','outcome','state')
+      entry:   find('entry_price','entry','premium','debit','credit'),
+      exit:    find('exit_price','exit','close','closed_at'),
+      pnl:     find('p_l','pnl','profit','gain','net','realized'),
+      status:  find('win_loss','win','status','result','outcome')
     };
+    // DD/MM/YYYY -> YYYY-MM-DD (no-op if already ISO)
+    const parseDate=s=>{const p=s.trim();if(/^\d{4}-\d{2}-\d{2}$/.test(p))return p;const[d,m,y]=p.split('/');return y?`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`:p;};
+    // Handles US$280.00, ($568.00), plain numbers
+    const parsePnL=s=>{if(!s||s==='—'||s==='-')return null;const n=parseFloat(s.replace(/^\((.+)\)$/,'-$1').replace(/[^0-9.\-]/g,''));return isNaN(n)?null:n;};
     const parsed=lines.slice(1).map((line,i)=>{
       const c=parseCSVLine(line);
       const g=(k,fb='')=>((col[k]>=0?c[col[k]]:null)||fb).toString().trim();
-      const pRaw=g('pnl');
-      const pNum=pRaw===''||pRaw==='—'||pRaw==='-'?null:parseFloat(pRaw.replace(/[$,\s]/g,'').replace(/^\((.+)\)$/,'-$1'));
-      return{id:parseInt(g('id'))||i+1,date:g('date'),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:isNaN(pNum)?null:pNum,status:g('status','Open')};
+      const rawSt=g('status','Open');
+      const status=rawSt.toLowerCase()==='win'?'Win':rawSt.toLowerCase()==='loss'?'Loss':rawSt||'Open';
+      return{id:parseInt(g('id'))||i+1,date:parseDate(g('date')),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:parsePnL(g('pnl')),status};
     }).filter(t=>t.date&&t.ticker);
     if(!parsed.length)throw new Error('No valid rows — check column names match expected format');
     trades.length=0;parsed.forEach(t=>trades.push(t));
