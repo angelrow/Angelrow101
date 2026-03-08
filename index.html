@@ -487,6 +487,7 @@ function nav(page){
   const map={home:0,market:1,options:2,reports:3,journal:4};
   if(map[page]!==undefined)document.querySelectorAll('.nav-pill')[map[page]].classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  if(page==='market'&&!fredCharts._loaded){fredCharts._loaded=true;loadMarketData();}
 }
 
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -574,12 +575,6 @@ async function loadMarketData(){
   }
 }
 
-// Load FRED data when user navigates to market page
-const _origNav=nav;
-function nav(page){
-  _origNav(page);
-  if(page==='market'&&!fredCharts._loaded){fredCharts._loaded=true;loadMarketData();}
-}
 </script>
 </body>
 </html>
