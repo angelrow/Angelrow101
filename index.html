@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Angelrow Limited — Resources & Analytics</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#0b0f14;--bg-card:rgba(17,22,30,0.85);--bg-card-solid:#111620;--border:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);--text:#eaf0f6;--text-secondary:#8a95a5;--text-muted:#5a6577;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.1);--accent-glow:rgba(0,212,170,0.15);--red:#ff4d6a;--red-dim:rgba(255,77,106,0.1);--amber:#ffb020;--amber-dim:rgba(255,176,32,0.1);--blue:#4d9fff;--blue-dim:rgba(77,159,255,0.1);--radius:14px;--radius-sm:8px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -140,6 +141,26 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .site-footer a{color:var(--accent);text-decoration:none}
 @media(max-width:768px){.home-grid,.chart-grid{grid-template-columns:1fr}.greeks-grid{grid-template-columns:repeat(2,1fr)}.header-inner{flex-direction:column;gap:16px}.summary-row{grid-template-columns:repeat(2,1fr)}.site-footer{flex-direction:column;gap:8px;text-align:center}}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+/* FRED Macro Cards */
+.fred-section-hdr{display:flex;align-items:center;gap:10px;margin:20px 0 14px}
+.fred-section-hdr .section-label{margin:0}
+#fred-status{font-size:11px;font-weight:400;color:var(--text-muted)}
+.fred-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:28px}
+.fred-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;transition:border-color .2s}
+.fred-card:hover{border-color:var(--border-hover)}
+.fred-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:8px}
+.fred-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);line-height:1.3}
+.fred-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.fred-badge.fb-bull{background:rgba(0,212,170,.12);color:var(--accent);border:1px solid rgba(0,212,170,.25)}
+.fred-badge.fb-bear{background:rgba(255,77,106,.12);color:var(--red);border:1px solid rgba(255,77,106,.25)}
+.fred-badge.fb-neut{background:rgba(255,176,32,.12);color:var(--amber);border:1px solid rgba(255,176,32,.25)}
+.fred-badge.fb-load{background:rgba(90,101,119,.12);color:var(--text-muted);border:1px solid rgba(90,101,119,.2)}
+.fred-val-row{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.fred-val{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.fred-chg{font-size:11px;font-family:'JetBrains Mono',monospace}
+.fred-up{color:var(--accent)}.fred-down{color:var(--red)}
+.fred-spark{height:52px;margin:6px 0 6px}
+.fred-note{font-size:11px;color:var(--text-muted);line-height:1.4;min-height:14px}
 </style>
 </head>
 <body>
@@ -213,6 +234,17 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="snapshot-label">&#9679; Live Snapshot</div>
 <div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>{"symbols":[{"proName":"AMEX:VIXY","title":"VIX Proxy"},{"proName":"AMEX:SPY","title":"S&P 500"},{"proName":"NASDAQ:QQQ","title":"Nasdaq 100"},{"proName":"NASDAQ:TLT","title":"Bonds/Yields"},{"proName":"AMEX:GLD","title":"Gold"},{"proName":"AMEX:IWM","title":"Small Caps"},{"proName":"AMEX:UUP","title":"US Dollar"},{"proName":"AMEX:XLF","title":"Financials"}],"showSymbolLogo":false,"isTransparent":true,"displayMode":"compact","colorTheme":"dark","locale":"en"}</script></div>
 </div>
+
+<!-- FRED Macro Snapshot -->
+<div class="fred-section-hdr"><div class="section-label">FRED Macro Snapshot</div><span id="fred-status"></span></div>
+<div class="fred-grid">
+<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">VIX — Volatility Index</span><span class="fred-badge fb-load" id="fred-vix-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-vix-val">—</span><span class="fred-chg" id="fred-vix-chg"></span></div><div class="fred-spark"><canvas id="fred-vix-chart"></canvas></div><div class="fred-note" id="fred-vix-note"></div></div>
+<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">S&amp;P 500 Index</span><span class="fred-badge fb-load" id="fred-sp500-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-sp500-val">—</span><span class="fred-chg" id="fred-sp500-chg"></span></div><div class="fred-spark"><canvas id="fred-sp500-chart"></canvas></div><div class="fred-note" id="fred-sp500-note"></div></div>
+<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">10-Year Treasury Yield</span><span class="fred-badge fb-load" id="fred-dgs10-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-dgs10-val">—</span><span class="fred-chg" id="fred-dgs10-chg"></span></div><div class="fred-spark"><canvas id="fred-dgs10-chart"></canvas></div><div class="fred-note" id="fred-dgs10-note"></div></div>
+<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">US Dollar Index (DXY)</span><span class="fred-badge fb-load" id="fred-dxy-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-dxy-val">—</span><span class="fred-chg" id="fred-dxy-chg"></span></div><div class="fred-spark"><canvas id="fred-dxy-chart"></canvas></div><div class="fred-note" id="fred-dxy-note"></div></div>
+<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">Nasdaq Composite</span><span class="fred-badge fb-load" id="fred-nasdaq-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-nasdaq-val">—</span><span class="fred-chg" id="fred-nasdaq-chg"></span></div><div class="fred-spark"><canvas id="fred-nasdaq-chart"></canvas></div><div class="fred-note" id="fred-nasdaq-note"></div></div>
+</div>
+
 <div class="chart-grid">
 <div class="chart-card"><div class="chart-header"><span class="chart-label">Volatility — VIXY ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:VIXY","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,77,106,1)","underLineColor":"rgba(255,77,106,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bearish"></div>VIXY rising — fear increasing, VIX spiking</div><div class="key-item"><div class="key-dot bullish"></div>VIXY falling — calm market, low fear</div><div class="key-item"><div class="key-dot neutral"></div>Tracks VIX futures direction closely</div></div></div>
 <div class="chart-card"><div class="chart-header"><span class="chart-label">S&amp;P 500 — SPY ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:SPY","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(77,159,255,1)","underLineColor":"rgba(77,159,255,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>Rising — broad market strength</div><div class="key-item"><div class="key-dot bearish"></div>Falling — risk-off, sell pressure</div><div class="key-item"><div class="key-dot neutral"></div>Tracks S&P 500 index 1:1</div></div></div>
@@ -459,6 +491,95 @@ function nav(page){
 
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 loadTradesCSV();
+
+// ─── FRED Market Data ────────────────────────────────────────────────────────
+const FRED_KEY='4f8556e2691bd5f3c2f5e819a5249ec3';
+const FRED_SERIES=[
+  {id:'vix',    series:'VIXCLS',    label:'VIX',           unit:'',  dec:2},
+  {id:'sp500',  series:'SP500',     label:'S&P 500',       unit:'',  dec:0},
+  {id:'dgs10',  series:'DGS10',     label:'10Y Yield',     unit:'%', dec:2},
+  {id:'dxy',    series:'DTWEXBGS',  label:'Dollar Index',  unit:'',  dec:2},
+  {id:'nasdaq', series:'NASDAQCOM', label:'Nasdaq',        unit:'',  dec:0}
+];
+const fredCharts={};
+
+async function fetchFred(seriesId,limit=35){
+  const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_KEY}&file_type=json&limit=${limit}&sort_order=desc`;
+  const r=await fetch(url);
+  if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const d=await r.json();
+  return d.observations.filter(o=>o.value!=='.').reverse();
+}
+
+function vixRegime(v){
+  if(v<15)return{txt:'Low Fear',cls:'fb-bull'};
+  if(v<20)return{txt:'Moderate',cls:'fb-neut'};
+  if(v<30)return{txt:'Elevated',cls:'fb-bear'};
+  return{txt:'Extreme Fear',cls:'fb-bear'};
+}
+
+function renderFredCard(cfg,obs){
+  const vals=obs.map(o=>parseFloat(o.value));
+  const latest=vals[vals.length-1];
+  const prev=vals.length>1?vals[vals.length-2]:latest;
+  const change=latest-prev;
+  const pct=prev?change/prev*100:0;
+  const valEl=document.getElementById(`fred-${cfg.id}-val`);
+  const chgEl=document.getElementById(`fred-${cfg.id}-chg`);
+  const badgeEl=document.getElementById(`fred-${cfg.id}-badge`);
+  const noteEl=document.getElementById(`fred-${cfg.id}-note`);
+  if(!valEl)return;
+  const fmt=n=>cfg.unit==='%'?`${n.toFixed(cfg.dec)}%`:cfg.dec===0?n.toLocaleString('en-US',{maximumFractionDigits:0}):n.toFixed(cfg.dec);
+  valEl.textContent=fmt(latest);
+  const sign=change>=0?'+':'';
+  chgEl.textContent=`${sign}${change.toFixed(cfg.dec)} (${sign}${pct.toFixed(2)}%)`;
+  chgEl.className='fred-chg '+(change>=0?'fred-up':'fred-down');
+  if(cfg.id==='vix'){
+    const r=vixRegime(latest);
+    badgeEl.textContent=r.txt;badgeEl.className=`fred-badge ${r.cls}`;
+    noteEl.textContent=latest<15?'Sell premium aggressively — IV low, theta optimal':latest<20?'Neutral — standard CSP/IC sizing':latest<30?'Elevated fear — widen strikes, reduce size':'Extreme vol — defined-risk only, no naked puts';
+  }else if(cfg.id==='dgs10'){
+    badgeEl.textContent=change>0?'Yields Rising':'Yields Falling';
+    badgeEl.className=`fred-badge ${change>0?'fb-bear':'fb-bull'}`;
+    noteEl.textContent=change>0?'Rising yields → pressure on growth & tech':'Falling yields → supportive for equities & growth';
+  }else if(cfg.id==='dxy'){
+    badgeEl.textContent=change>0?'USD Strong':'USD Weak';
+    badgeEl.className=`fred-badge ${change>0?'fb-bear':'fb-bull'}`;
+    noteEl.textContent=change>0?'Strong dollar headwind for multinationals & commodities':'Weak dollar tailwind for international earnings & gold';
+  }else{
+    badgeEl.textContent=change>=0?'▲ Up':'▼ Down';
+    badgeEl.className=`fred-badge ${change>=0?'fb-bull':'fb-bear'}`;
+    noteEl.textContent='';
+  }
+  const canvas=document.getElementById(`fred-${cfg.id}-chart`);
+  if(!canvas)return;
+  if(fredCharts[cfg.id])fredCharts[cfg.id].destroy();
+  const lineColor=change>=0?'#00d4aa':'#ff4d6a';
+  fredCharts[cfg.id]=new Chart(canvas,{
+    type:'line',
+    data:{labels:obs.map(o=>o.date.substring(5)),datasets:[{data:vals,borderColor:lineColor,borderWidth:1.5,backgroundColor:change>=0?'rgba(0,212,170,0.08)':'rgba(255,77,106,0.08)',fill:true,tension:0.3,pointRadius:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:500}}
+  });
+}
+
+async function loadMarketData(){
+  const st=document.getElementById('fred-status');
+  if(st)st.textContent='Loading…';
+  const results=await Promise.allSettled(FRED_SERIES.map(cfg=>fetchFred(cfg.series).then(obs=>({cfg,obs}))));
+  let ok=0;
+  results.forEach(r=>{if(r.status==='fulfilled'){renderFredCard(r.value.cfg,r.value.obs);ok++;}else{console.warn('FRED error:',r.reason);}});
+  if(st){
+    const now=new Date();
+    st.textContent=ok>0?`Updated ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} · FRED prev-close, updated ~6pm ET`:'FRED data unavailable';
+  }
+}
+
+// Load FRED data when user navigates to market page
+const _origNav=nav;
+function nav(page){
+  _origNav(page);
+  if(page==='market'&&!fredCharts._loaded){fredCharts._loaded=true;loadMarketData();}
+}
 </script>
 </body>
 </html>
