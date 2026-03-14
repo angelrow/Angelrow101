@@ -161,6 +161,30 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .fred-up{color:var(--accent)}.fred-down{color:var(--red)}
 .fred-spark{height:52px;margin:6px 0 6px}
 .fred-note{font-size:11px;color:var(--text-muted);line-height:1.4;min-height:14px}
+/* Greeks interactive charts */
+.greeks-controls{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin-bottom:16px}
+.gc-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 28px}
+.gc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.gc-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:1px 8px;border-radius:20px}
+.gc-spot{color:var(--accent);background:rgba(0,212,170,.12);border:1px solid rgba(0,212,170,.2)}
+.gc-strike{color:var(--red);background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.2)}
+.gc-neutral{color:var(--amber);background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.2)}
+.gc-slider{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:rgba(255,255,255,.08);outline:none;cursor:pointer;display:block;margin-top:4px}
+.gc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid rgba(0,0,0,.5);cursor:pointer;box-shadow:0 0 6px var(--accent-glow)}
+.gc-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid rgba(0,0,0,.5);cursor:pointer}
+.greeks-chart-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+.gcc{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px 14px;transition:border-color .2s}
+.gcc:hover{border-color:var(--border-hover)}
+.gcc-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.gcc-sym{font-size:20px;font-weight:300}
+.gcc-delta .gcc-sym{color:var(--blue)}.gcc-gamma .gcc-sym{color:#c084fc}.gcc-vega .gcc-sym{color:var(--amber)}.gcc-theta .gcc-sym{color:var(--accent)}
+.gcc-sub{font-size:11px;color:var(--text-muted);margin-bottom:12px;display:block}
+.gcc-canvas-wrap{position:relative;height:200px}
+.greeks-legend{display:flex;gap:16px;margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
+.gl-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)}
+.gl-line{width:18px;height:2px;border-radius:1px}
+.gl-dashed{background:repeating-linear-gradient(90deg,currentColor 0,currentColor 4px,transparent 4px,transparent 8px)}
+@media(max-width:768px){.gc-row{grid-template-columns:repeat(2,1fr)}.greeks-chart-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -263,12 +287,25 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="page-title">Options</div>
 <div class="page-subtitle">Greeks analysis, interactive strategy matrix, and complete strategy reference.</div>
 <a href="Csp_checklist.html" target="_blank" style="display:inline-flex;align-items:center;gap:10px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.25);color:var(--accent);text-decoration:none;padding:11px 22px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;margin-bottom:28px;transition:all .2s ease" onmouseover="this.style.background='rgba(0,212,170,.18)';this.style.borderColor='rgba(0,212,170,.4)'" onmouseout="this.style.background='var(--accent-dim)';this.style.borderColor='rgba(0,212,170,.25)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>CSP Checklist</a>
-<div class="section-label" style="margin-top:8px">The Greeks</div>
-<div class="greeks-grid" style="margin-bottom:28px">
-<div class="greek-card"><div class="greek-symbol">Δ</div><div class="greek-name">Delta</div><div class="greek-desc">Price sensitivity per $1 of underlying</div><div class="greek-chart-ph">Chart placeholder</div></div>
-<div class="greek-card"><div class="greek-symbol">Γ</div><div class="greek-name">Gamma</div><div class="greek-desc">Rate of delta change — acceleration</div><div class="greek-chart-ph">Chart placeholder</div></div>
-<div class="greek-card"><div class="greek-symbol">Θ</div><div class="greek-name">Theta</div><div class="greek-desc">Time decay — value lost per day</div><div class="greek-chart-ph">Chart placeholder</div></div>
-<div class="greek-card"><div class="greek-symbol">V</div><div class="greek-name">Vega</div><div class="greek-desc">IV sensitivity — impact of vol changes</div><div class="greek-chart-ph">Chart placeholder</div></div>
+<div class="section-label" style="margin-top:8px">The Greeks — How They Change as Stock Price Moves</div>
+<div class="greeks-controls">
+  <div class="gc-row">
+    <div><div class="gc-label">Stock Price <span class="gc-badge gc-spot" id="gc-spot-badge">$273</span></div><input type="range" class="gc-slider" id="gc-spot" min="150" max="450" value="273" step="1" oninput="updateGreeksCharts()"></div>
+    <div><div class="gc-label">Strike Price <span class="gc-badge gc-strike" id="gc-strike-badge">$280</span></div><input type="range" class="gc-slider" id="gc-strike" min="150" max="450" value="280" step="1" oninput="updateGreeksCharts()"></div>
+    <div><div class="gc-label">Days to Expiry <span class="gc-badge gc-neutral" id="gc-dte-badge">20d</span></div><input type="range" class="gc-slider" id="gc-dte" min="1" max="90" value="20" step="1" oninput="updateGreeksCharts()"></div>
+    <div><div class="gc-label">Implied Vol <span class="gc-badge gc-neutral" id="gc-iv-badge">30%</span></div><input type="range" class="gc-slider" id="gc-iv" min="5" max="100" value="30" step="1" oninput="updateGreeksCharts()"></div>
+  </div>
+  <div class="greeks-legend" style="margin-top:14px">
+    <div class="gl-item"><div class="gl-line" style="background:#ff4d6a;height:2px;border-top:2px dashed #ff4d6a;background:none"></div>Strike price</div>
+    <div class="gl-item"><div class="gl-line" style="border-top:2px dashed #00d4aa;background:none"></div>Current spot</div>
+    <div class="gl-item" style="margin-left:auto;color:var(--text-muted);font-size:10px">Call option · Black-Scholes · r=5%</div>
+  </div>
+</div>
+<div class="greeks-chart-grid">
+  <div class="gcc gcc-delta"><div class="gcc-title"><span class="gcc-sym">Δ</span> Delta</div><span class="gcc-sub">How much option moves per $1 stock move — 0 (deep OTM) → 1 (deep ITM)</span><div class="gcc-canvas-wrap"><canvas id="chart-delta"></canvas></div></div>
+  <div class="gcc gcc-gamma"><div class="gcc-title"><span class="gcc-sym">Γ</span> Gamma</div><span class="gcc-sub">How fast delta changes — peaks at-the-money, fades away from strike</span><div class="gcc-canvas-wrap"><canvas id="chart-gamma"></canvas></div></div>
+  <div class="gcc gcc-vega"><div class="gcc-title"><span class="gcc-sym">V</span> Vega</div><span class="gcc-sub">Option value per 1% IV change — highest ATM, falls OTM &amp; ITM</span><div class="gcc-canvas-wrap"><canvas id="chart-vega"></canvas></div></div>
+  <div class="gcc gcc-theta"><div class="gcc-title"><span class="gcc-sym">Θ</span> Theta</div><span class="gcc-sub">Daily time decay — peaks at-the-money, accelerates near expiry</span><div class="gcc-canvas-wrap"><canvas id="chart-theta"></canvas></div></div>
 </div>
 <div class="section-label">Strategy Matrix — Interactive (Select IV Regime)</div>
 <iframe src="matrix.html" class="matrix-frame" style="margin-bottom:28px" title="Options Strategy Matrix"></iframe>
@@ -488,6 +525,7 @@ function nav(page){
   if(map[page]!==undefined)document.querySelectorAll('.nav-pill')[map[page]].classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   if(page==='market'&&!fredCharts._loaded){fredCharts._loaded=true;loadMarketData();}
+  if(page==='options'&&!greekCharts._loaded){greekCharts._loaded=true;updateGreeksCharts();}
 }
 
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -561,6 +599,95 @@ function renderFredCard(cfg,obs){
     data:{labels:obs.map(o=>o.date.substring(5)),datasets:[{data:vals,borderColor:lineColor,borderWidth:1.5,backgroundColor:change>=0?'rgba(0,212,170,0.08)':'rgba(255,77,106,0.08)',fill:true,tension:0.3,pointRadius:0}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:500}}
   });
+}
+
+// ─── Greeks Charts (Black-Scholes) ───────────────────────────────────────────
+function normPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI)}
+function normCDF(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=x<0?-1:1;const ax=Math.abs(x);
+  const t=1/(1+p*ax);
+  const y=1-(((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t)*Math.exp(-ax*ax);
+  return 0.5*(1+sign*y);
+}
+function bsGreeks(S,K,T,r,sigma){
+  if(T<=0||sigma<=0||S<=0)return{delta:S>=K?1:0,gamma:0,vega:0,theta:0};
+  const sqrtT=Math.sqrt(T);
+  const d1=(Math.log(S/K)+(r+0.5*sigma*sigma)*T)/(sigma*sqrtT);
+  const d2=d1-sigma*sqrtT;
+  const delta=normCDF(d1);
+  const gamma=normPDF(d1)/(S*sigma*sqrtT);
+  const vega=S*normPDF(d1)*sqrtT/100;
+  const theta=(-(S*normPDF(d1)*sigma/(2*sqrtT))-r*K*Math.exp(-r*T)*normCDF(d2))/365;
+  return{delta,gamma,vega,theta:-theta};
+}
+
+// Register inline vertical-line plugin (no extra CDN needed)
+Chart.register({
+  id:'vLinePlugin',
+  afterDraw(chart,_,opts){
+    if(!opts||!opts.lines)return;
+    const ctx=chart.ctx,xs=chart.scales.x,ys=chart.scales.y;
+    opts.lines.forEach(l=>{
+      const px=xs.getPixelForValue(l.x);
+      ctx.save();ctx.beginPath();
+      ctx.moveTo(px,ys.top);ctx.lineTo(px,ys.bottom);
+      ctx.strokeStyle=l.color;ctx.lineWidth=1.5;
+      ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
+    });
+  }
+});
+
+const greekCharts={};
+
+function buildGreekChart(id,label,data,color,prices,strike,spot,yLabel){
+  const canvas=document.getElementById(id);
+  if(!canvas)return;
+  if(greekCharts[id])greekCharts[id].destroy();
+  greekCharts[id]=new Chart(canvas,{
+    type:'line',
+    data:{datasets:[{label,data:prices.map((x,i)=>({x,y:data[i]})),borderColor:color,borderWidth:2,backgroundColor:color+'18',fill:true,tension:0.4,pointRadius:0}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{mode:'index',intersect:false,callbacks:{label:c=>`${label}: ${c.parsed.y.toFixed(4)}`},backgroundColor:'rgba(17,22,30,0.95)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8a95a5',bodyColor:'#eaf0f6'},
+        vLinePlugin:{lines:[{x:strike,color:'rgba(255,77,106,0.75)'},{x:spot,color:'rgba(0,212,170,0.75)'}]}
+      },
+      scales:{
+        x:{type:'linear',ticks:{color:'#5a6577',font:{size:10},maxTicksLimit:7,callback:v=>`$${v.toFixed(0)}`},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
+        y:{ticks:{color:'#5a6577',font:{size:10},maxTicksLimit:5},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'},title:{display:true,text:yLabel,color:'#5a6577',font:{size:10}}}
+      },
+      animation:{duration:250}
+    }
+  });
+}
+
+function updateGreeksCharts(){
+  const spot=parseFloat(document.getElementById('gc-spot').value);
+  const strike=parseFloat(document.getElementById('gc-strike').value);
+  const dte=parseInt(document.getElementById('gc-dte').value);
+  const iv=parseFloat(document.getElementById('gc-iv').value);
+  document.getElementById('gc-spot-badge').textContent=`$${spot}`;
+  document.getElementById('gc-strike-badge').textContent=`$${strike}`;
+  document.getElementById('gc-dte-badge').textContent=`${dte}d`;
+  document.getElementById('gc-iv-badge').textContent=`${iv}%`;
+  const T=dte/365,r=0.05,sigma=iv/100;
+  const range=strike*0.15,xMin=strike-range,xMax=strike+range,N=120;
+  const prices=[],dD=[],gD=[],vD=[],tD=[];
+  for(let i=0;i<=N;i++){
+    const S=xMin+(xMax-xMin)*i/N;
+    prices.push(parseFloat(S.toFixed(2)));
+    const g=bsGreeks(S,strike,T,r,sigma);
+    dD.push(parseFloat(g.delta.toFixed(5)));
+    gD.push(parseFloat((g.gamma*100).toFixed(5)));
+    vD.push(parseFloat(g.vega.toFixed(5)));
+    tD.push(parseFloat(g.theta.toFixed(5)));
+  }
+  buildGreekChart('chart-delta','Delta',dD,'#4d9fff',prices,strike,spot,'Delta');
+  buildGreekChart('chart-gamma','Gamma ×100',gD,'#c084fc',prices,strike,spot,'Gamma ×100');
+  buildGreekChart('chart-vega','Vega ($)',vD,'#ffb020',prices,strike,spot,'Vega ($)');
+  buildGreekChart('chart-theta','Theta ($/day)',tD,'#00d4aa',prices,strike,spot,'Theta ($/day)');
 }
 
 async function loadMarketData(){
