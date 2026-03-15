@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Technical Indicators — Angelrow Limited</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14;
+  --bg-card:rgba(17,22,30,0.85);
+  --bg-card-solid:#111620;
+  --border:rgba(255,255,255,0.06);
+  --border-hover:rgba(255,255,255,0.12);
+  --text:#eaf0f6;
+  --text-secondary:#8a95a5;
+  --text-muted:#5a6577;
+  --accent:#00d4aa;
+  --accent-dim:rgba(0,212,170,0.1);
+  --accent-glow:rgba(0,212,170,0.15);
+  --red:#ff4d6a;
+  --red-dim:rgba(255,77,106,0.1);
+  --amber:#ffb020;
+  --amber-dim:rgba(255,176,32,0.1);
+  --blue:#4d9fff;
+  --blue-dim:rgba(77,159,255,0.1);
+  --purple:#c084fc;
+  --purple-dim:rgba(192,132,252,0.1);
+  --teal:#6dd5fa;
+  --teal-dim:rgba(109,213,250,0.1);
+  --radius:14px;
+  --radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.skyline-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.skyline-bg::before{content:'';position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 5% bottom/12px 55%,linear-gradient(transparent 40%,#181d27 40%,#181d27 100%) no-repeat 8% bottom/28px 48%,linear-gradient(transparent 25%,#141922 25%,#141922 100%) no-repeat 12% bottom/35px 58%,linear-gradient(transparent 45%,#171c26 45%,#171c26 100%) no-repeat 18% bottom/22px 42%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 22% bottom/45px 62%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 28% bottom/18px 50%,linear-gradient(transparent 15%,#121720 15%,#121720 100%) no-repeat 32% bottom/50px 65%,linear-gradient(transparent 50%,#191e28 50%,#191e28 100%) no-repeat 38% bottom/25px 38%,linear-gradient(transparent 10%,#111620 10%,#111620 100%) no-repeat 42% bottom/40px 70%,linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 48% bottom/55px 55%,linear-gradient(transparent 22%,#131821 22%,#131821 100%) no-repeat 54% bottom/30px 60%,linear-gradient(transparent 40%,#171c26 40%,#171c26 100%) no-repeat 58% bottom/20px 45%,linear-gradient(transparent 18%,#141922 18%,#141922 100%) no-repeat 62% bottom/48px 63%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 68% bottom/35px 50%,linear-gradient(transparent 12%,#121720 12%,#121720 100%) no-repeat 73% bottom/42px 68%,linear-gradient(transparent 28%,#151a24 28%,#151a24 100%) no-repeat 78% bottom/55px 56%,linear-gradient(transparent 45%,#191e28 45%,#191e28 100%) no-repeat 83% bottom/20px 40%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 87% bottom/38px 62%,linear-gradient(transparent 32%,#171c26 32%,#171c26 100%) no-repeat 92% bottom/28px 52%,linear-gradient(transparent 15%,#141922 15%,#141922 100%) no-repeat 96% bottom/45px 66%;opacity:.5}
+.skyline-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(0,212,170,.02) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(77,159,255,.015) 0%,transparent 50%),linear-gradient(to bottom,transparent 50%,var(--bg) 100%)}
+.grid-overlay{position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 80 0 L 0 0 0 80' fill='none' stroke='%23ffffff' stroke-width='0.3' opacity='0.015'/%3E%3C/svg%3E");pointer-events:none}
+.app{position:relative;z-index:1;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:0 28px}
+
+/* Header */
+.site-header{padding:44px 0 0;animation:fadeDown .7s ease-out}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.header-inner{display:flex;justify-content:space-between;align-items:flex-start}
+.brand{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit}
+.brand-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#009e7e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.15)}
+.brand-icon svg{width:24px;height:24px;fill:none;stroke:var(--bg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand-text h1{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.brand-text .tagline{font-size:13px;font-weight:400;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;padding-top:8px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);animation:blink 2s ease-in-out infinite}
+
+/* Nav */
+.nav-bar{margin-top:32px;padding-bottom:32px;border-bottom:1px solid var(--border);animation:fadeUp .6s ease-out .1s both}
+.nav-pills{display:flex;gap:6px;list-style:none;flex-wrap:wrap}
+.nav-pill{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .2s ease;border:1px solid transparent;background:none;font-family:inherit;display:flex;align-items:center;gap:8px;user-select:none;text-decoration:none}
+.nav-pill:hover{color:var(--text-secondary);background:rgba(255,255,255,.03);border-color:var(--border)}
+.nav-pill.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,212,170,.15)}
+
+/* Page content */
+.page-content{padding:40px 0 80px;animation:fadeUp .4s ease-out}
+.page-title{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.page-subtitle{font-size:15px;color:var(--text-secondary);margin-bottom:36px;max-width:680px;line-height:1.5}
+
+/* Category jump bar */
+.cat-jump{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:40px}
+.cat-pill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:all .2s ease;border:1px solid transparent}
+.cat-pill-trend{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,212,170,.2)}
+.cat-pill-trend:hover{background:rgba(0,212,170,.18)}
+.cat-pill-momentum{color:var(--blue);background:var(--blue-dim);border-color:rgba(77,159,255,.2)}
+.cat-pill-momentum:hover{background:rgba(77,159,255,.18)}
+.cat-pill-volume{color:var(--amber);background:var(--amber-dim);border-color:rgba(255,176,32,.2)}
+.cat-pill-volume:hover{background:rgba(255,176,32,.18)}
+.cat-pill-volatility{color:var(--purple);background:var(--purple-dim);border-color:rgba(192,132,252,.2)}
+.cat-pill-volatility:hover{background:rgba(192,132,252,.18)}
+.cat-pill-sr{color:var(--red);background:var(--red-dim);border-color:rgba(255,77,106,.2)}
+.cat-pill-sr:hover{background:rgba(255,77,106,.18)}
+.cat-pill-breadth{color:var(--teal);background:var(--teal-dim);border-color:rgba(109,213,250,.2)}
+.cat-pill-breadth:hover{background:rgba(109,213,250,.18)}
+
+/* Category section */
+.cat-section{margin-bottom:56px}
+.cat-header{display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.cat-line{width:3px;height:26px;border-radius:2px;flex-shrink:0}
+.cat-line-trend{background:var(--accent)}
+.cat-line-momentum{background:var(--blue)}
+.cat-line-volume{background:var(--amber)}
+.cat-line-volatility{background:var(--purple)}
+.cat-line-sr{background:var(--red)}
+.cat-line-breadth{background:var(--teal)}
+.cat-title{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.cat-count{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+
+/* Indicator grid */
+.indicator-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+
+/* Indicator card */
+.ind-card{background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all .3s ease;position:relative}
+.ind-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transition:opacity .3s ease}
+.ind-card:hover{border-color:var(--border-hover);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.ind-card:hover::before{opacity:1}
+.ind-card-trend::before{background:linear-gradient(90deg,var(--accent),transparent)}
+.ind-card-momentum::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.ind-card-volume::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.ind-card-volatility::before{background:linear-gradient(90deg,var(--purple),transparent)}
+.ind-card-sr::before{background:linear-gradient(90deg,var(--red),transparent)}
+.ind-card-breadth::before{background:linear-gradient(90deg,var(--teal),transparent)}
+
+/* Card header */
+.ind-card-header{padding:20px 20px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ind-name{font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.ind-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.badge-trend{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,212,170,.2)}
+.badge-momentum{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,159,255,.2)}
+.badge-volume{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,176,32,.2)}
+.badge-volatility{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(192,132,252,.2)}
+.badge-sr{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,77,106,.2)}
+.badge-breadth{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(109,213,250,.2)}
+
+/* Chart area */
+.chart-area{margin:0 20px 20px;height:220px;background:rgba(0,0,0,.25);border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-muted);border:1px dashed rgba(255,255,255,.07);position:relative;overflow:hidden}
+.chart-area-inner{text-align:center}
+.chart-area-icon{font-size:24px;opacity:.4;margin-bottom:4px}
+.chart-area-label{font-size:11px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;opacity:.5}
+
+/* Details section */
+.ind-details{padding:0 20px 22px;display:flex;flex-direction:column;gap:14px}
+.detail-block{}
+.detail-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:5px}
+.detail-text{font-size:13px;color:var(--text-secondary);line-height:1.6}
+.detail-divider{border:none;border-top:1px solid var(--border);margin:2px 0}
+
+/* Pairs chips */
+.pairs-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.pair-chip{font-size:11px;font-family:'JetBrains Mono',monospace;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text-secondary);white-space:nowrap}
+
+/* Footer */
+.site-footer{border-top:1px solid var(--border);padding:28px 0;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted)}
+.site-footer a{color:var(--accent);text-decoration:none}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+
+/* Responsive */
+@media(max-width:900px){.indicator-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.header-inner{flex-direction:column;gap:16px}.site-footer{flex-direction:column;gap:8px;text-align:center}}
+</style>
+</head>
+<body>
+<div class="skyline-bg"></div>
+<div class="grid-overlay"></div>
+<div class="app"><div class="container">
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Angelrow Limited</h1>
+        <div class="tagline">Resources & Analytics</div>
+      </div>
+    </a>
+    <div class="header-right"><div class="live-dot"></div><span id="headerDate"></span></div>
+  </div>
+
+  <nav class="nav-bar">
+    <div class="nav-pills">
+      <a class="nav-pill" href="index.html"><span>◉</span> Home</a>
+      <a class="nav-pill active" href="indicators.html"><span>📊</span> Indicators</a>
+      <a class="nav-pill" href="index.html#market"><span>📈</span> The Market Today</a>
+      <a class="nav-pill" href="index.html#options"><span>⚡</span> Options</a>
+      <a class="nav-pill" href="matrix.html"><span>🔢</span> Strategy Matrix</a>
+      <a class="nav-pill" href="index.html#reports"><span>📋</span> Weekly Reports</a>
+      <a class="nav-pill" href="index.html#journal"><span>📓</span> Trading Journal</a>
+    </div>
+  </nav>
+</header>
+
+<!-- PAGE CONTENT -->
+<main class="page-content">
+  <div class="page-title">Technical Indicators</div>
+  <div class="page-subtitle">20 indicators organised by category. Each card holds a chart slot for later import, followed by institutional setup notes, interpretation guidelines, key signals, and pairing recommendations.</div>
+
+  <!-- Category jump links -->
+  <div class="cat-jump">
+    <a class="cat-pill cat-pill-trend" href="#cat-trend">Trend</a>
+    <a class="cat-pill cat-pill-momentum" href="#cat-momentum">Momentum</a>
+    <a class="cat-pill cat-pill-volume" href="#cat-volume">Volume</a>
+    <a class="cat-pill cat-pill-volatility" href="#cat-volatility">Volatility</a>
+    <a class="cat-pill cat-pill-sr" href="#cat-sr">Support / Resistance</a>
+    <a class="cat-pill cat-pill-breadth" href="#cat-breadth">Breadth / Sentiment</a>
+  </div>
+
+  <!-- ═══════════════════ TREND ═══════════════════ -->
+  <section class="cat-section" id="cat-trend">
+    <div class="cat-header">
+      <div class="cat-line cat-line-trend"></div>
+      <div class="cat-title">Trend</div>
+      <div class="cat-count">4 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 1 · 50/100/200 SMA -->
+      <div class="ind-card ind-card-trend">
+        <div class="ind-card-header">
+          <div class="ind-name">50 / 100 / 200 SMA</div>
+          <span class="ind-badge badge-trend">Trend</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">50, 100, 200 periods on daily chart (close). Weekly 40-week SMA ≈ 200-day.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Price above all three = strong uptrend; below all three = strong downtrend. SMA order (50&gt;100&gt;200) confirms trend health. A "golden cross" (50 crosses above 200) is a bullish regime signal; "death cross" is bearish. Institutional desks use the 200 SMA as the key risk-on / risk-off filter.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Whipsaws in range-bound markets — only trust crosses with volume confirmation. The 200 SMA acts as dynamic support/resistance: look for price to retest and hold it. Lag is inherent; these confirm trend, they do not predict turns.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">VWAP</span>
+              <span class="pair-chip">MACD</span>
+              <span class="pair-chip">RSI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 · 21 EMA -->
+      <div class="ind-card ind-card-trend">
+        <div class="ind-card-header">
+          <div class="ind-name">21 EMA</div>
+          <span class="ind-badge badge-trend">Trend</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">21-period EMA on daily chart (close). Some desks use 20 EMA — functionally identical.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Fast trend-following line. In a trend, price pulls back to the 21 EMA then resumes — this is the institutional "trend pullback entry." Price consistently below the 21 EMA signals short-term bearish momentum. Slope of the EMA matters as much as price position.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">In choppy markets the 21 EMA generates constant false signals. Only use for entries when the higher-timeframe trend (50/200 SMA) is already confirmed. Flat EMA = no trend = stay out.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Bollinger Bands</span>
+              <span class="pair-chip">ATR</span>
+              <span class="pair-chip">RSI</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 · VWAP -->
+      <div class="ind-card ind-card-trend">
+        <div class="ind-card-header">
+          <div class="ind-name">VWAP</div>
+          <span class="ind-badge badge-trend">Trend</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Session VWAP (resets daily). Anchored VWAP from key swing highs/lows or earnings dates for multi-day context.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">VWAP is the institutional fair-value benchmark for the session. Price above VWAP = buyers in control; below = sellers. Institutional algos buy below VWAP and sell above it. Anchored VWAP from earnings or IPO dates reveals the average cost basis of all participants since that event.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">VWAP is most useful intraday and loses meaning on daily+ charts. In low-volume sessions VWAP can be misleading. The standard deviation bands (±1σ, ±2σ) around VWAP act as mean-reversion targets.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">OBV</span>
+              <span class="pair-chip">Volume Profile</span>
+              <span class="pair-chip">Bollinger Bands</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 · Ichimoku Cloud -->
+      <div class="ind-card ind-card-trend">
+        <div class="ind-card-header">
+          <div class="ind-name">Ichimoku Cloud (Kumo)</div>
+          <span class="ind-badge badge-trend">Trend</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Default: Tenkan 9, Kijun 26, Senkou Span B 52, displacement 26. These are the original settings and remain the institutional standard.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Price above the cloud = bullish; below = bearish; inside = neutral / no trade. Cloud thickness indicates support/resistance strength. Tenkan/Kijun cross is a momentum signal (bullish cross above cloud = strongest). Future cloud (Senkou Span A vs B) projects forward support/resistance. Chikou Span confirms if current price exceeds price 26 periods ago.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Very noisy on sub-daily charts. Best on daily and weekly for swing/position trades. The cloud acts as a complete trading system — combining trend, momentum, and support/resistance — but takes practice to read in real time. Thin cloud = weak support, expect breakdowns.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">ATR (for stops)</span>
+              <span class="pair-chip">Volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+  <!-- ═══════════════════ MOMENTUM ═══════════════════ -->
+  <section class="cat-section" id="cat-momentum">
+    <div class="cat-header">
+      <div class="cat-line cat-line-momentum"></div>
+      <div class="cat-title">Momentum</div>
+      <div class="cat-count">5 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 5 · RSI -->
+      <div class="ind-card ind-card-momentum">
+        <div class="ind-card-header">
+          <div class="ind-name">RSI</div>
+          <span class="ind-badge badge-momentum">Momentum</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">14-period RSI (close). Institutional desks also watch 7-period for short-term momentum on intraday charts.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">RSI &gt; 70 = overbought; RSI &lt; 30 = oversold — but these are NOT automatic reversal signals. In strong trends, RSI can stay overbought/oversold for extended periods. The primary institutional use is divergence: price makes new high but RSI makes lower high = bearish divergence. Failure swings are high-probability reversal signals.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Never use overbought/oversold as standalone entry triggers — this is the most common retail error. RSI works best as a divergence and regime filter. In trending markets, RSI 40–50 zone acts as support (bull) or resistance (bear). Adjust thresholds: use 80/20 in strong trends.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">MACD</span>
+              <span class="pair-chip">SMA trend filter</span>
+              <span class="pair-chip">Volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 · MACD -->
+      <div class="ind-card ind-card-momentum">
+        <div class="ind-card-header">
+          <div class="ind-name">MACD</div>
+          <span class="ind-badge badge-momentum">Momentum</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">12, 26, 9 (standard). Applied to closing prices. Histogram = MACD line minus signal line.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">MACD line crossing above signal line = bullish momentum shift; crossing below = bearish. Histogram expanding = momentum accelerating; contracting = fading. The zero-line cross is a key regime signal. Divergence between price and MACD histogram is a powerful early warning of trend exhaustion.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">MACD is a lagging indicator — it confirms moves, does not predict them. In range-bound markets it generates many false signals. The most reliable signal is histogram divergence combined with a zero-line cross. Avoid signal-line crosses when MACD is near zero (low conviction).</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">RSI</span>
+              <span class="pair-chip">50/200 SMA</span>
+              <span class="pair-chip">Volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7 · Stochastic -->
+      <div class="ind-card ind-card-momentum">
+        <div class="ind-card-header">
+          <div class="ind-name">Stochastic Oscillator</div>
+          <span class="ind-badge badge-momentum">Momentum</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">%K: 14 periods, %D: 3-period SMA of %K. "Slow stochastic" (smoothed %K) is the institutional standard; avoid "fast" version (noisy).</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">%K above 80 = overbought; below 20 = oversold. %K crossing above %D in the oversold zone = buy signal; crossing below in overbought zone = sell signal. Like RSI, divergence is the highest-value use case. Stochastics are faster than RSI and better for timing entries within a confirmed trend.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Extremely noisy in trending markets — stochastics can stay pegged at 80+ for weeks in a strong uptrend. Only use for entries when the broader trend direction is already established by SMA or MACD. Multiple timeframe confirmation (weekly + daily) increases reliability.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">RSI</span>
+              <span class="pair-chip">Trend filter (SMA)</span>
+              <span class="pair-chip">MACD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8 · ADX -->
+      <div class="ind-card ind-card-momentum">
+        <div class="ind-card-header">
+          <div class="ind-name">ADX</div>
+          <span class="ind-badge badge-momentum">Momentum</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">14-period ADX with +DI and -DI. Some institutions use 20-period for smoother readings.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">ADX measures trend strength, not direction. ADX &gt; 25 = trending market (use trend-following tools); ADX &lt; 20 = range-bound (use mean-reversion tools). +DI above -DI = bullish trend; -DI above +DI = bearish trend. Rising ADX = strengthening trend; falling ADX = weakening. ADX is the institutional "meta-indicator" — it tells you which other indicators to trust.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">ADX is lagging and slow to react. A rising ADX during a trend reversal can be misleading (it measures the old trend fading). ADX does not tell you when a trend will end. Best used as a filter: if ADX &lt; 20, avoid trend-following entries.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">All other indicators</span>
+              <span class="pair-chip">(regime filter)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9 · ROC -->
+      <div class="ind-card ind-card-momentum">
+        <div class="ind-card-header">
+          <div class="ind-name">Rate of Change (ROC) / Momentum</div>
+          <span class="ind-badge badge-momentum">Momentum</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">12-period ROC for daily charts (measures % change over 12 periods). Some desks use 10 or 20 depending on asset class.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">ROC &gt; 0 = bullish momentum; ROC &lt; 0 = bearish momentum. The magnitude shows acceleration: rising ROC = momentum increasing; falling ROC = fading. Divergence between price and ROC signals exhaustion. ROC crossing zero is a regime change signal, similar to MACD zero-line cross but simpler.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">ROC is noisy and best used with smoothing (apply a short EMA to the ROC line) or as secondary confirmation. Extreme ROC readings can signal overextension rather than strength. Combine with trend filters.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">MACD</span>
+              <span class="pair-chip">RSI</span>
+              <span class="pair-chip">SMA trend filter</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+  <!-- ═══════════════════ VOLUME ═══════════════════ -->
+  <section class="cat-section" id="cat-volume">
+    <div class="cat-header">
+      <div class="cat-line cat-line-volume"></div>
+      <div class="cat-title">Volume</div>
+      <div class="cat-count">3 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 10 · OBV -->
+      <div class="ind-card ind-card-volume">
+        <div class="ind-card-header">
+          <div class="ind-name">OBV (On-Balance Volume)</div>
+          <span class="ind-badge badge-volume">Volume</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Cumulative OBV using daily close and volume. Apply a 20-period EMA to OBV for clearer signal.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">OBV rising with price = healthy trend (accumulation). OBV diverging from price is a critical signal: if price makes new highs but OBV does not, institutions are distributing (selling into strength) — expect reversal. OBV breaking to new highs before price does = institutional accumulation, bullish leading signal.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">OBV is directional, not absolute — the shape and trend of the OBV line matters, not the number. In low-volume stocks, OBV can be erratic. Look for OBV divergence on weekly charts for the most reliable signals.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">VWAP</span>
+              <span class="pair-chip">Volume Profile</span>
+              <span class="pair-chip">Price action</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 11 · Volume Profile -->
+      <div class="ind-card ind-card-volume">
+        <div class="ind-card-header">
+          <div class="ind-name">Volume Profile (VPVR)</div>
+          <span class="ind-badge badge-volume">Volume</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Visible range or fixed range. Identify POC (Point of Control), VAH (Value Area High), VAL (Value Area Low) — 70% of volume typically sits within the Value Area.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">POC = the price level with the highest traded volume — acts as a magnet and strong support/resistance. Price tends to rotate around the POC. VAH and VAL act as upper/lower boundaries of "fair value." Breakouts above VAH or below VAL on high volume signal a value shift. Low-volume nodes are fast-move zones with little support/resistance.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Volume Profile is a professional tool used by futures and institutional equity desks. Use session, weekly, and multi-month profiles together. The POC from a high-volume consolidation day is particularly significant. Not available on all platforms (ToS has it as "Volume Profile" study).</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">VWAP</span>
+              <span class="pair-chip">OBV</span>
+              <span class="pair-chip">Support/Resistance</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 12 · A/D Line -->
+      <div class="ind-card ind-card-volume">
+        <div class="ind-card-header">
+          <div class="ind-name">A/D Line (Accumulation/Distribution)</div>
+          <span class="ind-badge badge-volume">Volume</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Cumulative A/D line using close, high, low, and volume. No parameters to set.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Similar concept to OBV but weights volume by where price closes within the day's range (close near high = accumulation; close near low = distribution). A/D line rising = net accumulation; falling = net distribution. The key signal is divergence: price rising but A/D line flat or falling = distribution beneath the surface.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Can be distorted by gap openings. Less intuitive than OBV but more nuanced. Best used on daily charts for swing trading timeframes. Confirms or contradicts the price trend.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">OBV</span>
+              <span class="pair-chip">RSI divergence</span>
+              <span class="pair-chip">MACD</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+  <!-- ═══════════════════ VOLATILITY ═══════════════════ -->
+  <section class="cat-section" id="cat-volatility">
+    <div class="cat-header">
+      <div class="cat-line cat-line-volatility"></div>
+      <div class="cat-title">Volatility</div>
+      <div class="cat-count">4 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 13 · Bollinger Bands -->
+      <div class="ind-card ind-card-volatility">
+        <div class="ind-card-header">
+          <div class="ind-name">Bollinger Bands</div>
+          <span class="ind-badge badge-volatility">Volatility</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">20-period SMA, ±2 standard deviations. This is the universal standard. Some desks add ±1σ bands for finer granularity.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Price touching the upper band is NOT a sell signal; touching the lower band is NOT a buy signal — this is a common mistake. In trends, price "rides the band." The squeeze (bands narrowing) signals low volatility and precedes a large move. Band expansion after a squeeze = breakout confirmation. Mean reversion to the 20 SMA is the default expectation when price is extended.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Bollinger Bands measure volatility, not direction. "Walking the band" in a strong trend can last weeks. The squeeze is the highest-value setup: combine with volume for direction. %B (0 to 1 scale) and Bandwidth (measures squeeze) are useful derivatives.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Keltner Channels</span>
+              <span class="pair-chip">RSI</span>
+              <span class="pair-chip">Volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 14 · ATR -->
+      <div class="ind-card ind-card-volatility">
+        <div class="ind-card-header">
+          <div class="ind-name">ATR (Average True Range)</div>
+          <span class="ind-badge badge-volatility">Volatility</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">14-period ATR on daily chart. Used for position sizing and stop-loss placement, not as a directional signal.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">ATR measures how much an asset moves per period on average. Institutional use: set stop-losses at 1.5× to 2× ATR below entry (gives the trade room to breathe without arbitrary fixed stops). Position sizing: risk per trade ($) ÷ (ATR × multiplier) = number of shares. Rising ATR = increasing volatility; falling ATR = consolidation / potential squeeze.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">ATR does not indicate direction. A high ATR does not mean bearish — it means volatile. Use ATR to normalise across assets: a $500 stock with 2% ATR and a $50 stock with 2% ATR have the same volatility profile. ATR-based stops adapt to market conditions automatically.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Bollinger Bands</span>
+              <span class="pair-chip">Position sizing</span>
+              <span class="pair-chip">Any entry signal</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 15 · Keltner Channels -->
+      <div class="ind-card ind-card-volatility">
+        <div class="ind-card-header">
+          <div class="ind-name">Keltner Channels</div>
+          <span class="ind-badge badge-volatility">Volatility</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">20-period EMA centre line, ±2× ATR for channel width. The EMA-based centre (vs Bollinger's SMA) makes Keltner more responsive.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Primary institutional use: combine with Bollinger Bands for "squeeze" detection. When Bollinger Bands contract inside Keltner Channels, a volatility squeeze is confirmed — a large directional move is imminent. The breakout direction from the squeeze is the trade. Alone, Keltner Channels function similarly to Bollinger Bands as trend envelopes.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">The Keltner/Bollinger squeeze (also called the "TTM Squeeze") is one of the most reliable institutional setups. The squeeze itself does not predict direction — wait for the breakout and use momentum (MACD histogram) to confirm direction. Works on all timeframes.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Bollinger Bands</span>
+              <span class="pair-chip">MACD histogram</span>
+              <span class="pair-chip">Volume</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 16 · IVR -->
+      <div class="ind-card ind-card-volatility">
+        <div class="ind-card-header">
+          <div class="ind-name">IVR / IV Percentile</div>
+          <span class="ind-badge badge-volatility">Volatility</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">IVR = (Current IV − 52-week low IV) / (52-week high IV − 52-week low IV) × 100. IV Percentile = % of days in past year IV was lower than today.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">IVR &gt; 50 = IV is elevated — favour selling premium (CSPs, credit spreads). IVR &lt; 30 = IV is low — favour buying premium (debit spreads, long options). This is THE key filter for options sellers: high IVR means richer premiums and greater probability of IV crush benefiting your position. IV Percentile is more statistically robust but IVR is more widely available.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">IVR is relative to the individual stock — an IVR of 80 on a low-vol stock may still represent less absolute IV than an IVR of 20 on a meme stock. Always check absolute IV levels alongside IVR. Earnings inflate IV artificially — post-earnings IV crush is predictable but priced into the premiums. Directly relevant to your CSP strategy.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">CSP screening</span>
+              <span class="pair-chip">Delta selection</span>
+              <span class="pair-chip">ATR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+  <!-- ═══════════════════ SUPPORT / RESISTANCE ═══════════════════ -->
+  <section class="cat-section" id="cat-sr">
+    <div class="cat-header">
+      <div class="cat-line cat-line-sr"></div>
+      <div class="cat-title">Support / Resistance</div>
+      <div class="cat-count">2 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 17 · Fibonacci -->
+      <div class="ind-card ind-card-sr">
+        <div class="ind-card-header">
+          <div class="ind-name">Fibonacci Retracements</div>
+          <span class="ind-badge badge-sr">S / R</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Draw from swing low to swing high (uptrend) or high to low (downtrend). Key levels: 23.6%, 38.2%, 50%, 61.8%, 78.6%. Use on daily and weekly charts.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">The 50% and 61.8% retracements are the most institutionally watched levels. In a healthy uptrend, pullbacks to 38.2%–50% represent buying opportunities. A pullback to 61.8% is the "last chance" for the trend to hold — a break below often means trend reversal. These levels work because large institutional order blocks cluster around them (self-fulfilling). Extensions (127.2%, 161.8%) project profit targets.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Fibonacci levels are NOT magic — they work because institutions use them, creating liquidity at those levels. Always combine with other confluence (horizontal S/R, VWAP, volume profile POC). If a Fib level has no other confluence, give it less weight. The most powerful setups have 2–3 tools agreeing at the same price level.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Volume Profile</span>
+              <span class="pair-chip">Horizontal S/R</span>
+              <span class="pair-chip">VWAP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 18 · Pivot Points -->
+      <div class="ind-card ind-card-sr">
+        <div class="ind-card-header">
+          <div class="ind-name">Pivot Points</div>
+          <span class="ind-badge badge-sr">S / R</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Standard (Floor) pivots: P = (H+L+C)/3, with R1/R2/R3 and S1/S2/S3. Calculate from prior day (intraday) or prior week (swing). CME floor trader standard.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">Pivot levels are pre-calculated support and resistance for the session. R1 and S1 are the primary intraday targets. If price opens above the pivot, bias is bullish toward R1; below, bearish toward S1. Institutional algos use these as intraday reference levels for order placement. R2/S2 are extreme levels — reaching them typically signals overextension.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">Pivots are primarily an intraday tool. Weekly pivots have more significance for swing traders. Multiple calculation methods exist (Fibonacci, Camarilla, Woodie) — standard/floor pivots are the most widely used institutionally. Less useful on assets that gap significantly.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">VWAP</span>
+              <span class="pair-chip">Intraday volume</span>
+              <span class="pair-chip">Price action</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+  <!-- ═══════════════════ BREADTH / SENTIMENT ═══════════════════ -->
+  <section class="cat-section" id="cat-breadth">
+    <div class="cat-header">
+      <div class="cat-line cat-line-breadth"></div>
+      <div class="cat-title">Breadth / Sentiment</div>
+      <div class="cat-count">2 indicators</div>
+    </div>
+    <div class="indicator-grid">
+
+      <!-- 19 · Put/Call Ratio -->
+      <div class="ind-card ind-card-breadth">
+        <div class="ind-card-header">
+          <div class="ind-name">Put/Call Ratio</div>
+          <span class="ind-badge badge-breadth">Sentiment</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">CBOE equity put/call ratio. 10-day moving average smooths noise. Separate index P/C from equity P/C for cleaner signals.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">The P/C ratio is a contrarian sentiment indicator. High readings (&gt;1.0 on equity P/C, especially &gt;1.2) = excessive fear / bearish sentiment = potential bullish reversal. Low readings (&lt;0.6) = excessive complacency = potential bearish reversal. This aligns with the principle that extremes in sentiment precede reversals. Institutional desks monitor this as a macro risk gauge.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">The P/C ratio is a macro/market-level indicator, not useful for individual stock timing. Use the 10-day MA, not daily readings (too noisy). Structural changes in options markets (e.g., retail options boom) can shift baseline levels over time. Always compare to recent ranges, not fixed thresholds.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">VIX</span>
+              <span class="pair-chip">Market breadth</span>
+              <span class="pair-chip">RSI on index</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 20 · VIX -->
+      <div class="ind-card ind-card-breadth">
+        <div class="ind-card-header">
+          <div class="ind-name">VIX (CBOE Volatility Index)</div>
+          <span class="ind-badge badge-breadth">Sentiment</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-area-inner">
+            <div class="chart-area-icon">📊</div>
+            <div class="chart-area-label">Chart placeholder</div>
+          </div>
+        </div>
+        <div class="ind-details">
+          <div class="detail-block">
+            <div class="detail-label">Institutional Setup</div>
+            <div class="detail-text">Spot VIX (real-time). VIX term structure (front month vs back months) and VIX futures curve. No parameters — it is a live market index.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">How to Interpret</div>
+            <div class="detail-text">VIX &gt; 30 = high fear, historically associated with market bottoms (contrarian buy signal when combined with other evidence). VIX &lt; 15 = complacency, often precedes corrections. The VIX term structure matters: contango (front month &lt; back months) = normal/bullish; backwardation (front month &gt; back months) = panic/stress. A VIX spike followed by a reversal lower is a classic "fear washout" buying opportunity.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Key Signals &amp; Edge Cases</div>
+            <div class="detail-text">VIX measures expected 30-day S&amp;P 500 volatility — it is index-specific, not a universal fear gauge. VIX can stay elevated or suppressed for extended periods. Do not use VIX as a timing tool in isolation — it indicates regime, not entry points. For options sellers: elevated VIX = richer premiums across the board, directly relevant to your IV crush strategy.</div>
+          </div>
+          <hr class="detail-divider">
+          <div class="detail-block">
+            <div class="detail-label">Pairs Well With</div>
+            <div class="pairs-row">
+              <span class="pair-chip">Put/Call Ratio</span>
+              <span class="pair-chip">IVR</span>
+              <span class="pair-chip">Market breadth</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /indicator-grid -->
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div>© Angelrow Limited — Technical Indicators Reference</div>
+  <div><a href="index.html">← Back to Dashboard</a></div>
+</footer>
+
+</div></div><!-- /container /app -->
+
+<script>
+// Header date
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+</script>
+</body>
+</html>
