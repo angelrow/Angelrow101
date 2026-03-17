@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trailing Stop Optimizer — Angelrow Limited</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14;
+  --bg-card:rgba(17,22,30,0.85);
+  --bg-card-solid:#111620;
+  --border:rgba(255,255,255,0.06);
+  --border-hover:rgba(255,255,255,0.12);
+  --text:#eaf0f6;
+  --text-secondary:#8a95a5;
+  --text-muted:#5a6577;
+  --accent:#00d4aa;
+  --accent-dim:rgba(0,212,170,0.1);
+  --accent-glow:rgba(0,212,170,0.15);
+  --red:#ff4d6a;
+  --red-dim:rgba(255,77,106,0.1);
+  --amber:#ffb020;
+  --amber-dim:rgba(255,176,32,0.1);
+  --blue:#4d9fff;
+  --blue-dim:rgba(77,159,255,0.1);
+  --purple:#c084fc;
+  --purple-dim:rgba(192,132,252,0.1);
+  --radius:14px;
+  --radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.skyline-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.skyline-bg::before{content:'';position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 5% bottom/12px 55%,linear-gradient(transparent 40%,#181d27 40%,#181d27 100%) no-repeat 8% bottom/28px 48%,linear-gradient(transparent 25%,#141922 25%,#141922 100%) no-repeat 12% bottom/35px 58%,linear-gradient(transparent 45%,#171c26 45%,#171c26 100%) no-repeat 18% bottom/22px 42%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 22% bottom/45px 62%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 28% bottom/18px 50%,linear-gradient(transparent 15%,#121720 15%,#121720 100%) no-repeat 32% bottom/50px 65%,linear-gradient(transparent 50%,#191e28 50%,#191e28 100%) no-repeat 38% bottom/25px 38%,linear-gradient(transparent 10%,#111620 10%,#111620 100%) no-repeat 42% bottom/40px 70%,linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 48% bottom/55px 55%,linear-gradient(transparent 22%,#131821 22%,#131821 100%) no-repeat 54% bottom/30px 60%,linear-gradient(transparent 40%,#171c26 40%,#171c26 100%) no-repeat 58% bottom/20px 45%,linear-gradient(transparent 18%,#141922 18%,#141922 100%) no-repeat 62% bottom/48px 63%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 68% bottom/35px 50%,linear-gradient(transparent 12%,#121720 12%,#121720 100%) no-repeat 73% bottom/42px 68%,linear-gradient(transparent 28%,#151a24 28%,#151a24 100%) no-repeat 78% bottom/55px 56%,linear-gradient(transparent 45%,#191e28 45%,#191e28 100%) no-repeat 83% bottom/20px 40%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 87% bottom/38px 62%,linear-gradient(transparent 32%,#171c26 32%,#171c26 100%) no-repeat 92% bottom/28px 52%,linear-gradient(transparent 15%,#141922 15%,#141922 100%) no-repeat 96% bottom/45px 66%;opacity:.5}
+.skyline-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(0,212,170,.02) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(77,159,255,.015) 0%,transparent 50%),linear-gradient(to bottom,transparent 50%,var(--bg) 100%)}
+.grid-overlay{position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 80 0 L 0 0 0 80' fill='none' stroke='%23ffffff' stroke-width='0.3' opacity='0.015'/%3E%3C/svg%3E");pointer-events:none}
+.app{position:relative;z-index:1;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:0 28px}
+
+/* ── Header ── */
+.site-header{padding:44px 0 0;animation:fadeDown .7s ease-out}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.header-inner{display:flex;justify-content:space-between;align-items:flex-start}
+.brand{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit}
+.brand-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#009e7e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.15)}
+.brand-icon svg{width:24px;height:24px;fill:none;stroke:var(--bg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand-text h1{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.brand-text .tagline{font-size:13px;font-weight:400;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;padding-top:8px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);animation:blink 2s ease-in-out infinite}
+.nav-bar{margin-top:32px;padding-bottom:32px;border-bottom:1px solid var(--border);animation:fadeUp .6s ease-out .1s both}
+.nav-pills{display:flex;gap:6px;list-style:none;flex-wrap:wrap}
+.nav-pill{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .2s ease;border:1px solid transparent;background:none;font-family:inherit;display:flex;align-items:center;gap:8px;user-select:none;text-decoration:none}
+.nav-pill:hover{color:var(--text-secondary);background:rgba(255,255,255,.03);border-color:var(--border)}
+.nav-pill.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,212,170,.15)}
+
+/* ── Page ── */
+.page-content{padding:40px 0 80px;animation:fadeUp .4s ease-out}
+.page-title{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.page-subtitle{font-size:15px;color:var(--text-secondary);margin-bottom:36px;max-width:700px;line-height:1.5}
+
+/* ── Calculator layout ── */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-bottom:24px}
+@media(max-width:900px){.calc-grid{grid-template-columns:1fr}}
+
+/* ── Cards ── */
+.calc-card{background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.calc-card-header{padding:20px 22px 0;margin-bottom:18px}
+.calc-card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);display:flex;align-items:center;gap:8px}
+.calc-card-body{padding:0 22px 22px}
+
+/* ── Strategy selector ── */
+.strategy-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:24px}
+.strat-btn{padding:9px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:1px solid var(--border);background:none;color:var(--text-muted);cursor:pointer;transition:all .2s ease;font-family:inherit;text-align:center;line-height:1.3}
+.strat-btn:hover{border-color:var(--border-hover);color:var(--text-secondary)}
+.strat-btn.active{background:var(--accent-dim);border-color:rgba(0,212,170,.25);color:var(--accent)}
+
+/* ── Input fields ── */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.field-hint{font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;font-family:'JetBrains Mono',monospace;opacity:.75}
+.field-input{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:10px 13px;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;width:100%;transition:border-color .15s ease;-moz-appearance:textfield}
+.field-input::-webkit-outer-spin-button,.field-input::-webkit-inner-spin-button{-webkit-appearance:none}
+.field-input:focus{outline:none;border-color:rgba(0,212,170,.35)}
+.field-input:hover{border-color:var(--border-hover)}
+.field-input::placeholder{color:var(--text-muted);opacity:.6}
+.field-prefix{position:relative}
+.field-prefix .field-input{padding-left:26px}
+.field-prefix::before{content:'$';position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:13px;pointer-events:none;z-index:1}
+.field-suffix{position:relative}
+.field-suffix .field-input{padding-right:26px}
+.field-suffix::after{content:'%';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:13px;pointer-events:none}
+
+/* ── Advanced settings ── */
+.adv-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:14px 0 0;border-top:1px solid var(--border);margin-top:18px;user-select:none}
+.adv-toggle-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em}
+.adv-toggle-icon{font-size:11px;color:var(--text-muted);transition:transform .2s ease}
+.adv-toggle-icon.open{transform:rotate(180deg)}
+.adv-body{overflow:hidden;max-height:0;transition:max-height .3s ease,opacity .3s ease;opacity:0}
+.adv-body.open{max-height:300px;opacity:1}
+.adv-body-inner{padding:14px 0 0;display:flex;flex-direction:column;gap:12px}
+.adv-note{font-size:11px;color:var(--text-muted);line-height:1.5;padding:10px 12px;background:rgba(0,0,0,.2);border-radius:var(--radius-sm);border:1px solid var(--border)}
+
+/* ── Results ── */
+.result-hero{text-align:center;padding:28px 22px 22px;border-bottom:1px solid var(--border)}
+.result-pct{font-size:76px;font-weight:800;letter-spacing:-.04em;line-height:1;font-family:'JetBrains Mono',monospace;transition:color .3s ease}
+.result-pct.risk-green{color:var(--accent)}
+.result-pct.risk-amber{color:var(--amber)}
+.result-pct.risk-red{color:var(--red)}
+.result-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-top:6px}
+.binding-row{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.binding-label{font-size:12px;color:var(--text-muted)}
+.binding-badge{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+.binding-bid{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(255,176,32,.25)}
+.binding-theta{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(77,159,255,.25)}
+.binding-iv{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(192,132,252,.25)}
+
+/* ── Component breakdown ── */
+.components{padding:16px 22px}
+.comp-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);gap:10px}
+.comp-row:last-child{border-bottom:none}
+.comp-left{display:flex;align-items:center;gap:10px}
+.comp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.comp-dot-bid{background:var(--amber)}
+.comp-dot-theta{background:var(--blue)}
+.comp-dot-iv{background:var(--purple)}
+.comp-name{font-size:13px;color:var(--text-secondary)}
+.comp-value{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text-muted);transition:color .2s ease}
+.comp-value.is-binding{color:var(--accent)}
+.comp-winning-tag{font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(0,212,170,.2);padding:2px 8px;border-radius:20px;margin-left:6px}
+
+/* ── Trade metrics ── */
+.metrics{padding:16px 22px 0;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--border)}
+.metric-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--border)}
+.metric-row:last-child{border-bottom:none}
+.metric-name{font-size:13px;color:var(--text-secondary)}
+.metric-value{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--text)}
+.metric-value.green{color:var(--accent)}
+.metric-value.amber{color:var(--amber)}
+.metric-value.red{color:var(--red)}
+
+/* ── Risk banner ── */
+.risk-banner{margin:0 22px 20px;padding:12px 16px;border-radius:var(--radius-sm);font-size:13px;display:flex;align-items:flex-start;gap:10px;line-height:1.5;display:none}
+.risk-banner.show{display:flex}
+.risk-banner.amber{background:var(--amber-dim);border:1px solid rgba(255,176,32,.25);color:var(--amber)}
+.risk-banner.red{background:var(--red-dim);border:1px solid rgba(255,77,106,.25);color:var(--red)}
+.risk-banner-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.risk-banner b{font-weight:700}
+
+/* ── Empty state ── */
+.result-empty{text-align:center;padding:52px 22px;color:var(--text-muted)}
+.result-empty-icon{font-size:36px;opacity:.3;margin-bottom:12px}
+.result-empty-text{font-size:13px;line-height:1.5}
+
+/* ── Explanation ── */
+.explanation-card{background:var(--bg-card);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);padding:24px 26px;margin-bottom:24px;display:none}
+.explanation-card.show{display:block;animation:fadeUp .35s ease-out}
+.explanation-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.explanation-body{font-size:14px;color:var(--text-secondary);line-height:1.75}
+.explanation-body p{margin-bottom:10px}
+.explanation-body p:last-child{margin-bottom:0}
+.explanation-body strong{color:var(--text);font-weight:600}
+.explanation-body .flag-amber{color:var(--amber);font-weight:600}
+.explanation-body .flag-red{color:var(--red);font-weight:600}
+.explanation-body .flag-green{color:var(--accent);font-weight:600}
+
+/* ── Footer ── */
+.site-footer{border-top:1px solid var(--border);padding:28px 0;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text-muted)}
+.site-footer a{color:var(--accent);text-decoration:none}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+
+/* ── Responsive ── */
+@media(max-width:600px){
+  .field-grid{grid-template-columns:1fr}
+  .field-full{grid-column:1}
+  .strategy-grid{grid-template-columns:repeat(2,1fr)}
+  .result-pct{font-size:58px}
+  .header-inner{flex-direction:column;gap:16px}
+  .site-footer{flex-direction:column;gap:8px;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="skyline-bg"></div>
+<div class="grid-overlay"></div>
+<div class="app"><div class="container">
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <a href="index.html" class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Angelrow Limited</h1>
+        <div class="tagline">Resources & Analytics</div>
+      </div>
+    </a>
+    <div class="header-right"><div class="live-dot"></div><span id="headerDate"></span></div>
+  </div>
+  <nav class="nav-bar">
+    <div class="nav-pills">
+      <a class="nav-pill" href="index.html"><span>◉</span> Home</a>
+      <a class="nav-pill active" href="trailing-stop.html"><span>🎯</span> Trailing Stop</a>
+      <a class="nav-pill" href="indicators.html"><span>📊</span> Indicators</a>
+      <a class="nav-pill" href="index.html"><span>📈</span> The Market Today</a>
+      <a class="nav-pill" href="index.html"><span>⚡</span> Options</a>
+      <a class="nav-pill" href="matrix.html"><span>🔢</span> Strategy Matrix</a>
+      <a class="nav-pill" href="Csp_checklist.html"><span>✅</span> CSP Checklist</a>
+    </div>
+  </nav>
+</header>
+
+<!-- PAGE CONTENT -->
+<main class="page-content">
+  <div class="page-title">Trailing Stop Optimizer</div>
+  <div class="page-subtitle">Calculates the optimal trailing stop percentage for short options positions based on bid-ask spread, theta decay, and IV environment — so the trail is never tighter than the noise floor.</div>
+
+  <div class="calc-grid">
+
+    <!-- ═══ INPUT PANEL ═══ -->
+    <div class="calc-card">
+      <div class="calc-card-header">
+        <div class="calc-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Position Details
+        </div>
+      </div>
+      <div class="calc-card-body">
+
+        <!-- Strategy -->
+        <div class="field" style="margin-bottom:8px">
+          <div class="field-label">Strategy Type</div>
+        </div>
+        <div class="strategy-grid" id="strategyGrid">
+          <button class="strat-btn active" data-strat="CSP" onclick="setStrategy(this)">Cash-Secured Put</button>
+          <button class="strat-btn" data-strat="BullPut" onclick="setStrategy(this)">Bull Put Spread</button>
+          <button class="strat-btn" data-strat="BearCall" onclick="setStrategy(this)">Bear Call Spread</button>
+          <button class="strat-btn" data-strat="IronCondor" onclick="setStrategy(this)">Iron Condor</button>
+        </div>
+
+        <!-- Inputs -->
+        <div class="field-grid">
+
+          <div class="field">
+            <label class="field-label" for="inp-bid">
+              Position Bid
+              <span class="field-hint">current bid</span>
+            </label>
+            <div class="field-prefix">
+              <input class="field-input" id="inp-bid" type="number" min="0" step="0.01" placeholder="0.80" oninput="calculate()">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="inp-ask">
+              Position Ask
+              <span class="field-hint">current ask</span>
+            </label>
+            <div class="field-prefix">
+              <input class="field-input" id="inp-ask" type="number" min="0" step="0.01" placeholder="1.20" oninput="calculate()">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="inp-theta">
+              Net Daily Theta
+              <span class="field-hint">positive = in your favour</span>
+            </label>
+            <div class="field-prefix">
+              <input class="field-input" id="inp-theta" type="number" min="0" step="0.01" placeholder="2.88" oninput="calculate()">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="inp-contracts">
+              Contracts
+              <span class="field-hint">number of contracts</span>
+            </label>
+            <input class="field-input" id="inp-contracts" type="number" min="1" step="1" placeholder="5" oninput="calculate()">
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="inp-ivrank">
+              IV Rank
+              <span class="field-hint">IV rank or IV percentile</span>
+            </label>
+            <div class="field-suffix">
+              <input class="field-input" id="inp-ivrank" type="number" min="0" max="100" step="1" placeholder="75" oninput="calculate()">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="inp-credit">
+              Credit Received
+              <span class="field-hint">original credit per contract</span>
+            </label>
+            <div class="field-prefix">
+              <input class="field-input" id="inp-credit" type="number" min="0" step="0.01" placeholder="2.00" oninput="calculate()">
+            </div>
+          </div>
+
+          <div class="field field-full">
+            <label class="field-label" for="inp-target">
+              Profit Target
+              <span class="field-hint">% at which trail activates</span>
+            </label>
+            <div class="field-suffix">
+              <input class="field-input" id="inp-target" type="number" min="1" max="99" step="1" placeholder="60" oninput="calculate()">
+            </div>
+          </div>
+
+        </div><!-- /field-grid -->
+
+        <!-- Advanced settings -->
+        <div class="adv-toggle" onclick="toggleAdv()">
+          <span class="adv-toggle-label">Advanced — Calibration Constants</span>
+          <span class="adv-toggle-icon" id="advIcon">▼</span>
+        </div>
+        <div class="adv-body" id="advBody">
+          <div class="adv-body-inner">
+            <div class="adv-note">These constants tune the formula. Increase the bid-ask multiplier if stops still trigger on noise; increase the theta multiplier for more decay runway; adjust the volatility buffer if IV isn't correlating with intraday swings as expected.</div>
+            <div class="field-grid">
+              <div class="field">
+                <label class="field-label" for="adv-ba-mult">Bid-Ask Multiplier <span class="field-hint">default 2</span></label>
+                <input class="field-input" id="adv-ba-mult" type="number" min="1" step="0.1" value="2" oninput="calculate()">
+              </div>
+              <div class="field">
+                <label class="field-label" for="adv-th-mult">Theta Multiplier <span class="field-hint">default 0.5</span></label>
+                <input class="field-input" id="adv-th-mult" type="number" min="0.1" step="0.1" value="0.5" oninput="calculate()">
+              </div>
+              <div class="field field-full">
+                <label class="field-label" for="adv-vol-buf">Base Volatility Buffer <span class="field-hint">default 15</span></label>
+                <input class="field-input" id="adv-vol-buf" type="number" min="1" step="1" value="15" oninput="calculate()">
+              </div>
+            </div>
+            <button onclick="resetAdvanced()" style="padding:7px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:1px solid var(--border);background:none;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s ease" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'">Reset to defaults</button>
+          </div>
+        </div>
+
+      </div><!-- /calc-card-body -->
+    </div><!-- /input card -->
+
+    <!-- ═══ OUTPUT PANEL ═══ -->
+    <div class="calc-card" id="outputCard">
+
+      <!-- Empty state -->
+      <div id="resultEmpty" class="result-empty">
+        <div class="result-empty-icon">🎯</div>
+        <div class="result-empty-text">Enter position details on the left<br>to calculate your trailing stop.</div>
+      </div>
+
+      <!-- Results (hidden until calc runs) -->
+      <div id="resultFilled" style="display:none">
+        <div class="result-hero">
+          <div class="result-pct" id="resPct">—</div>
+          <div class="result-label">Recommended Trailing Stop</div>
+          <div class="binding-row">
+            <span class="binding-label">Binding constraint:</span>
+            <span class="binding-badge" id="resBadge">—</span>
+          </div>
+        </div>
+
+        <!-- Component breakdown -->
+        <div class="components">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:2px">Component Breakdown</div>
+          <div class="comp-row">
+            <div class="comp-left">
+              <div class="comp-dot comp-dot-bid"></div>
+              <span class="comp-name">Bid-Ask Noise Floor</span>
+              <span id="compBidTag" class="comp-winning-tag" style="display:none">binding</span>
+            </div>
+            <span class="comp-value" id="compBid">—</span>
+          </div>
+          <div class="comp-row">
+            <div class="comp-left">
+              <div class="comp-dot comp-dot-theta"></div>
+              <span class="comp-name">Theta Runway</span>
+              <span id="compThetaTag" class="comp-winning-tag" style="display:none">binding</span>
+            </div>
+            <span class="comp-value" id="compTheta">—</span>
+          </div>
+          <div class="comp-row">
+            <div class="comp-left">
+              <div class="comp-dot comp-dot-iv"></div>
+              <span class="comp-name">IV Volatility Buffer</span>
+              <span id="compIvTag" class="comp-winning-tag" style="display:none">binding</span>
+            </div>
+            <span class="comp-value" id="compIv">—</span>
+          </div>
+        </div>
+
+        <!-- Trade metrics -->
+        <div class="metrics">
+          <div class="metric-row">
+            <span class="metric-name">Trigger price (trail activates at)</span>
+            <span class="metric-value" id="resTrigger">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Worst-case exit price</span>
+            <span class="metric-value" id="resWorstExit">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Worst-case profit</span>
+            <span class="metric-value" id="resWorstProfit">—</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-name">Mid price</span>
+            <span class="metric-value" id="resMid">—</span>
+          </div>
+        </div>
+
+        <!-- Risk banner -->
+        <div class="risk-banner" id="riskBanner">
+          <span class="risk-banner-icon">⚠</span>
+          <span id="riskBannerText"></span>
+        </div>
+
+      </div><!-- /resultFilled -->
+    </div><!-- /output card -->
+  </div><!-- /calc-grid -->
+
+  <!-- ═══ EXPLANATION ═══ -->
+  <div class="explanation-card" id="explanationCard">
+    <div class="explanation-title">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      What Does This Mean?
+    </div>
+    <div class="explanation-body" id="explanationBody"></div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div>© Angelrow Limited — Trailing Stop Optimizer</div>
+  <div><a href="index.html">← Back to Dashboard</a></div>
+</footer>
+
+</div></div><!-- /container /app -->
+
+<script>
+// ── Date ──────────────────────────────────────────────────
+document.getElementById('headerDate').textContent =
+  new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+// ── Strategy selector ─────────────────────────────────────
+let currentStrategy = 'CSP';
+function setStrategy(btn) {
+  document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentStrategy = btn.dataset.strat;
+  calculate();
+}
+
+// ── Advanced toggle ───────────────────────────────────────
+function toggleAdv() {
+  const body = document.getElementById('advBody');
+  const icon = document.getElementById('advIcon');
+  body.classList.toggle('open');
+  icon.classList.toggle('open');
+}
+
+function resetAdvanced() {
+  document.getElementById('adv-ba-mult').value = '2';
+  document.getElementById('adv-th-mult').value = '0.5';
+  document.getElementById('adv-vol-buf').value = '15';
+  calculate();
+}
+
+// ── Core calculation ──────────────────────────────────────
+function calculate() {
+  const bid      = parseFloat(document.getElementById('inp-bid').value);
+  const ask      = parseFloat(document.getElementById('inp-ask').value);
+  const theta    = parseFloat(document.getElementById('inp-theta').value);
+  const contracts= parseFloat(document.getElementById('inp-contracts').value);
+  const ivRank   = parseFloat(document.getElementById('inp-ivrank').value);
+  const credit   = parseFloat(document.getElementById('inp-credit').value);
+  const target   = parseFloat(document.getElementById('inp-target').value);
+
+  const baMult   = parseFloat(document.getElementById('adv-ba-mult').value) || 2;
+  const thMult   = parseFloat(document.getElementById('adv-th-mult').value) || 0.5;
+  const volBuf   = parseFloat(document.getElementById('adv-vol-buf').value) || 15;
+
+  // Need at minimum bid, ask, credit, target to show results
+  if (isNaN(bid) || isNaN(ask) || isNaN(credit) || isNaN(target) ||
+      bid <= 0 || ask <= 0 || credit <= 0 || target <= 0 || ask < bid) {
+    showEmpty();
+    return;
+  }
+
+  const mid      = (bid + ask) / 2;
+  const spread   = ask - bid;
+  const conts    = isNaN(contracts) || contracts < 1 ? 1 : contracts;
+
+  // Component 1: Bid-Ask Noise Floor
+  const comp1    = baMult * (spread / mid) * 100;
+
+  // Component 2: Theta Runway (needs theta and contracts)
+  let comp2 = 0;
+  if (!isNaN(theta) && theta > 0) {
+    const posValue = mid * 100 * conts;
+    comp2 = (theta / posValue) * 100 * thMult;
+  }
+
+  // Component 3: IV Volatility Buffer
+  let comp3 = 0;
+  if (!isNaN(ivRank) && ivRank >= 0) {
+    comp3 = (ivRank / 100) * volBuf;
+  }
+
+  // Recommended trail = max of three
+  const recommended = Math.max(comp1, comp2, comp3);
+  const roundedTrail = Math.round(recommended);
+
+  // Binding constraint
+  let binding = 'bid';
+  if (comp1 >= comp2 && comp1 >= comp3) binding = 'bid';
+  else if (comp2 >= comp1 && comp2 >= comp3) binding = 'theta';
+  else binding = 'iv';
+
+  // Trade metrics
+  const triggerPrice   = credit * (1 - target / 100);
+  const worstCaseExit  = triggerPrice * (1 + recommended / 100);
+  const worstCaseProfit = ((credit - worstCaseExit) / credit) * 100;
+
+  // Risk level
+  let riskLevel = 'green';
+  if (worstCaseProfit < 25) riskLevel = 'red';
+  else if (worstCaseProfit < 40) riskLevel = 'amber';
+
+  showResults({
+    comp1, comp2, comp3, recommended, roundedTrail,
+    binding, triggerPrice, worstCaseExit, worstCaseProfit,
+    riskLevel, mid, credit, target, ivRank, conts, theta, spread
+  });
+}
+
+function showEmpty() {
+  document.getElementById('resultEmpty').style.display = 'block';
+  document.getElementById('resultFilled').style.display = 'none';
+  document.getElementById('explanationCard').classList.remove('show');
+}
+
+function fmt(n, dec=2) {
+  if (isNaN(n)) return '—';
+  return n.toFixed(dec);
+}
+
+function showResults(r) {
+  document.getElementById('resultEmpty').style.display = 'none';
+  document.getElementById('resultFilled').style.display = 'block';
+
+  // Big number
+  const pctEl = document.getElementById('resPct');
+  pctEl.textContent = r.roundedTrail + '%';
+  pctEl.className = 'result-pct risk-' + r.riskLevel;
+
+  // Binding badge
+  const badge = document.getElementById('resBadge');
+  const bindingLabels = {bid: 'Bid-Ask Noise', theta: 'Theta Runway', iv: 'IV Buffer'};
+  const bindingClasses = {bid: 'binding-bid', theta: 'binding-theta', iv: 'binding-iv'};
+  badge.textContent = bindingLabels[r.binding];
+  badge.className = 'binding-badge ' + bindingClasses[r.binding];
+
+  // Components
+  ['Bid','Theta','Iv'].forEach(k => {
+    document.getElementById('comp' + k + 'Tag').style.display = 'none';
+    const el = document.getElementById('comp' + k);
+    el.classList.remove('is-binding');
+  });
+  document.getElementById('compBid').textContent   = fmt(r.comp1) + '%';
+  document.getElementById('compTheta').textContent = fmt(r.comp2) + '%';
+  document.getElementById('compIv').textContent    = fmt(r.comp3) + '%';
+
+  const bindingMap = {bid: 'Bid', theta: 'Theta', iv: 'Iv'};
+  const bKey = bindingMap[r.binding];
+  document.getElementById('comp' + bKey + 'Tag').style.display = 'inline';
+  document.getElementById('comp' + bKey).classList.add('is-binding');
+
+  // Metrics
+  document.getElementById('resMid').textContent         = '$' + fmt(r.mid);
+  document.getElementById('resTrigger').textContent     = '$' + fmt(r.triggerPrice);
+  document.getElementById('resWorstExit').textContent   = '$' + fmt(r.worstCaseExit);
+
+  const wpEl = document.getElementById('resWorstProfit');
+  wpEl.textContent = fmt(r.worstCaseProfit) + '%';
+  wpEl.className = 'metric-value ' + r.riskLevel;
+
+  // Risk banner
+  const banner = document.getElementById('riskBanner');
+  const bannerText = document.getElementById('riskBannerText');
+  banner.className = 'risk-banner';
+  if (r.riskLevel === 'red') {
+    banner.classList.add('show', 'red');
+    bannerText.innerHTML = '<b>High Risk:</b> Worst-case profit is below 25%. The trail is too wide relative to your profit target — you risk giving back most of the gain. Consider widening the profit target, tightening the bid-ask by trading at a better time of day, or using a fixed limit order instead.';
+  } else if (r.riskLevel === 'amber') {
+    banner.classList.add('show', 'amber');
+    bannerText.innerHTML = '<b>Moderate Risk:</b> Worst-case profit is between 25–40%. Acceptable, but monitor closely. The wide trail is driven by ' + (r.binding === 'bid' ? 'poor liquidity (wide bid-ask spread)' : r.binding === 'iv' ? 'elevated IV making option prices volatile' : 'theta decay relative to position size') + '.';
+  }
+
+  // Explanation
+  buildExplanation(r);
+}
+
+function buildExplanation(r) {
+  const card = document.getElementById('explanationCard');
+  const body = document.getElementById('explanationBody');
+  card.classList.add('show');
+
+  const stratNames = {
+    CSP: 'Cash-Secured Put', BullPut: 'Bull Put Spread',
+    BearCall: 'Bear Call Spread', IronCondor: 'Iron Condor'
+  };
+  const strat = stratNames[currentStrategy] || currentStrategy;
+
+  let html = '';
+
+  // Headline sentence
+  html += `<p>Your <strong>${strat}</strong> needs a <strong>${r.roundedTrail}% trailing stop</strong>, `;
+  html += `driven primarily by <strong>${
+    r.binding === 'bid' ? 'bid-ask spread noise' :
+    r.binding === 'theta' ? 'theta decay runway' : 'IV volatility buffer'
+  }</strong>.</p>`;
+
+  // Binding constraint explanation
+  if (r.binding === 'bid') {
+    const spreadPct = fmt((r.spread / r.mid) * 100);
+    html += `<p>The bid-ask spread ($${fmt(r.spread, 2)}) is <strong>${spreadPct}% of the mid price</strong>. `;
+    html += `At ${fmt(r.comp1)}%, the noise floor completely dominates the other components. `;
+    if (r.comp1 > 50) {
+      html += `A trail above 50% is a strong signal that this position has <strong>poor liquidity</strong> — `;
+      html += `market maker requoting alone will move the price enough to trigger a tight stop. `;
+      html += `Consider using a fixed limit order rather than a trailing stop, or waiting until the position `;
+      html += `has decayed further (reducing both the mid price and the spread as a % of value).`;
+    } else {
+      html += `Keep the trail wide enough to absorb normal bid-ask fluctuation without triggering.`;
+    }
+    html += `</p>`;
+  } else if (r.binding === 'theta') {
+    html += `<p>Daily theta of $${fmt(r.theta, 2)} against a position value of $${fmt(r.mid * 100 * r.conts, 2)} `;
+    html += `means the position decays <strong>${fmt(r.comp2)}% per day</strong>. `;
+    html += `The trail is set wide enough to give the position half a day to decay before a bounce could trigger it.`;
+    html += `</p>`;
+  } else {
+    html += `<p>With IV Rank at ${fmt(r.ivRank, 0)}%, the options market is pricing in elevated volatility. `;
+    html += `High IV environments produce <strong>larger intraday price swings</strong> on the option itself, `;
+    html += `so the trail needs to be wider to avoid getting shaken out on a normal move. `;
+    html += `The IV buffer accounts for ${fmt(r.comp3)}% of the recommendation.`;
+    html += `</p>`;
+  }
+
+  // Trail activation
+  html += `<p>The trail activates when the position reaches <strong>$${fmt(r.triggerPrice)}</strong> `;
+  html += `(${fmt(r.target, 0)}% of your $${fmt(r.credit)} credit locked in). `;
+  html += `If price then reverses ${r.roundedTrail}%, you close at <strong>$${fmt(r.worstCaseExit)}</strong> `;
+  html += `for a worst-case profit of `;
+
+  if (r.riskLevel === 'green') {
+    html += `<span class="flag-green">${fmt(r.worstCaseProfit)}% — a good outcome.</span>`;
+  } else if (r.riskLevel === 'amber') {
+    html += `<span class="flag-amber">${fmt(r.worstCaseProfit)}% — acceptable but watch the trade closely.</span>`;
+  } else {
+    html += `<span class="flag-red">${fmt(r.worstCaseProfit)}% — this is below the 25% threshold. Consider adjusting.</span>`;
+  }
+  html += `</p>`;
+
+  // Non-binding components context
+  html += `<p style="font-size:13px;color:var(--text-muted)">`;
+  html += `The other components would have required: `;
+  const others = [];
+  if (r.binding !== 'bid') others.push(`bid-ask noise floor: ${fmt(r.comp1)}%`);
+  if (r.binding !== 'theta') others.push(`theta runway: ${fmt(r.comp2)}%`);
+  if (r.binding !== 'iv') others.push(`IV buffer: ${fmt(r.comp3)}%`);
+  html += others.join(', ') + `.`;
+  html += `</p>`;
+
+  body.innerHTML = html;
+}
+</script>
+</body>
+</html>
