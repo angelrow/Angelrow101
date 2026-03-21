@@ -206,6 +206,12 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-config-item input:focus{outline:none;border-color:rgba(0,212,170,.4)}
 .mc-rerun-btn{padding:7px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:1px solid var(--border);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:all .15s ease}
 .mc-rerun-btn:hover{border-color:var(--border-hover);color:var(--text);background:rgba(255,255,255,.04)}
+.mc-error-toggle{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;padding:6px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:border-color .15s ease}
+.mc-error-toggle:hover{border-color:var(--amber);background:rgba(255,176,32,.04)}
+.mc-error-toggle input[type=checkbox]{width:14px;height:14px;accent-color:var(--amber);cursor:pointer;flex-shrink:0}
+.mc-error-label{font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap}
+.mc-error-toggle:has(input:checked){border-color:rgba(255,176,32,.4);background:rgba(255,176,32,.06)}
+.mc-error-toggle:has(input:checked) .mc-error-label{color:var(--amber)}
 .mc-status{font-size:11px;font-family:'JetBrains Mono',monospace;margin-left:4px}
 .mc-status-ok{color:var(--accent)}.mc-status-loading{color:var(--amber)}.mc-status-error{color:var(--red)}
 .mc-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:8px 0 12px;margin-top:8px;border-top:1px solid var(--border)}
@@ -411,6 +417,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
         <label for="mc-trades">Trades / Year</label>
         <input type="number" id="mc-trades" value="250" min="10" max="1000">
       </div>
+      <label class="mc-error-toggle" title="Include trades tagged ERROR in the dataset">
+        <input type="checkbox" id="mc-include-errors" onchange="MC.onErrorToggle()">
+        <span class="mc-error-label">Include error trades</span>
+      </label>
       <button class="mc-rerun-btn" onclick="MC.rerun()">↻ Re-run</button>
       <span id="mc-status" class="mc-status mc-status-loading">Click &quot;Show&quot; to run analysis</span>
     </div>
