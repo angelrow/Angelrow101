@@ -7,19 +7,12 @@ const MC = (() => {
   const SIMS = 10000;
   const RISK = 0.02;
 
-  let mcCharts = {};
-  let mcData = null;
-  let mcResults = null;
-  let mcStats = null;
+  let mcCharts     = {};
+  let mcDataAll    = null;  // all CSP/Bull Put trades (including errors)
+  let mcResults    = null;
+  let mcStats      = null;
 
   // ── Maths helpers ─────────────────────────────────────────────────────────
-
-  function randn() {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  }
 
   function pctile(arr, p) {
     const sorted = [...arr].sort((a, b) => a - b);
@@ -65,7 +58,8 @@ const MC = (() => {
     return isNaN(n) ? null : Math.abs(n);
   }
 
-  async function loadCSPTrades() {
+  // Loads ALL CSP + Bull Put trades; flags error trades rather than dropping them
+  async function loadAllTrades() {
     const res = await fetch(encodeURI('Trade Log-Table 1.csv'));
     if (!res.ok) throw new Error(`HTTP ${res.status} loading CSV`);
     const text = await res.text();
@@ -78,12 +72,11 @@ const MC = (() => {
 
     const fi = (...names) => headers.findIndex(h => names.some(n => h === n || h.includes(n)));
 
-    // Column indices — fall back to known CSV positions if header match fails
-    const cStrategy  = fi('strategy')                        >= 0 ? fi('strategy')                        : 3;
-    const cPnlPct    = fi('p_l_', 'pnl_pct', 'p_l_%')       >= 0 ? fi('p_l_', 'pnl_pct', 'p_l_%')       : 13;
-    const cWinLoss   = fi('win_loss', 'win')                 >= 0 ? fi('win_loss', 'win')                 : 16;
-    const cPremium   = fi('entry_cost', 'premium', 'credit') >= 0 ? fi('entry_cost', 'premium', 'credit') : 10;
-    const cTags      = fi('tags')                            >= 0 ? fi('tags')                            : 29;
+    const cStrategy = fi('strategy')                        >= 0 ? fi('strategy')                        : 3;
+    const cPnlPct   = fi('p_l_', 'pnl_pct', 'p_l_%')       >= 0 ? fi('p_l_', 'pnl_pct', 'p_l_%')       : 13;
+    const cWinLoss  = fi('win_loss', 'win')                 >= 0 ? fi('win_loss', 'win')                 : 16;
+    const cPremium  = fi('entry_cost', 'premium', 'credit') >= 0 ? fi('entry_cost', 'premium', 'credit') : 10;
+    const cTags     = fi('tags')                            >= 0 ? fi('tags')                            : 29;
 
     const trades = [];
 
@@ -94,12 +87,10 @@ const MC = (() => {
       const strategy = g(cStrategy);
       const tags     = g(cTags);
 
-      const strat_lc = strategy.toLowerCase();
+      const strat_lc  = strategy.toLowerCase();
       const isCsp     = strat_lc.includes('cash secured put') || strat_lc.includes('csp');
       const isBullPut = strat_lc.includes('bull put spread');
       if (!isCsp && !isBullPut) continue;
-
-      if (tags.toLowerCase().includes('error')) continue;
 
       const pnlPct  = parsePct(g(cPnlPct));
       const winLoss = g(cWinLoss).toLowerCase();
@@ -111,13 +102,24 @@ const MC = (() => {
       trades.push({
         strategy,
         pnlPct,
-        isWin: winLoss === 'win',
+        isWin:  winLoss === 'win',
+        isError: tags.toLowerCase().includes('error'),
         premium: premium || 0
       });
     }
 
     // Use most recent 50 if > 200 total (CSV is date-ordered)
     return trades.length > 200 ? trades.slice(-50) : trades;
+  }
+
+  function includeErrors() {
+    const el = document.getElementById('mc-include-errors');
+    return el ? el.checked : false;
+  }
+
+  function activeTrades() {
+    if (!mcDataAll) return [];
+    return includeErrors() ? mcDataAll : mcDataAll.filter(t => !t.isError);
   }
 
   // ── Statistics ────────────────────────────────────────────────────────────
@@ -131,32 +133,32 @@ const MC = (() => {
 
     const avg = arr => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 
-    const winRate  = trades.length ? wins.length / trades.length : 0;
-    const lossRate = 1 - winRate;
-    const avgWin   = avg(winPcts);
-    const avgLoss  = avg(lossPcts);
-    const maxWin   = winPcts.length  ? Math.max(...winPcts)  : 0;
-    const maxLoss  = lossPcts.length ? Math.min(...lossPcts) : 0;
-    const expectancy = winRate * avgWin + lossRate * avgLoss;
+    const winRate    = trades.length ? wins.length / trades.length : 0;
+    const avgWin     = avg(winPcts);
+    const avgLoss    = avg(lossPcts);
+    const maxWin     = winPcts.length  ? Math.max(...winPcts)  : 0;
+    const maxLoss    = lossPcts.length ? Math.min(...lossPcts) : 0;
+    const expectancy = winRate * avgWin + (1 - winRate) * avgLoss;
 
-    const premiums = trades.filter(t => t.premium > 0).map(t => t.premium);
+    const premiums      = trades.filter(t => t.premium > 0).map(t => t.premium);
     const avgPremium    = avg(premiums);
     const medianPremium = premiums.length ? median(premiums) : 0;
 
     return {
       total: trades.length,
       wins: wins.length, losses: losses.length,
-      winRate, lossRate, avgWin, avgLoss, maxWin, maxLoss,
+      winRate, lossRate: 1 - winRate,
+      avgWin, avgLoss, maxWin, maxLoss,
       expectancy, avgPremium, medianPremium
     };
   }
 
-  // ── Monte Carlo ───────────────────────────────────────────────────────────
+  // ── Monte Carlo — bootstrap resampling ────────────────────────────────────
+  // Each simulated trade draws a P&L directly from the actual trade pool
+  // (sampling with replacement). No parametric distribution assumed.
 
-  function runMonteCarlo(stats, startCapital, tradesPerYear) {
-    const { winRate, avgWin, avgLoss } = stats;
-    const stdWin  = avgWin * 0.3;
-    const stdLoss = Math.abs(avgLoss) * 0.5;
+  function runMonteCarlo(trades, startCapital, tradesPerYear) {
+    const n = trades.length;
 
     const endValues    = new Float64Array(SIMS);
     const maxDrawdowns = new Float64Array(SIMS);
@@ -170,16 +172,9 @@ const MC = (() => {
       let maxCons = 0;
 
       for (let t = 0; t < tradesPerYear; t++) {
-        const win = Math.random() < winRate;
-        let pnlPct;
-
-        if (win) {
-          pnlPct = avgWin + randn() * stdWin;
-          pnlPct = Math.max(0.01, pnlPct);
-        } else {
-          pnlPct = avgLoss + randn() * stdLoss;
-          pnlPct = Math.max(-100, Math.min(-0.01, pnlPct));
-        }
+        // Bootstrap: draw one actual trade outcome at random (with replacement)
+        const trade  = trades[Math.floor(Math.random() * n)];
+        const pnlPct = trade.pnlPct;
 
         account += account * RISK * (pnlPct / 100);
         if (account <= 0) { account = 0; break; }
@@ -188,7 +183,7 @@ const MC = (() => {
         const dd = (peak - account) / peak * 100;
         if (dd > maxDD) maxDD = dd;
 
-        if (!win) { consL++; if (consL > maxCons) maxCons = consL; }
+        if (!trade.isWin) { consL++; if (consL > maxCons) maxCons = consL; }
         else consL = 0;
       }
 
@@ -201,16 +196,9 @@ const MC = (() => {
     const mdd = Array.from(maxDrawdowns);
     const mcl = Array.from(maxConLosses);
 
-    const p5  = pctile(ev, 5);
-    const p25 = pctile(ev, 25);
-    const p50 = pctile(ev, 50);
-    const p75 = pctile(ev, 75);
-    const p95 = pctile(ev, 95);
-
     const probProfit   = ev.filter(v => v > startCapital).length / SIMS * 100;
     const probHalfLoss = ev.filter(v => v < startCapital * 0.5).length / SIMS * 100;
 
-    // Percentile return curve (1–99)
     const sortedEV = [...ev].sort((a, b) => a - b);
     const pctReturns = Array.from({ length: 99 }, (_, i) => {
       const idx = Math.floor(((i + 1) / 100) * (sortedEV.length - 1));
@@ -219,11 +207,10 @@ const MC = (() => {
 
     return {
       endValues: ev, maxDrawdowns: mdd, maxConLosses: mcl,
-      p5, p25, p50, p75, p95,
+      p5:  pctile(ev, 5),  p25: pctile(ev, 25), p50: pctile(ev, 50),
+      p75: pctile(ev, 75), p95: pctile(ev, 95),
       meanVal: mean(ev),
-      probProfit,
-      probLoss: 100 - probProfit,
-      probHalfLoss,
+      probProfit, probLoss: 100 - probProfit, probHalfLoss,
       ddMedian: pctile(mdd, 50), ddP95: pctile(mdd, 95),
       consMedian: pctile(mcl, 50), consP95: pctile(mcl, 95),
       pctReturns
@@ -243,8 +230,12 @@ const MC = (() => {
 
   // ── Render sections ───────────────────────────────────────────────────────
 
-  function renderStats(s) {
+  function renderStats(s, errorsIncluded, errorCount) {
+    const errNote = errorsIncluded
+      ? `<tr><td colspan="2" style="font-size:11px;color:var(--amber);padding:6px 10px 2px">⚠ ${errorCount} error trade${errorCount !== 1 ? 's' : ''} included in dataset</td></tr>`
+      : '';
     document.getElementById('mc-stats-body').innerHTML = `
+      ${errNote}
       <tr><td>Total Trades (CSP + Bull Put)</td><td class="mc-mono mc-neutral">${s.total}</td></tr>
       <tr><td>Wins</td><td class="mc-mono mc-win">${s.wins}</td></tr>
       <tr><td>Losses</td><td class="mc-mono mc-loss">${s.losses}</td></tr>
@@ -362,34 +353,22 @@ const MC = (() => {
           backgroundColor: ev.centers.map(v =>
             v >= startCapital ? 'rgba(0,212,170,0.65)' : 'rgba(255,77,106,0.65)'
           ),
-          borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0
+          borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0
         }]
       },
       options: {
         ...baseOpts,
         plugins: {
           ...baseOpts.plugins,
-          tooltip: {
-            ...baseOpts.plugins.tooltip,
-            callbacks: {
-              title: c => `~${$d(parseFloat(c[0].label))}`,
-              label: c => `${c.raw.toLocaleString()} simulations`
-            }
-          }
+          tooltip: { ...baseOpts.plugins.tooltip, callbacks: {
+            title: c => `~${$d(parseFloat(c[0].label))}`,
+            label: c => `${c.raw.toLocaleString()} simulations`
+          }}
         },
         scales: {
-          x: {
-            ...baseOpts.scales.x,
-            ticks: {
-              ...baseOpts.scales.x.ticks,
-              callback: (_, i) => {
-                const v = ev.centers[i];
-                return v !== undefined ? `$${(v / 1000).toFixed(0)}k` : '';
-              }
-            }
-          },
+          x: { ...baseOpts.scales.x, ticks: { ...baseOpts.scales.x.ticks,
+            callback: (_, i) => { const v = ev.centers[i]; return v !== undefined ? `$${(v / 1000).toFixed(0)}k` : ''; }
+          }},
           y: { ...baseOpts.scales.y }
         }
       }
@@ -406,37 +385,24 @@ const MC = (() => {
           data: dd.counts,
           backgroundColor: dd.centers.map(v =>
             v <= r.ddMedian ? 'rgba(0,212,170,0.55)' :
-            v <= r.ddP95   ? 'rgba(255,176,32,0.55)' :
-                              'rgba(255,77,106,0.65)'
+            v <= r.ddP95   ? 'rgba(255,176,32,0.55)' : 'rgba(255,77,106,0.65)'
           ),
-          borderWidth: 0,
-          barPercentage: 1.0,
-          categoryPercentage: 1.0
+          borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0
         }]
       },
       options: {
         ...baseOpts,
         plugins: {
           ...baseOpts.plugins,
-          tooltip: {
-            ...baseOpts.plugins.tooltip,
-            callbacks: {
-              title: c => `~${parseFloat(c[0].label).toFixed(1)}% drawdown`,
-              label: c => `${c.raw.toLocaleString()} simulations`
-            }
-          }
+          tooltip: { ...baseOpts.plugins.tooltip, callbacks: {
+            title: c => `~${parseFloat(c[0].label).toFixed(1)}% drawdown`,
+            label: c => `${c.raw.toLocaleString()} simulations`
+          }}
         },
         scales: {
-          x: {
-            ...baseOpts.scales.x,
-            ticks: {
-              ...baseOpts.scales.x.ticks,
-              callback: (_, i) => {
-                const v = dd.centers[i];
-                return v !== undefined ? `${v.toFixed(0)}%` : '';
-              }
-            }
-          },
+          x: { ...baseOpts.scales.x, ticks: { ...baseOpts.scales.x.ticks,
+            callback: (_, i) => { const v = dd.centers[i]; return v !== undefined ? `${v.toFixed(0)}%` : ''; }
+          }},
           y: { ...baseOpts.scales.y }
         }
       }
@@ -458,31 +424,22 @@ const MC = (() => {
           backgroundColor: consLabels.map(l => {
             const v = parseInt(l);
             return v <= r.consMedian ? 'rgba(0,212,170,0.55)' :
-                   v <= r.consP95   ? 'rgba(255,176,32,0.55)' :
-                                       'rgba(255,77,106,0.65)';
+                   v <= r.consP95   ? 'rgba(255,176,32,0.55)' : 'rgba(255,77,106,0.65)';
           }),
-          borderWidth: 0,
-          barPercentage: 0.8,
-          categoryPercentage: 0.9
+          borderWidth: 0, barPercentage: 0.8, categoryPercentage: 0.9
         }]
       },
       options: {
         ...baseOpts,
         plugins: {
           ...baseOpts.plugins,
-          tooltip: {
-            ...baseOpts.plugins.tooltip,
-            callbacks: {
-              title: c => `${c[0].label} consecutive losses`,
-              label: c => `${c.raw.toLocaleString()} simulations`
-            }
-          }
+          tooltip: { ...baseOpts.plugins.tooltip, callbacks: {
+            title: c => `${c[0].label} consecutive losses`,
+            label: c => `${c.raw.toLocaleString()} simulations`
+          }}
         },
         scales: {
-          x: {
-            ...baseOpts.scales.x,
-            title: { display: true, text: 'Max Consecutive Losses', color: '#5a6577', font: { size: 10 } }
-          },
+          x: { ...baseOpts.scales.x, title: { display: true, text: 'Max Consecutive Losses', color: '#5a6577', font: { size: 10 } } },
           y: { ...baseOpts.scales.y }
         }
       }
@@ -507,25 +464,17 @@ const MC = (() => {
         ...baseOpts,
         plugins: {
           ...baseOpts.plugins,
-          tooltip: {
-            ...baseOpts.plugins.tooltip,
-            mode: 'index',
-            intersect: false,
-            callbacks: {
-              title: c => `${c[0].parsed.x}th percentile`,
-              label: c => `Return: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(1)}%`
-            }
-          }
+          tooltip: { ...baseOpts.plugins.tooltip, mode: 'index', intersect: false, callbacks: {
+            title: c => `${c[0].parsed.x}th percentile`,
+            label: c => `Return: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(1)}%`
+          }}
         },
         scales: {
-          x: {
-            type: 'linear',
-            ...baseOpts.scales.x,
+          x: { type: 'linear', ...baseOpts.scales.x,
             title: { display: true, text: 'Percentile', color: '#5a6577', font: { size: 10 } },
             ticks: { ...baseOpts.scales.x.ticks, callback: v => `${v}%` }
           },
-          y: {
-            ...baseOpts.scales.y,
+          y: { ...baseOpts.scales.y,
             title: { display: true, text: 'Return (%)', color: '#5a6577', font: { size: 10 } },
             ticks: { ...baseOpts.scales.y.ticks, callback: v => `${v >= 0 ? '+' : ''}${v}%` }
           }
@@ -543,7 +492,16 @@ const MC = (() => {
     el.className = 'mc-status mc-status-' + type;
   }
 
-  // ── Public: toggle ────────────────────────────────────────────────────────
+  function updateDataCount(trades) {
+    const el = document.getElementById('mc-data-count');
+    if (!el) return;
+    const errCount = trades.filter(t => t.isError).length;
+    el.textContent = includeErrors() && errCount > 0
+      ? `${trades.length} trades (incl. ${errCount} errors)`
+      : `${trades.length} trades`;
+  }
+
+  // ── Public: toggle panel ──────────────────────────────────────────────────
 
   function toggle() {
     const content = document.getElementById('mc-content');
@@ -558,44 +516,46 @@ const MC = (() => {
   // ── Public: run ───────────────────────────────────────────────────────────
 
   async function run() {
-    const capitalInput = document.getElementById('mc-capital');
-    const tradesInput  = document.getElementById('mc-trades');
-    const startCapital = parseFloat((capitalInput ? capitalInput.value : '50000').replace(/[^0-9.]/g, '')) || 50000;
+    const capitalInput  = document.getElementById('mc-capital');
+    const tradesInput   = document.getElementById('mc-trades');
+    const startCapital  = parseFloat((capitalInput ? capitalInput.value : '50000').replace(/[^0-9.]/g, '')) || 50000;
     const tradesPerYear = parseInt(tradesInput ? tradesInput.value : '250') || 250;
 
     setStatus('Loading trade data…', 'loading');
 
     try {
-      if (!mcData) {
-        mcData = await loadCSPTrades();
+      if (!mcDataAll) {
+        mcDataAll = await loadAllTrades();
       }
 
-      if (mcData.length < 5) {
-        setStatus(`Insufficient data: ${mcData.length} CSP/Bull Put trades found (need ≥ 5)`, 'error');
+      const trades = activeTrades();
+
+      if (trades.length < 5) {
+        setStatus(`Insufficient data: ${trades.length} CSP/Bull Put trades found (need ≥ 5)`, 'error');
         return;
       }
 
-      const countEl = document.getElementById('mc-data-count');
-      if (countEl) countEl.textContent = `${mcData.length} trades`;
+      updateDataCount(trades);
 
-      mcStats = calcStats(mcData);
-      setStatus(`Running ${SIMS.toLocaleString()} simulations…`, 'loading');
+      mcStats = calcStats(trades);
+      setStatus(`Running ${SIMS.toLocaleString()} bootstrap simulations…`, 'loading');
 
       // Yield to UI before heavy computation
       await new Promise(resolve => setTimeout(resolve, 30));
 
-      mcResults = runMonteCarlo(mcStats, startCapital, tradesPerYear);
+      const errCount = trades.filter(t => t.isError).length;
+      mcResults = runMonteCarlo(trades, startCapital, tradesPerYear);
 
-      renderStats(mcStats);
+      renderStats(mcStats, includeErrors(), errCount);
       renderResults(mcResults, startCapital);
       renderRisk(mcResults, mcStats);
       renderCharts(mcResults, startCapital);
 
       const cfgEl = document.getElementById('mc-sim-config');
       if (cfgEl) cfgEl.textContent =
-        `Starting Capital: ${$d(startCapital)} · Trades/Year: ${tradesPerYear} · Risk/Trade: ${(RISK * 100).toFixed(0)}% · Simulations: ${SIMS.toLocaleString()}`;
+        `Starting Capital: ${$d(startCapital)} · Trades/Year: ${tradesPerYear} · Risk/Trade: ${(RISK * 100).toFixed(0)}% · Simulations: ${SIMS.toLocaleString()} · Method: Bootstrap`;
 
-      setStatus(`Complete — ${mcData.length} trades · ${SIMS.toLocaleString()} scenarios`, 'ok');
+      setStatus(`Complete — ${trades.length} trades · ${SIMS.toLocaleString()} scenarios`, 'ok');
     } catch (err) {
       console.error('[MC]', err);
       setStatus(`Error: ${err.message}`, 'error');
@@ -605,11 +565,19 @@ const MC = (() => {
   // ── Public: rerun (clear cache) ───────────────────────────────────────────
 
   function rerun() {
-    mcData    = null;
+    mcDataAll = null;
     mcResults = null;
     mcStats   = null;
     run();
   }
 
-  return { toggle, run, rerun };
+  // ── Public: onErrorToggle — re-run without refetching CSV ─────────────────
+
+  function onErrorToggle() {
+    mcResults = null;
+    mcStats   = null;
+    run();
+  }
+
+  return { toggle, run, rerun, onErrorToggle };
 })();
