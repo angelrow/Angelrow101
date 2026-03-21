@@ -187,6 +187,60 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .gl-line{width:18px;height:2px;border-radius:1px}
 .gl-dashed{background:repeating-linear-gradient(90deg,currentColor 0,currentColor 4px,transparent 4px,transparent 8px)}
 @media(max-width:768px){.gc-row{grid-template-columns:repeat(2,1fr)}.greeks-chart-grid{grid-template-columns:1fr}}
+
+/* ── Monte Carlo Analysis ─────────────────────────────────────────────────── */
+.mc-wrapper{margin-bottom:28px}
+.mc-toggle-bar{display:flex;justify-content:space-between;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;cursor:pointer;transition:all .2s ease;user-select:none;gap:12px}
+.mc-toggle-bar:hover{border-color:var(--border-hover);background:rgba(255,255,255,.02)}
+.mc-toggle-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mc-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;background:rgba(0,212,170,.12);color:var(--accent);border:1px solid rgba(0,212,170,.25)}
+.mc-toggle-title{font-size:14px;font-weight:600;color:var(--text)}
+.mc-data-tag{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);padding:2px 8px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.mc-toggle-btn{font-size:12px;font-weight:500;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(0,212,170,.2);border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer;font-family:inherit;transition:all .15s ease;white-space:nowrap;flex-shrink:0}
+.mc-toggle-btn:hover{background:rgba(0,212,170,.18)}
+.mc-content{padding-top:20px}
+.mc-config-bar{display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px}
+.mc-config-item{display:flex;align-items:center;gap:8px}
+.mc-config-item label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.mc-config-item input{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 10px;width:110px;transition:border-color .15s}
+.mc-config-item input:focus{outline:none;border-color:rgba(0,212,170,.4)}
+.mc-rerun-btn{padding:7px 16px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;border:1px solid var(--border);background:none;color:var(--text-secondary);cursor:pointer;font-family:inherit;transition:all .15s ease}
+.mc-rerun-btn:hover{border-color:var(--border-hover);color:var(--text);background:rgba(255,255,255,.04)}
+.mc-status{font-size:11px;font-family:'JetBrains Mono',monospace;margin-left:4px}
+.mc-status-ok{color:var(--accent)}.mc-status-loading{color:var(--amber)}.mc-status-error{color:var(--red)}
+.mc-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:8px 0 12px;margin-top:8px;border-top:1px solid var(--border)}
+.mc-sim-config{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-bottom:14px}
+.mc-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.mc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 20px 16px}
+.mc-card-title{font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.mc-table{width:100%;border-collapse:collapse;font-size:13px}
+.mc-table th{padding:8px 10px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);border-bottom:1px solid var(--border)}
+.mc-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-secondary)}
+.mc-table tr:last-child td{border-bottom:none}
+.mc-table tr.mc-hi td{background:rgba(255,255,255,.018)}
+.mc-mono{font-family:'JetBrains Mono',monospace;text-align:right}
+.mc-win{color:var(--accent)}.mc-loss{color:var(--red)}.mc-neutral{color:var(--text)}
+.mc-tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--text-muted);margin-left:4px;vertical-align:middle}
+.mc-prob-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.mc-prob-item{padding:12px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.06)}
+.mc-prob-win{background:rgba(0,212,170,.05);border-color:rgba(0,212,170,.12)}
+.mc-prob-loss-item{background:rgba(255,77,106,.05);border-color:rgba(255,77,106,.12)}
+.mc-prob-danger{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.18)}
+.mc-prob-label{font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500}
+.mc-prob-value{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.mc-psych-box{display:flex;align-items:flex-start;gap:14px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px}
+.mc-psych-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.mc-psych-title{font-size:12px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.mc-psych-body{font-size:13px;color:var(--text-secondary);line-height:1.6}
+.mc-psych-body strong{color:var(--text)}
+.mc-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px}
+.mc-chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 14px;transition:border-color .2s}
+.mc-chart-card:hover{border-color:var(--border-hover)}
+.mc-chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.mc-chart-sub{font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.4}
+.mc-chart-wrap{position:relative;height:220px}
+@media(max-width:900px){.mc-grid-2,.mc-chart-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.mc-toggle-bar{flex-direction:column;align-items:flex-start}.mc-config-bar{flex-direction:column;align-items:flex-start}.mc-config-item input{width:100%}}
 </style>
 </head>
 <body>
@@ -333,6 +387,153 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <button class="back-btn" onclick="nav('home')">← Back to Home</button>
 <div class="page-title">Trading Journal</div>
 <div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
+
+<!-- ── Monte Carlo Analysis ──────────────────────────────────────────────── -->
+<div class="mc-wrapper">
+  <div class="mc-toggle-bar" onclick="MC.toggle()">
+    <div class="mc-toggle-left">
+      <span class="mc-badge">Monte Carlo</span>
+      <span class="mc-toggle-title">CSP &amp; Bull Put Spread Strategy Analysis</span>
+      <span id="mc-data-count" class="mc-data-tag"></span>
+    </div>
+    <button class="mc-toggle-btn" id="mc-toggle-btn" onclick="event.stopPropagation();MC.toggle()">Show Monte Carlo Analysis ▼</button>
+  </div>
+
+  <div id="mc-content" style="display:none" class="mc-content">
+
+    <!-- Config bar -->
+    <div class="mc-config-bar">
+      <div class="mc-config-item">
+        <label for="mc-capital">Starting Capital</label>
+        <input type="text" id="mc-capital" value="50000" placeholder="50000">
+      </div>
+      <div class="mc-config-item">
+        <label for="mc-trades">Trades / Year</label>
+        <input type="number" id="mc-trades" value="250" min="10" max="1000">
+      </div>
+      <button class="mc-rerun-btn" onclick="MC.rerun()">↻ Re-run</button>
+      <span id="mc-status" class="mc-status mc-status-loading">Click &quot;Show&quot; to run analysis</span>
+    </div>
+
+    <!-- Section 1: Statistics -->
+    <div class="mc-section-hdr">1 — Trading Performance Statistics</div>
+    <div class="mc-grid-2">
+      <div class="mc-card">
+        <div class="mc-card-title">Actual Statistics — CSP &amp; Bull Put Spread</div>
+        <table class="mc-table">
+          <tbody id="mc-stats-body">
+            <tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:20px">Running simulation…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mc-card">
+        <div class="mc-card-title">About This Analysis</div>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">
+          10,000 scenarios are simulated using your actual win rate, average win, and average loss from closed CSP &amp; Bull Put Spread trades.
+        </p>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">
+          Each trade samples a P&amp;L from a normal distribution centred on your historical average, then applies it to <strong style="color:var(--text)">2% of the current account balance</strong>.
+        </p>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6">
+          Results show the range of realistic outcomes over the specified trading horizon.
+          <br>ERROR-tagged trades are excluded. CSV refreshes automatically each page load.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section 2: MC Results -->
+    <div class="mc-section-hdr">2 — Monte Carlo Simulation Results (10,000 Scenarios)</div>
+    <div id="mc-sim-config" class="mc-sim-config"></div>
+    <div class="mc-grid-2">
+      <div class="mc-card">
+        <div class="mc-card-title">Ending Account Value by Percentile</div>
+        <table class="mc-table">
+          <thead>
+            <tr><th>Scenario</th><th style="text-align:right">Final Value</th><th style="text-align:right">Return</th></tr>
+          </thead>
+          <tbody id="mc-results-body">
+            <tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">Running…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mc-card">
+        <div class="mc-card-title">Probability Metrics</div>
+        <div class="mc-prob-grid">
+          <div class="mc-prob-item mc-prob-win">
+            <div class="mc-prob-label">Probability of Profit</div>
+            <div class="mc-prob-value mc-win" id="mc-prob-profit">—</div>
+          </div>
+          <div class="mc-prob-item mc-prob-loss-item">
+            <div class="mc-prob-label">Probability of Loss</div>
+            <div class="mc-prob-value mc-loss" id="mc-prob-loss">—</div>
+          </div>
+          <div class="mc-prob-item mc-prob-danger">
+            <div class="mc-prob-label">Probability of &gt;50% Loss</div>
+            <div class="mc-prob-value mc-loss" id="mc-prob-halfloss">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Risk Metrics -->
+    <div class="mc-section-hdr">3 — Risk Metrics</div>
+    <div class="mc-grid-2">
+      <div class="mc-card">
+        <div class="mc-card-title">Maximum Drawdown</div>
+        <table class="mc-table">
+          <tbody>
+            <tr><td>Median Max Drawdown</td><td class="mc-mono mc-loss" id="mc-dd-median">—</td></tr>
+            <tr><td>95th Percentile Max Drawdown</td><td class="mc-mono mc-loss" id="mc-dd-p95">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mc-card">
+        <div class="mc-card-title">Consecutive Loss Streaks</div>
+        <table class="mc-table">
+          <tbody>
+            <tr><td>Median Max Consecutive Losses</td><td class="mc-mono mc-loss" id="mc-cons-median">—</td></tr>
+            <tr><td>95th Percentile Consecutive Losses</td><td class="mc-mono mc-loss" id="mc-cons-p95">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mc-psych-box">
+      <div class="mc-psych-icon">⚠</div>
+      <div class="mc-psych-content">
+        <div class="mc-psych-title">Psychological Preparation</div>
+        <div id="mc-psych-text" class="mc-psych-body">Running simulation…</div>
+      </div>
+    </div>
+
+    <!-- Section 4: Charts -->
+    <div class="mc-section-hdr">4 — Visual Analysis</div>
+    <div class="mc-chart-grid">
+      <div class="mc-chart-card">
+        <div class="mc-chart-title">Ending Account Values</div>
+        <div class="mc-chart-sub">10,000 simulations · Green = above starting capital · Red = below</div>
+        <div class="mc-chart-wrap"><canvas id="mc-c1"></canvas></div>
+      </div>
+      <div class="mc-chart-card">
+        <div class="mc-chart-title">Maximum Drawdowns</div>
+        <div class="mc-chart-sub">Green ≤ median · Amber ≤ 95th percentile · Red = worst cases</div>
+        <div class="mc-chart-wrap"><canvas id="mc-c2"></canvas></div>
+      </div>
+      <div class="mc-chart-card">
+        <div class="mc-chart-title">Max Consecutive Loss Streaks</div>
+        <div class="mc-chart-sub">Green ≤ median · Amber ≤ 95th percentile · Red = worst cases</div>
+        <div class="mc-chart-wrap"><canvas id="mc-c3"></canvas></div>
+      </div>
+      <div class="mc-chart-card">
+        <div class="mc-chart-title">Return (%) by Percentile</div>
+        <div class="mc-chart-sub">1st–99th percentile outcomes · Green fill = positive · Red fill = negative</div>
+        <div class="mc-chart-wrap"><canvas id="mc-c4"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- /mc-content -->
+</div><!-- /mc-wrapper -->
+<!-- ── End Monte Carlo ────────────────────────────────────────────────────── -->
+
 <div class="month-selector" id="monthSelector">
 <button class="month-btn active" onclick="filterMonth('all',this)">All Trades</button>
 <button class="month-btn" onclick="filterMonth('2026-02',this)">Feb 2026</button>
@@ -709,5 +910,6 @@ async function loadMarketData(){
 }
 
 </script>
+<script src="monte-carlo.js" defer></script>
 </body>
 </html>
