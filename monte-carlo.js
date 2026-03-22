@@ -111,9 +111,10 @@ const MC = (() => {
       trades.push({
         strategy,
         pnlPct,
-        isWin:   winLoss === 'win',
-        isError: mistakes.startsWith('ERROR'),
-        premium: premium || 0
+        isWin:       winLoss === 'win',
+        isError:     mistakes.toUpperCase().startsWith('ERROR'),  // case-insensitive
+        premium:     premium || 0,
+        mistakesRaw: mistakes  // stored for the diagnostic panel
       });
     }
 
@@ -516,6 +517,49 @@ const MC = (() => {
     else el.textContent = `${trades.length} clean trades`;
   }
 
+  // ── Diagnostic panel (shown before simulation runs) ───────────────────────
+
+  function renderDiagnostic(allTrades, activeTrds) {
+    const el = document.getElementById('mc-diagnostic');
+    if (!el) return;
+
+    const errorCount = allTrades.filter(t => t.isError).length;
+    const cleanCount = allTrades.length - errorCount;
+
+    // Unique non-empty mistakes values (up to 10 for display)
+    const uniqueMistakes = [...new Set(
+      allTrades.map(t => t.mistakesRaw).filter(v => v)
+    )].slice(0, 10);
+
+    const modeLabel = _mode === 'all' ? 'All Trades' : _mode === 'errors' ? 'Errors Only' : 'Clean Only';
+    const modeColor = _mode === 'errors' ? 'var(--red)' : _mode === 'all' ? 'var(--amber)' : 'var(--accent)';
+
+    const mistakesSamples = uniqueMistakes.length
+      ? uniqueMistakes.map(v => {
+          const isErr = v.toUpperCase().startsWith('ERROR');
+          const display = v.length > 35 ? v.slice(0, 35) + '…' : v;
+          return `<span class="mc-diag-val ${isErr ? 'mc-diag-val-err' : 'mc-diag-val-ok'}">${display}</span>`;
+        }).join('')
+      : '<span style="color:var(--red);font-size:11px">⚠ Mistakes column empty — check CSV column index</span>';
+
+    el.innerHTML = `
+      <div class="mc-diag-bar">
+        <div class="mc-diag-counts">
+          <span class="mc-diag-item">Total loaded: <strong>${allTrades.length}</strong></span>
+          <span class="mc-diag-sep">·</span>
+          <span class="mc-diag-item mc-diag-clean">Clean: <strong>${cleanCount}</strong></span>
+          <span class="mc-diag-sep">·</span>
+          <span class="mc-diag-item mc-diag-err">Errors: <strong>${errorCount}</strong></span>
+          <span class="mc-diag-sep">·</span>
+          <span class="mc-diag-item" style="color:${modeColor}">Active (${modeLabel}): <strong>${activeTrds.length}</strong></span>
+        </div>
+        <div class="mc-diag-mistakes">
+          <span class="mc-diag-label">Mistakes column values: </span>
+          ${mistakesSamples}
+        </div>
+      </div>`;
+  }
+
   // ── Public: toggle panel ──────────────────────────────────────────────────
 
   function toggle() {
@@ -553,15 +597,19 @@ const MC = (() => {
       updateDataCount(trades);
 
       mcStats = calcStats(trades);
+      const errCount = trades.filter(t => t.isError).length;
+
+      // Show diagnostic + stats BEFORE the heavy simulation so the user can
+      // verify filtering is correct while the simulation is running
+      renderDiagnostic(mcDataAll, trades);
+      renderStats(mcStats, _mode, errCount);
       setStatus(`Running ${SIMS.toLocaleString()} bootstrap simulations…`, 'loading');
 
       // Yield to UI before heavy computation
       await new Promise(resolve => setTimeout(resolve, 30));
 
-      const errCount = trades.filter(t => t.isError).length;
       mcResults = runMonteCarlo(trades, startCapital, tradesPerYear);
 
-      renderStats(mcStats, _mode, errCount);
       renderResults(mcResults, startCapital);
       renderRisk(mcResults, mcStats);
       renderCharts(mcResults, startCapital);

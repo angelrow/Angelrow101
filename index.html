@@ -216,6 +216,16 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .journal-error-row:hover td{background:rgba(255,77,106,.07)!important}
 .error-badge{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 5px;border-radius:3px;background:rgba(255,77,106,.18);color:var(--red);border:1px solid rgba(255,77,106,.25);vertical-align:middle;margin-left:4px}
 .mc-status{font-size:11px;font-family:'JetBrains Mono',monospace;margin-left:4px}
+.mc-diag-bar{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;font-size:12px;font-family:'JetBrains Mono',monospace}
+.mc-diag-counts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.mc-diag-item{color:var(--text-secondary)}.mc-diag-item strong{color:var(--text)}
+.mc-diag-clean strong{color:var(--accent)}.mc-diag-err strong{color:var(--red)}
+.mc-diag-sep{color:var(--border-hover)}
+.mc-diag-label{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+.mc-diag-mistakes{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.mc-diag-val{font-size:10px;padding:1px 6px;border-radius:3px;border:1px solid var(--border)}
+.mc-diag-val-ok{background:rgba(0,212,170,.06);color:var(--accent);border-color:rgba(0,212,170,.2)}
+.mc-diag-val-err{background:rgba(255,77,106,.08);color:var(--red);border-color:rgba(255,77,106,.2)}
 .mc-status-ok{color:var(--accent)}.mc-status-loading{color:var(--amber)}.mc-status-error{color:var(--red)}
 .mc-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:8px 0 12px;margin-top:8px;border-top:1px solid var(--border)}
 .mc-sim-config{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-bottom:14px}
@@ -429,6 +439,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <span id="mc-status" class="mc-status mc-status-loading">Click &quot;Show&quot; to run analysis</span>
     </div>
 
+    <!-- Filter diagnostic — populated by JS before simulation runs -->
+    <div id="mc-diagnostic"></div>
+
     <!-- Section 1: Statistics -->
     <div class="mc-section-hdr">1 — Trading Performance Statistics</div>
     <div class="mc-grid-2">
@@ -443,14 +456,13 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
       <div class="mc-card">
         <div class="mc-card-title">About This Analysis</div>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">
-          10,000 scenarios are simulated using your actual win rate, average win, and average loss from closed CSP &amp; Bull Put Spread trades.
+          10,000 scenarios are simulated by <strong style="color:var(--text)">bootstrap resampling</strong> — each simulated trade draws a P&amp;L directly from your actual closed CSP &amp; Bull Put Spread trades (sampling with replacement). No parametric distribution assumed.
         </p>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:10px">
-          Each trade samples a P&amp;L from a normal distribution centred on your historical average, then applies it to <strong style="color:var(--text)">2% of the current account balance</strong>.
+          Each sampled P&amp;L is applied to <strong style="color:var(--text)">2% of the current account balance</strong>. Accounts can reach zero; there is no loss cap.
         </p>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6">
-          Results show the range of realistic outcomes over the specified trading horizon.
-          <br>ERROR-tagged trades are excluded. CSV refreshes automatically each page load.
+          Use the filter buttons to include/exclude ERROR-tagged trades. The diagnostic bar above the stats shows exactly how many trades are in the active pool and what Mistakes values were found in the CSV.
         </p>
       </div>
     </div>
