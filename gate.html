@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Trade Gate — Angelrow Trading Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--bg-card-solid:#111620;--border:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);--text:#eaf0f6;--text-secondary:#8a95a5;--text-muted:#5a6577;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.1);--accent-glow:rgba(0,212,170,0.15);--radius:14px;--radius-sm:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* Background layers matching main site */
+.skyline-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.skyline-bg::before{content:'';position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 5% bottom/12px 55%,linear-gradient(transparent 40%,#181d27 40%,#181d27 100%) no-repeat 8% bottom/28px 48%,linear-gradient(transparent 25%,#141922 25%,#141922 100%) no-repeat 12% bottom/35px 58%,linear-gradient(transparent 45%,#171c26 45%,#171c26 100%) no-repeat 18% bottom/22px 42%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 22% bottom/45px 62%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 28% bottom/18px 50%,linear-gradient(transparent 15%,#121720 15%,#121720 100%) no-repeat 32% bottom/50px 65%,linear-gradient(transparent 50%,#191e28 50%,#191e28 100%) no-repeat 38% bottom/25px 38%,linear-gradient(transparent 10%,#111620 10%,#111620 100%) no-repeat 42% bottom/40px 70%,linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 48% bottom/55px 55%,linear-gradient(transparent 22%,#131821 22%,#131821 100%) no-repeat 54% bottom/30px 60%,linear-gradient(transparent 40%,#171c26 40%,#171c26 100%) no-repeat 58% bottom/20px 45%,linear-gradient(transparent 18%,#141922 18%,#141922 100%) no-repeat 62% bottom/48px 63%,linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 68% bottom/35px 50%,linear-gradient(transparent 12%,#121720 12%,#121720 100%) no-repeat 73% bottom/42px 68%,linear-gradient(transparent 28%,#151a24 28%,#151a24 100%) no-repeat 78% bottom/55px 56%,linear-gradient(transparent 45%,#191e28 45%,#191e28 100%) no-repeat 83% bottom/20px 40%,linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 87% bottom/38px 62%,linear-gradient(transparent 32%,#171c26 32%,#171c26 100%) no-repeat 92% bottom/28px 52%,linear-gradient(transparent 15%,#141922 15%,#141922 100%) no-repeat 96% bottom/45px 66%;opacity:.5}
+.skyline-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(0,212,170,.02) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(77,159,255,.015) 0%,transparent 50%),linear-gradient(to bottom,transparent 50%,var(--bg) 100%)}
+.grid-overlay{position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 80 0 L 0 0 0 80' fill='none' stroke='%23ffffff' stroke-width='0.3' opacity='0.015'/%3E%3C/svg%3E");pointer-events:none}
+
+/* Gate screen */
+.gate-screen{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px}
+
+.gate-card{background:var(--bg-card-solid);border:1px solid var(--border-hover);border-radius:var(--radius);padding:48px;max-width:640px;width:100%}
+
+/* Header */
+.gate-brand{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.brand-icon{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#009e7e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.15);flex-shrink:0}
+.brand-icon svg{width:22px;height:22px;fill:none;stroke:#0b0f14;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gate-brand-text{}
+.gate-brand-text h1{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.gate-brand-text .tagline{font-size:12px;font-weight:400;color:var(--text-muted);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+
+.gate-heading{font-size:17px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;letter-spacing:-.01em}
+.gate-subtext{font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:32px}
+
+/* Conditions */
+.conditions{list-style:none;margin-bottom:32px}
+.condition-item{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
+.condition-item:first-child{border-top:1px solid var(--border)}
+.condition-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);width:18px;flex-shrink:0;padding-top:2px;font-weight:500}
+.condition-body{font-size:14px;line-height:1.6}
+.condition-label{font-weight:600;color:var(--text)}
+.condition-desc{color:var(--text-secondary)}
+
+/* Confirm checkbox row */
+.confirm-row{display:flex;align-items:center;margin-bottom:24px;padding:14px 16px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius-sm)}
+.confirm-label{display:flex;align-items:center;gap:12px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text);user-select:none;width:100%}
+.confirm-cb{width:17px;height:17px;cursor:pointer;accent-color:var(--accent);flex-shrink:0}
+
+/* Buttons */
+.button-row{display:flex;gap:10px}
+.btn-proceed{flex:1;padding:13px 24px;font-size:15px;font-weight:600;font-family:inherit;border-radius:var(--radius-sm);border:1px solid rgba(0,212,170,.25);background:var(--accent-dim);color:var(--accent);cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.btn-proceed:hover:not(:disabled){background:rgba(0,212,170,.18);border-color:rgba(0,212,170,.4)}
+.btn-proceed:disabled{opacity:.3;cursor:not-allowed}
+.btn-not-today{padding:13px 20px;font-size:14px;font-weight:500;font-family:inherit;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:color .15s ease,border-color .15s ease;white-space:nowrap}
+.btn-not-today:hover{color:var(--text-secondary);border-color:var(--border-hover)}
+
+/* Not Today screen */
+.not-today-screen{display:none;position:relative;z-index:1;min-height:100vh;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:40px 24px}
+.not-today-msg{font-size:22px;font-weight:300;color:var(--text-secondary);letter-spacing:.01em;font-style:italic}
+.not-today-note{font-size:13px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div class="skyline-bg"></div>
+<div class="grid-overlay"></div>
+
+<!-- Gate screen -->
+<div id="gate-screen" class="gate-screen">
+  <div class="gate-card">
+
+    <div class="gate-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div class="gate-brand-text">
+        <h1>Angelrow Trading Systems</h1>
+        <div class="tagline">Pre-Trade Gate</div>
+      </div>
+    </div>
+
+    <div class="gate-heading">Before you proceed</div>
+    <div class="gate-subtext">Confirm each condition is met before entering the market today.</div>
+
+    <ol class="conditions">
+      <li class="condition-item">
+        <span class="condition-num">01</span>
+        <span class="condition-body"><span class="condition-label">Environment</span> <span class="condition-desc">— I am at my desk with full connectivity, ThinkorSwim open, and no time pressure for at least 30 minutes.</span></span>
+      </li>
+      <li class="condition-item">
+        <span class="condition-num">02</span>
+        <span class="condition-body"><span class="condition-label">Physical State</span> <span class="condition-desc">— I have slept 6+ hours, eaten, and am free of pain, illness, or stimulant crash.</span></span>
+      </li>
+      <li class="condition-item">
+        <span class="condition-num">03</span>
+        <span class="condition-body"><span class="condition-label">Mental State</span> <span class="condition-desc">— I am calm and focused — not angry, anxious, euphoric, or distracted by something unresolved.</span></span>
+      </li>
+      <li class="condition-item">
+        <span class="condition-num">04</span>
+        <span class="condition-body"><span class="condition-label">Market Context</span> <span class="condition-desc">— I have checked the calendar for FOMC, CPI, earnings, or other binary events that invalidate my edge.</span></span>
+      </li>
+      <li class="condition-item">
+        <span class="condition-num">05</span>
+        <span class="condition-body"><span class="condition-label">Process Ready</span> <span class="condition-desc">— My screener is run, journal is open, and I know my max position size before looking at any specific trade.</span></span>
+      </li>
+    </ol>
+
+    <div class="confirm-row">
+      <label class="confirm-label">
+        <input type="checkbox" class="confirm-cb" id="confirm-cb">
+        I confirm all conditions are met
+      </label>
+    </div>
+
+    <div class="button-row">
+      <button class="btn-proceed" id="btn-proceed" disabled>Proceed</button>
+      <button class="btn-not-today" id="btn-not-today">Not Today</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Not Today screen -->
+<div id="not-today-screen" class="not-today-screen">
+  <div class="not-today-msg">The edge will be there tomorrow.</div>
+  <div class="not-today-note">Close this tab when you're ready.</div>
+</div>
+
+<script>
+(function () {
+  var KEY = 'angelrow-gate-date';
+
+  function localDateString() {
+    var d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  // Already confirmed today — go straight to the site
+  if (localStorage.getItem(KEY) === localDateString()) {
+    window.location.replace('index.html');
+    return;
+  }
+
+  var cb       = document.getElementById('confirm-cb');
+  var btnProceed   = document.getElementById('btn-proceed');
+  var btnNotToday  = document.getElementById('btn-not-today');
+  var gateScreen   = document.getElementById('gate-screen');
+  var notTodayScreen = document.getElementById('not-today-screen');
+
+  cb.addEventListener('change', function () {
+    btnProceed.disabled = !cb.checked;
+  });
+
+  btnProceed.addEventListener('click', function () {
+    if (!cb.checked) return;
+    localStorage.setItem(KEY, localDateString());
+    window.location.replace('index.html');
+  });
+
+  btnNotToday.addEventListener('click', function () {
+    gateScreen.style.display = 'none';
+    notTodayScreen.style.display = 'flex';
+  });
+}());
+</script>
+</body>
+</html>
