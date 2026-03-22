@@ -58,11 +58,19 @@ const MC = (() => {
     return isNaN(n) ? null : Math.abs(n);
   }
 
+  // Try new underscore filename first, fall back to legacy space name
+  async function fetchCSV() {
+    const names = ['Trade_Log-Table_1.csv', 'Trade Log-Table 1.csv'];
+    for (const name of names) {
+      const res = await fetch(encodeURI(name));
+      if (res.ok) return res.text();
+    }
+    throw new Error('CSV not found (tried Trade_Log-Table_1.csv and Trade Log-Table 1.csv)');
+  }
+
   // Loads ALL CSP + Bull Put trades; flags error trades rather than dropping them
   async function loadAllTrades() {
-    const res = await fetch(encodeURI('Trade Log-Table 1.csv'));
-    if (!res.ok) throw new Error(`HTTP ${res.status} loading CSV`);
-    const text = await res.text();
+    const text = await fetchCSV();
     const lines = text.trim().split('\n').filter(l => l.trim());
     if (lines.length < 2) throw new Error('CSV appears empty');
 
@@ -72,11 +80,11 @@ const MC = (() => {
 
     const fi = (...names) => headers.findIndex(h => names.some(n => h === n || h.includes(n)));
 
-    const cStrategy = fi('strategy')                        >= 0 ? fi('strategy')                        : 3;
-    const cPnlPct   = fi('p_l_', 'pnl_pct', 'p_l_%')       >= 0 ? fi('p_l_', 'pnl_pct', 'p_l_%')       : 13;
-    const cWinLoss  = fi('win_loss', 'win')                 >= 0 ? fi('win_loss', 'win')                 : 16;
-    const cPremium  = fi('entry_cost', 'premium', 'credit') >= 0 ? fi('entry_cost', 'premium', 'credit') : 10;
-    const cTags     = fi('tags')                            >= 0 ? fi('tags')                            : 29;
+    const cStrategy  = fi('strategy')                        >= 0 ? fi('strategy')                        : 3;
+    const cPnlPct    = fi('p_l_', 'pnl_pct', 'p_l_%')       >= 0 ? fi('p_l_', 'pnl_pct', 'p_l_%')       : 13;
+    const cWinLoss   = fi('win_loss', 'win')                 >= 0 ? fi('win_loss', 'win')                 : 16;
+    const cPremium   = fi('entry_cost', 'premium', 'credit') >= 0 ? fi('entry_cost', 'premium', 'credit') : 10;
+    const cMistakes  = fi('mistakes')                        >= 0 ? fi('mistakes')                        : 28;
 
     const trades = [];
 
@@ -84,8 +92,8 @@ const MC = (() => {
       const c = parseCSVLine(lines[i]);
       const g = idx => (c[idx] || '').toString().trim();
 
-      const strategy = g(cStrategy);
-      const tags     = g(cTags);
+      const strategy  = g(cStrategy);
+      const mistakes  = g(cMistakes);
 
       const strat_lc  = strategy.toLowerCase();
       const isCsp     = strat_lc.includes('cash secured put') || strat_lc.includes('csp');
@@ -102,8 +110,8 @@ const MC = (() => {
       trades.push({
         strategy,
         pnlPct,
-        isWin:  winLoss === 'win',
-        isError: tags.toLowerCase().includes('error'),
+        isWin:   winLoss === 'win',
+        isError: mistakes.startsWith('ERROR'),
         premium: premium || 0
       });
     }
@@ -112,14 +120,18 @@ const MC = (() => {
     return trades.length > 200 ? trades.slice(-50) : trades;
   }
 
-  function includeErrors() {
-    const el = document.getElementById('mc-include-errors');
-    return el ? el.checked : false;
+  // mode: 'clean' | 'all' | 'errors'
+  function getMode() {
+    const el = document.querySelector('.mc-mode-btn.active');
+    return el ? (el.dataset.mode || 'clean') : 'clean';
   }
 
   function activeTrades() {
     if (!mcDataAll) return [];
-    return includeErrors() ? mcDataAll : mcDataAll.filter(t => !t.isError);
+    const mode = getMode();
+    if (mode === 'all')    return mcDataAll;
+    if (mode === 'errors') return mcDataAll.filter(t => t.isError);
+    return mcDataAll.filter(t => !t.isError);
   }
 
   // ── Statistics ────────────────────────────────────────────────────────────
@@ -230,10 +242,13 @@ const MC = (() => {
 
   // ── Render sections ───────────────────────────────────────────────────────
 
-  function renderStats(s, errorsIncluded, errorCount) {
-    const errNote = errorsIncluded
-      ? `<tr><td colspan="2" style="font-size:11px;color:var(--amber);padding:6px 10px 2px">⚠ ${errorCount} error trade${errorCount !== 1 ? 's' : ''} included in dataset</td></tr>`
+  function renderStats(s, mode, errorCount) {
+    const modeNote = mode === 'all'
+      ? `<tr><td colspan="2" style="font-size:11px;color:var(--amber);padding:6px 10px 2px">⚠ ${errorCount} error trade${errorCount !== 1 ? 's' : ''} included</td></tr>`
+      : mode === 'errors'
+      ? `<tr><td colspan="2" style="font-size:11px;color:var(--red);padding:6px 10px 2px">⚠ Error trades only — ${s.total} trades</td></tr>`
       : '';
+    const errNote = modeNote;
     document.getElementById('mc-stats-body').innerHTML = `
       ${errNote}
       <tr><td>Total Trades (CSP + Bull Put)</td><td class="mc-mono mc-neutral">${s.total}</td></tr>
@@ -495,10 +510,11 @@ const MC = (() => {
   function updateDataCount(trades) {
     const el = document.getElementById('mc-data-count');
     if (!el) return;
-    const errCount = trades.filter(t => t.isError).length;
-    el.textContent = includeErrors() && errCount > 0
-      ? `${trades.length} trades (incl. ${errCount} errors)`
-      : `${trades.length} trades`;
+    const mode = getMode();
+    const errCount = mcDataAll ? mcDataAll.filter(t => t.isError).length : 0;
+    if (mode === 'errors') el.textContent = `${trades.length} error trade${trades.length !== 1 ? 's' : ''}`;
+    else if (mode === 'all') el.textContent = `${trades.length} trades (${errCount} errors incl.)`;
+    else el.textContent = `${trades.length} clean trades`;
   }
 
   // ── Public: toggle panel ──────────────────────────────────────────────────
@@ -543,10 +559,11 @@ const MC = (() => {
       // Yield to UI before heavy computation
       await new Promise(resolve => setTimeout(resolve, 30));
 
+      const mode     = getMode();
       const errCount = trades.filter(t => t.isError).length;
       mcResults = runMonteCarlo(trades, startCapital, tradesPerYear);
 
-      renderStats(mcStats, includeErrors(), errCount);
+      renderStats(mcStats, mode, errCount);
       renderResults(mcResults, startCapital);
       renderRisk(mcResults, mcStats);
       renderCharts(mcResults, startCapital);
@@ -571,13 +588,15 @@ const MC = (() => {
     run();
   }
 
-  // ── Public: onErrorToggle — re-run without refetching CSV ─────────────────
+  // ── Public: setMode — switch between clean/all/errors without refetching CSV
 
-  function onErrorToggle() {
+  function setMode(mode, btn) {
+    document.querySelectorAll('.mc-mode-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
     mcResults = null;
     mcStats   = null;
     run();
   }
 
-  return { toggle, run, rerun, onErrorToggle };
+  return { toggle, run, rerun, setMode };
 })();
