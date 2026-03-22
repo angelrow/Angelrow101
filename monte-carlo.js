@@ -11,6 +11,7 @@ const MC = (() => {
   let mcDataAll    = null;  // all CSP/Bull Put trades (including errors)
   let mcResults    = null;
   let mcStats      = null;
+  let _mode        = 'clean'; // 'clean' | 'all' | 'errors' — source of truth
 
   // ── Maths helpers ─────────────────────────────────────────────────────────
 
@@ -120,18 +121,17 @@ const MC = (() => {
     return trades.length > 200 ? trades.slice(-50) : trades;
   }
 
-  // mode: 'clean' | 'all' | 'errors'
-  function getMode() {
-    const el = document.querySelector('.mc-mode-btn.active');
-    return el ? (el.dataset.mode || 'clean') : 'clean';
-  }
-
   function activeTrades() {
     if (!mcDataAll) return [];
-    const mode = getMode();
-    if (mode === 'all')    return mcDataAll;
-    if (mode === 'errors') return mcDataAll.filter(t => t.isError);
+    if (_mode === 'all')    return mcDataAll;
+    if (_mode === 'errors') return mcDataAll.filter(t => t.isError);
     return mcDataAll.filter(t => !t.isError);
+  }
+
+  function syncModeButtons() {
+    document.querySelectorAll('.mc-mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === _mode);
+    });
   }
 
   // ── Statistics ────────────────────────────────────────────────────────────
@@ -510,10 +510,9 @@ const MC = (() => {
   function updateDataCount(trades) {
     const el = document.getElementById('mc-data-count');
     if (!el) return;
-    const mode = getMode();
     const errCount = mcDataAll ? mcDataAll.filter(t => t.isError).length : 0;
-    if (mode === 'errors') el.textContent = `${trades.length} error trade${trades.length !== 1 ? 's' : ''}`;
-    else if (mode === 'all') el.textContent = `${trades.length} trades (${errCount} errors incl.)`;
+    if (_mode === 'errors') el.textContent = `${trades.length} error trade${trades.length !== 1 ? 's' : ''}`;
+    else if (_mode === 'all') el.textContent = `${trades.length} trades (${errCount} errors incl.)`;
     else el.textContent = `${trades.length} clean trades`;
   }
 
@@ -559,11 +558,10 @@ const MC = (() => {
       // Yield to UI before heavy computation
       await new Promise(resolve => setTimeout(resolve, 30));
 
-      const mode     = getMode();
       const errCount = trades.filter(t => t.isError).length;
       mcResults = runMonteCarlo(trades, startCapital, tradesPerYear);
 
-      renderStats(mcStats, mode, errCount);
+      renderStats(mcStats, _mode, errCount);
       renderResults(mcResults, startCapital);
       renderRisk(mcResults, mcStats);
       renderCharts(mcResults, startCapital);
@@ -590,9 +588,9 @@ const MC = (() => {
 
   // ── Public: setMode — switch between clean/all/errors without refetching CSV
 
-  function setMode(mode, btn) {
-    document.querySelectorAll('.mc-mode-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+  function setMode(mode) {
+    _mode     = mode;
+    syncModeButtons();
     mcResults = null;
     mcStats   = null;
     run();

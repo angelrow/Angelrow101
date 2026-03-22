@@ -422,9 +422,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
         <input type="number" id="mc-trades" value="250" min="10" max="1000">
       </div>
       <div class="mc-mode-group" title="Which trades to include in the simulation">
-        <button class="mc-mode-btn active" data-mode="clean"  onclick="MC.setMode('clean',this)">Clean Only</button>
-        <button class="mc-mode-btn"        data-mode="all"    onclick="MC.setMode('all',this)">All Trades</button>
-        <button class="mc-mode-btn"        data-mode="errors" onclick="MC.setMode('errors',this)">Errors Only</button>
+        <button class="mc-mode-btn active" data-mode="clean"  onclick="MC.setMode('clean')">Clean Only</button>
+        <button class="mc-mode-btn"        data-mode="all"    onclick="MC.setMode('all')">All Trades</button>
+        <button class="mc-mode-btn"        data-mode="errors" onclick="MC.setMode('errors')">Errors Only</button>
       </div>
       <button class="mc-rerun-btn" onclick="MC.rerun()">↻ Re-run</button>
       <span id="mc-status" class="mc-status mc-status-loading">Click &quot;Show&quot; to run analysis</span>
@@ -581,7 +581,7 @@ function renderJournal(filter){
     const statusClass=t.status==='Open'?'status-open':t.status==='Win'?'status-win':'status-loss';
     const rowClass=t.isError?' class="journal-error-row"':'';
     const strategyCell=t.isError
-      ?`${t.strategy} <span class="error-badge">ERR</span>`
+      ?`${t.strategy} <span class="error-badge">ERROR</span>`
       :t.strategy;
     return `<tr${rowClass}><td>${t.id}</td><td>${t.date}</td><td><strong>${t.ticker}</strong></td><td>${strategyCell}</td><td>${t.strike}</td><td>${t.cts}</td><td>${t.entry}</td><td>${t.exit}</td><td class="${pnlClass}">${pnlStr}</td><td class="${statusClass}">${t.status}</td></tr>`;
   }).join('');
