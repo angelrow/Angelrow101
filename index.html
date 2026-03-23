@@ -212,21 +212,19 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-mode-btn:last-child{border-right:none}
 .mc-mode-btn:hover{background:rgba(255,255,255,.04);color:var(--text-secondary)}
 .mc-mode-btn.active{background:var(--accent-dim);color:var(--accent)}
-.mc-mode-btn[data-mode="errors"].active{background:var(--red-dim);color:var(--red)}
+.mc-filter-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px}
+.mc-filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mc-filter-error-row{border-top:1px solid rgba(255,255,255,.04);padding-top:10px;margin-top:2px}
+.mc-chk-label{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-secondary);padding:3px 0;user-select:none}
+.mc-chk-label input[type="checkbox"]{cursor:pointer;accent-color:var(--accent);width:14px;height:14px;flex-shrink:0}
+.mc-chk-label:hover{color:var(--text)}
+.mc-filter-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.mc-custom-select{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;min-width:220px;cursor:pointer;transition:border-color .15s}
+.mc-custom-select:focus{outline:none;border-color:rgba(0,212,170,.4)}
 .journal-error-row td{background:rgba(255,77,106,.04)!important;color:var(--text-muted)}
 .journal-error-row:hover td{background:rgba(255,77,106,.07)!important}
 .error-badge{display:inline-block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 5px;border-radius:3px;background:rgba(255,77,106,.18);color:var(--red);border:1px solid rgba(255,77,106,.25);vertical-align:middle;margin-left:4px}
 .mc-status{font-size:11px;font-family:'JetBrains Mono',monospace;margin-left:4px}
-.mc-diag-bar{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;font-size:12px;font-family:'JetBrains Mono',monospace}
-.mc-diag-counts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
-.mc-diag-item{color:var(--text-secondary)}.mc-diag-item strong{color:var(--text)}
-.mc-diag-clean strong{color:var(--accent)}.mc-diag-err strong{color:var(--red)}
-.mc-diag-sep{color:var(--border-hover)}
-.mc-diag-label{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
-.mc-diag-mistakes{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
-.mc-diag-val{font-size:10px;padding:1px 6px;border-radius:3px;border:1px solid var(--border)}
-.mc-diag-val-ok{background:rgba(0,212,170,.06);color:var(--accent);border-color:rgba(0,212,170,.2)}
-.mc-diag-val-err{background:rgba(255,77,106,.08);color:var(--red);border-color:rgba(255,77,106,.2)}
 .mc-status-ok{color:var(--accent)}.mc-status-loading{color:var(--amber)}.mc-status-error{color:var(--red)}
 .mc-section-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:8px 0 12px;margin-top:8px;border-top:1px solid var(--border)}
 .mc-sim-config{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);margin-bottom:14px}
@@ -413,13 +411,47 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   <div class="mc-toggle-bar" onclick="MC.toggle()">
     <div class="mc-toggle-left">
       <span class="mc-badge">Monte Carlo</span>
-      <span class="mc-toggle-title">CSP &amp; Bull Put Spread Strategy Analysis</span>
+      <span class="mc-toggle-title" id="mc-subtitle">Premium Selling Analysis</span>
       <span id="mc-data-count" class="mc-data-tag"></span>
     </div>
     <button class="mc-toggle-btn" id="mc-toggle-btn" onclick="event.stopPropagation();MC.toggle()">Show Monte Carlo Analysis ▼</button>
   </div>
 
   <div id="mc-content" style="display:none" class="mc-content">
+
+    <!-- Filter bar -->
+    <div class="mc-filter-bar">
+      <!-- Primary filter: radio-style buttons -->
+      <div class="mc-filter-row">
+        <div class="mc-mode-group">
+          <button class="mc-mode-btn" data-filter="all"     onclick="MC.setPrimary('all')">All Strategies</button>
+          <button class="mc-mode-btn active" data-filter="premium" onclick="MC.setPrimary('premium')">Premium Selling</button>
+          <button class="mc-mode-btn" data-filter="custom"  onclick="MC.setPrimary('custom')">Custom</button>
+        </div>
+      </div>
+
+      <!-- Premium Selling sub-filter: checkboxes -->
+      <div class="mc-filter-row" id="mc-premium-sub">
+        <label class="mc-chk-label"><input type="checkbox" id="mc-chk-csp" checked onchange="MC.setPremiumCheck('csp', this.checked)"><span>Cash Secured Puts</span></label>
+        <label class="mc-chk-label"><input type="checkbox" id="mc-chk-bullput" checked onchange="MC.setPremiumCheck('bullput', this.checked)"><span>Bull Put Spreads</span></label>
+        <label class="mc-chk-label"><input type="checkbox" id="mc-chk-ironcondor" onchange="MC.setPremiumCheck('ironcondor', this.checked)"><span>Iron Condors</span></label>
+      </div>
+
+      <!-- Custom sub-filter: dropdown -->
+      <div class="mc-filter-row" id="mc-custom-sub" style="display:none">
+        <label class="mc-chk-label" style="gap:10px">
+          <span class="mc-filter-label">Strategy</span>
+          <select id="mc-custom-select" class="mc-custom-select" onchange="MC.setCustomStrategy(this.value)">
+            <option value="">— Select a strategy —</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Error toggle — always visible -->
+      <div class="mc-filter-row mc-filter-error-row">
+        <label class="mc-chk-label"><input type="checkbox" id="mc-error-toggle" onchange="MC.setIncludeErrors(this.checked)"><span>Include ERROR-tagged trades</span></label>
+      </div>
+    </div>
 
     <!-- Config bar -->
     <div class="mc-config-bar">
@@ -431,23 +463,15 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
         <label for="mc-trades">Trades / Year</label>
         <input type="number" id="mc-trades" value="250" min="10" max="1000">
       </div>
-      <div class="mc-mode-group" title="Which trades to include in the simulation">
-        <button class="mc-mode-btn active" data-mode="clean"  onclick="MC.setMode('clean')">Clean Only</button>
-        <button class="mc-mode-btn"        data-mode="all"    onclick="MC.setMode('all')">All Trades</button>
-        <button class="mc-mode-btn"        data-mode="errors" onclick="MC.setMode('errors')">Errors Only</button>
-      </div>
       <button class="mc-rerun-btn" onclick="MC.rerun()">↻ Re-run</button>
       <span id="mc-status" class="mc-status mc-status-loading">Click &quot;Show&quot; to run analysis</span>
     </div>
-
-    <!-- Filter diagnostic — populated by JS before simulation runs -->
-    <div id="mc-diagnostic"></div>
 
     <!-- Section 1: Statistics -->
     <div class="mc-section-hdr">1 — Trading Performance Statistics</div>
     <div class="mc-grid-2">
       <div class="mc-card">
-        <div class="mc-card-title">Actual Statistics — CSP &amp; Bull Put Spread</div>
+        <div class="mc-card-title">Actual Statistics — Filtered Trade Pool</div>
         <table class="mc-table">
           <tbody id="mc-stats-body">
             <tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:20px">Running simulation…</td></tr>
