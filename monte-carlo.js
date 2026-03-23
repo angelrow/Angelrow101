@@ -1,4 +1,4 @@
-// Monte Carlo Simulation — CSP & Bull Put Spread Strategy Analysis
+// Monte Carlo Simulation — Strategy Analysis
 // Angelrow Limited — angelrow.co.uk
 
 const MC = (() => {
@@ -6,12 +6,47 @@ const MC = (() => {
 
   const SIMS = 10000;
   const RISK = 0.02;
+  const LS   = 'mc_filter_v1';  // localStorage key
 
-  let mcCharts     = {};
-  let mcDataAll    = null;  // all CSP/Bull Put trades (including errors)
-  let mcResults    = null;
-  let mcStats      = null;
-  let _mode        = 'clean'; // 'clean' | 'all' | 'errors' — source of truth
+  let mcCharts        = {};
+  let mcDataAll       = null;   // all trades from CSV (every strategy)
+  let mcResults       = null;
+  let mcStats         = null;
+  let _primaryFilter  = 'premium';  // 'all' | 'premium' | 'custom'
+  let _premiumChecks  = { csp: true, bullput: true, ironcondor: true };
+  let _customStrategy = '';
+  let _includeErrors  = false;
+
+  // ── Premium Selling group predicates ──────────────────────────────────────
+
+  const PREMIUM_GROUP = {
+    csp:        s => s.includes('cash secured put') || s.includes('csp'),
+    bullput:    s => s.includes('bull put spread'),
+    ironcondor: s => s.includes('iron condor'),
+  };
+
+  // ── localStorage ──────────────────────────────────────────────────────────
+
+  function saveState() {
+    try {
+      localStorage.setItem(LS, JSON.stringify({
+        primary: _primaryFilter,
+        premium: _premiumChecks,
+        custom:  _customStrategy,
+        errors:  _includeErrors,
+      }));
+    } catch (_) {}
+  }
+
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS) || '{}');
+      if (s.primary) _primaryFilter = s.primary;
+      if (s.premium) _premiumChecks = { csp: true, bullput: true, ironcondor: true, ...s.premium };
+      if (s.custom  !== undefined) _customStrategy = s.custom;
+      if (s.errors  !== undefined) _includeErrors  = Boolean(s.errors);
+    } catch (_) {}
+  }
 
   // ── Maths helpers ─────────────────────────────────────────────────────────
 
@@ -69,7 +104,7 @@ const MC = (() => {
     throw new Error('CSV not found (tried Trade_Log-Table_1.csv and Trade Log-Table 1.csv)');
   }
 
-  // Loads ALL CSP + Bull Put trades; flags error trades rather than dropping them
+  // Loads ALL trades from CSV; strategy filtering happens in activeTrades()
   async function loadAllTrades() {
     const text = await fetchCSV();
     const lines = text.trim().split('\n').filter(l => l.trim());
@@ -93,13 +128,10 @@ const MC = (() => {
       const c = parseCSVLine(lines[i]);
       const g = idx => (c[idx] || '').toString().trim();
 
-      const strategy  = g(cStrategy);
-      const mistakes  = g(cMistakes);
+      const strategy = g(cStrategy);
+      const mistakes = g(cMistakes);
 
-      const strat_lc  = strategy.toLowerCase();
-      const isCsp     = strat_lc.includes('cash secured put') || strat_lc.includes('csp');
-      const isBullPut = strat_lc.includes('bull put spread');
-      if (!isCsp && !isBullPut) continue;
+      if (!strategy) continue;
 
       const pnlPct  = parsePct(g(cPnlPct));
       const winLoss = g(cWinLoss).toLowerCase();
@@ -111,28 +143,87 @@ const MC = (() => {
       trades.push({
         strategy,
         pnlPct,
-        isWin:       winLoss === 'win',
-        isError:     mistakes.toUpperCase().startsWith('ERROR'),  // case-insensitive
-        premium:     premium || 0,
-        mistakesRaw: mistakes  // stored for the diagnostic panel
+        isWin:   winLoss === 'win',
+        isError: mistakes.toUpperCase().startsWith('ERROR'),
+        premium: premium || 0,
       });
     }
 
-    // Use most recent 50 if > 200 total (CSV is date-ordered)
-    return trades.length > 200 ? trades.slice(-50) : trades;
+    // Use most recent 200 if dataset grows very large (CSV is date-ordered)
+    return trades.length > 500 ? trades.slice(-200) : trades;
   }
+
+  // ── Active trade pool ─────────────────────────────────────────────────────
 
   function activeTrades() {
     if (!mcDataAll) return [];
-    if (_mode === 'all')    return mcDataAll;
-    if (_mode === 'errors') return mcDataAll.filter(t => t.isError);
-    return mcDataAll.filter(t => !t.isError);
+    let pool = mcDataAll;
+
+    if (_primaryFilter === 'premium') {
+      pool = pool.filter(t => {
+        const s = t.strategy.toLowerCase();
+        return (
+          (_premiumChecks.csp        && PREMIUM_GROUP.csp(s))        ||
+          (_premiumChecks.bullput    && PREMIUM_GROUP.bullput(s))    ||
+          (_premiumChecks.ironcondor && PREMIUM_GROUP.ironcondor(s))
+        );
+      });
+    } else if (_primaryFilter === 'custom' && _customStrategy) {
+      pool = pool.filter(t => t.strategy === _customStrategy);
+    }
+    // 'all' → keep every trade
+
+    if (!_includeErrors) {
+      pool = pool.filter(t => !t.isError);
+    }
+
+    return pool;
   }
 
-  function syncModeButtons() {
-    document.querySelectorAll('.mc-mode-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.mode === _mode);
+  function activeLabel() {
+    if (_primaryFilter === 'all')    return 'All Strategies';
+    if (_primaryFilter === 'custom') return _customStrategy || 'Custom Strategy';
+    // premium
+    const names   = { csp: 'CSPs', bullput: 'Bull Put Spreads', ironcondor: 'Iron Condors' };
+    const checked = Object.entries(_premiumChecks).filter(([, v]) => v).map(([k]) => names[k]);
+    if (checked.length === Object.keys(names).length) return 'Premium Selling';
+    return checked.join(' + ') || 'Premium Selling';
+  }
+
+  // ── Sync filter UI from state ─────────────────────────────────────────────
+
+  function syncFilterUI() {
+    // Primary radio-style buttons
+    document.querySelectorAll('[data-filter]').forEach(b => {
+      b.classList.toggle('active', b.dataset.filter === _primaryFilter);
     });
+
+    // Show/hide sub-filter sections
+    const premiumSub = document.getElementById('mc-premium-sub');
+    const customSub  = document.getElementById('mc-custom-sub');
+    if (premiumSub) premiumSub.style.display = _primaryFilter === 'premium' ? '' : 'none';
+    if (customSub)  customSub.style.display  = _primaryFilter === 'custom'  ? '' : 'none';
+
+    // Premium checkboxes
+    Object.keys(_premiumChecks).forEach(k => {
+      const cb = document.getElementById(`mc-chk-${k}`);
+      if (cb) cb.checked = _premiumChecks[k];
+    });
+
+    // Error toggle
+    const errCb = document.getElementById('mc-error-toggle');
+    if (errCb) errCb.checked = _includeErrors;
+  }
+
+  function populateDropdown() {
+    const sel = document.getElementById('mc-custom-select');
+    if (!sel || !mcDataAll) return;
+    const strategies = [...new Set(mcDataAll.map(t => t.strategy))].sort();
+    sel.innerHTML =
+      '<option value="">— Select a strategy —</option>' +
+      strategies.map(s =>
+        `<option value="${s}"${s === _customStrategy ? ' selected' : ''}>${s}</option>`
+      ).join('');
   }
 
   // ── Statistics ────────────────────────────────────────────────────────────
@@ -243,16 +334,13 @@ const MC = (() => {
 
   // ── Render sections ───────────────────────────────────────────────────────
 
-  function renderStats(s, mode, errorCount) {
-    const modeNote = mode === 'all'
-      ? `<tr><td colspan="2" style="font-size:11px;color:var(--amber);padding:6px 10px 2px">⚠ ${errorCount} error trade${errorCount !== 1 ? 's' : ''} included</td></tr>`
-      : mode === 'errors'
-      ? `<tr><td colspan="2" style="font-size:11px;color:var(--red);padding:6px 10px 2px">⚠ Error trades only — ${s.total} trades</td></tr>`
+  function renderStats(s) {
+    const errNote = _includeErrors
+      ? `<tr><td colspan="2" style="font-size:11px;color:var(--amber);padding:6px 10px 2px">⚠ ERROR-tagged trades included</td></tr>`
       : '';
-    const errNote = modeNote;
     document.getElementById('mc-stats-body').innerHTML = `
       ${errNote}
-      <tr><td>Total Trades (CSP + Bull Put)</td><td class="mc-mono mc-neutral">${s.total}</td></tr>
+      <tr><td>Total Trades</td><td class="mc-mono mc-neutral">${s.total}</td></tr>
       <tr><td>Wins</td><td class="mc-mono mc-win">${s.wins}</td></tr>
       <tr><td>Losses</td><td class="mc-mono mc-loss">${s.losses}</td></tr>
       <tr class="mc-hi"><td><strong>Win Rate</strong></td><td class="mc-mono mc-win"><strong>${(s.winRate * 100).toFixed(1)}%</strong></td></tr>
@@ -511,53 +599,7 @@ const MC = (() => {
   function updateDataCount(trades) {
     const el = document.getElementById('mc-data-count');
     if (!el) return;
-    const errCount = mcDataAll ? mcDataAll.filter(t => t.isError).length : 0;
-    if (_mode === 'errors') el.textContent = `${trades.length} error trade${trades.length !== 1 ? 's' : ''}`;
-    else if (_mode === 'all') el.textContent = `${trades.length} trades (${errCount} errors incl.)`;
-    else el.textContent = `${trades.length} clean trades`;
-  }
-
-  // ── Diagnostic panel (shown before simulation runs) ───────────────────────
-
-  function renderDiagnostic(allTrades, activeTrds) {
-    const el = document.getElementById('mc-diagnostic');
-    if (!el) return;
-
-    const errorCount = allTrades.filter(t => t.isError).length;
-    const cleanCount = allTrades.length - errorCount;
-
-    // Unique non-empty mistakes values (up to 10 for display)
-    const uniqueMistakes = [...new Set(
-      allTrades.map(t => t.mistakesRaw).filter(v => v)
-    )].slice(0, 10);
-
-    const modeLabel = _mode === 'all' ? 'All Trades' : _mode === 'errors' ? 'Errors Only' : 'Clean Only';
-    const modeColor = _mode === 'errors' ? 'var(--red)' : _mode === 'all' ? 'var(--amber)' : 'var(--accent)';
-
-    const mistakesSamples = uniqueMistakes.length
-      ? uniqueMistakes.map(v => {
-          const isErr = v.toUpperCase().startsWith('ERROR');
-          const display = v.length > 35 ? v.slice(0, 35) + '…' : v;
-          return `<span class="mc-diag-val ${isErr ? 'mc-diag-val-err' : 'mc-diag-val-ok'}">${display}</span>`;
-        }).join('')
-      : '<span style="color:var(--red);font-size:11px">⚠ Mistakes column empty — check CSV column index</span>';
-
-    el.innerHTML = `
-      <div class="mc-diag-bar">
-        <div class="mc-diag-counts">
-          <span class="mc-diag-item">Total loaded: <strong>${allTrades.length}</strong></span>
-          <span class="mc-diag-sep">·</span>
-          <span class="mc-diag-item mc-diag-clean">Clean: <strong>${cleanCount}</strong></span>
-          <span class="mc-diag-sep">·</span>
-          <span class="mc-diag-item mc-diag-err">Errors: <strong>${errorCount}</strong></span>
-          <span class="mc-diag-sep">·</span>
-          <span class="mc-diag-item" style="color:${modeColor}">Active (${modeLabel}): <strong>${activeTrds.length}</strong></span>
-        </div>
-        <div class="mc-diag-mistakes">
-          <span class="mc-diag-label">Mistakes column values: </span>
-          ${mistakesSamples}
-        </div>
-      </div>`;
+    el.textContent = `${trades.length} trade${trades.length !== 1 ? 's' : ''}`;
   }
 
   // ── Public: toggle panel ──────────────────────────────────────────────────
@@ -569,7 +611,11 @@ const MC = (() => {
     const isHidden = content.style.display === 'none' || content.style.display === '';
     content.style.display = isHidden ? 'block' : 'none';
     if (btn) btn.textContent = isHidden ? 'Hide Analysis ▲' : 'Show Monte Carlo Analysis ▼';
-    if (isHidden && !mcResults) run();
+    if (isHidden && !mcResults) {
+      loadState();
+      syncFilterUI();
+      run();
+    }
   }
 
   // ── Public: run ───────────────────────────────────────────────────────────
@@ -585,24 +631,31 @@ const MC = (() => {
     try {
       if (!mcDataAll) {
         mcDataAll = await loadAllTrades();
+        populateDropdown();
       }
 
       const trades = activeTrades();
 
+      // Validate: at least one premium strategy selected
+      if (_primaryFilter === 'premium' && !Object.values(_premiumChecks).some(v => v)) {
+        setStatus('Select at least one strategy', 'error');
+        return;
+      }
+
       if (trades.length < 5) {
-        setStatus(`Insufficient data: ${trades.length} CSP/Bull Put trades found (need ≥ 5)`, 'error');
+        setStatus(`Insufficient data: ${trades.length} trade${trades.length !== 1 ? 's' : ''} (need ≥ 5)`, 'error');
         return;
       }
 
       updateDataCount(trades);
 
-      mcStats = calcStats(trades);
-      const errCount = trades.filter(t => t.isError).length;
+      // Update dynamic subtitle in toggle bar
+      const subtitleEl = document.getElementById('mc-subtitle');
+      if (subtitleEl) subtitleEl.textContent = activeLabel() + ' Analysis';
 
-      // Show diagnostic + stats BEFORE the heavy simulation so the user can
-      // verify filtering is correct while the simulation is running
-      renderDiagnostic(mcDataAll, trades);
-      renderStats(mcStats, _mode, errCount);
+      mcStats = calcStats(trades);
+      renderStats(mcStats);
+
       setStatus(`Running ${SIMS.toLocaleString()} bootstrap simulations…`, 'loading');
 
       // Yield to UI before heavy computation
@@ -618,7 +671,7 @@ const MC = (() => {
       if (cfgEl) cfgEl.textContent =
         `Starting Capital: ${$d(startCapital)} · Trades/Year: ${tradesPerYear} · Risk/Trade: ${(RISK * 100).toFixed(0)}% · Simulations: ${SIMS.toLocaleString()} · Method: Bootstrap`;
 
-      setStatus(`Complete — ${trades.length} trades · ${SIMS.toLocaleString()} scenarios`, 'ok');
+      setStatus(`Complete — ${trades.length} trade${trades.length !== 1 ? 's' : ''} · ${SIMS.toLocaleString()} scenarios`, 'ok');
     } catch (err) {
       console.error('[MC]', err);
       setStatus(`Error: ${err.message}`, 'error');
@@ -634,15 +687,43 @@ const MC = (() => {
     run();
   }
 
-  // ── Public: setMode — switch between clean/all/errors without refetching CSV
+  // ── Public: filter controls ───────────────────────────────────────────────
 
-  function setMode(mode) {
-    _mode     = mode;
-    syncModeButtons();
+  function setPrimary(filter) {
+    _primaryFilter = filter;
+    saveState();
+    syncFilterUI();
+    if (filter === 'custom' && mcDataAll) populateDropdown();
     mcResults = null;
     mcStats   = null;
     run();
   }
 
-  return { toggle, run, rerun, setMode };
+  function setPremiumCheck(strategy, checked) {
+    _premiumChecks[strategy] = checked;
+    saveState();
+    // Guard: don't run if nothing is checked (validation in run())
+    mcResults = null;
+    mcStats   = null;
+    run();
+  }
+
+  function setCustomStrategy(strategy) {
+    _customStrategy = strategy;
+    saveState();
+    if (!strategy) return;  // don't run until something is selected
+    mcResults = null;
+    mcStats   = null;
+    run();
+  }
+
+  function setIncludeErrors(checked) {
+    _includeErrors = checked;
+    saveState();
+    mcResults = null;
+    mcStats   = null;
+    run();
+  }
+
+  return { toggle, run, rerun, setPrimary, setPremiumCheck, setCustomStrategy, setIncludeErrors };
 })();
