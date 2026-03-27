@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Weather Grid — Angelrow Trading Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0f1a;--bg-card:rgba(14,20,32,0.88);--bg-card-solid:#0e1420;--border:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);--text:#eaf0f6;--text-secondary:#8a95a5;--text-muted:#5a6577;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.1);--accent-glow:rgba(0,212,170,0.15);--red:#ff4d6a;--red-dim:rgba(255,77,106,0.1);--amber:#ffb020;--amber-dim:rgba(255,176,32,0.1);--blue:#4d9fff;--blue-dim:rgba(77,159,255,0.1);--green:#00d4aa;--radius:14px;--radius-sm:8px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* Background layers */
+.skyline-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.skyline-bg::before{content:'';position:absolute;bottom:0;left:0;right:0;height:45%;background:linear-gradient(transparent 30%,#0d1220 30%,#0d1220 100%) no-repeat 5% bottom/12px 55%,linear-gradient(transparent 40%,#101726 40%,#101726 100%) no-repeat 8% bottom/28px 48%,linear-gradient(transparent 25%,#0e1422 25%,#0e1422 100%) no-repeat 12% bottom/35px 58%,linear-gradient(transparent 45%,#111825 45%,#111825 100%) no-repeat 18% bottom/22px 42%,linear-gradient(transparent 20%,#0d1221 20%,#0d1221 100%) no-repeat 22% bottom/45px 62%,linear-gradient(transparent 35%,#101624 35%,#101624 100%) no-repeat 28% bottom/18px 50%,linear-gradient(transparent 15%,#0c1120 15%,#0c1120 100%) no-repeat 32% bottom/50px 65%,linear-gradient(transparent 50%,#121928 50%,#121928 100%) no-repeat 38% bottom/25px 38%,linear-gradient(transparent 10%,#0b1020 10%,#0b1020 100%) no-repeat 42% bottom/40px 70%,linear-gradient(transparent 30%,#0d1220 30%,#0d1220 100%) no-repeat 48% bottom/55px 55%,linear-gradient(transparent 22%,#0d1221 22%,#0d1221 100%) no-repeat 54% bottom/30px 60%,linear-gradient(transparent 40%,#111825 40%,#111825 100%) no-repeat 58% bottom/20px 45%,linear-gradient(transparent 18%,#0e1422 18%,#0e1422 100%) no-repeat 62% bottom/48px 63%,linear-gradient(transparent 35%,#101624 35%,#101624 100%) no-repeat 68% bottom/35px 50%,linear-gradient(transparent 12%,#0c1120 12%,#0c1120 100%) no-repeat 73% bottom/42px 68%,linear-gradient(transparent 28%,#0d1220 28%,#0d1220 100%) no-repeat 78% bottom/55px 56%,linear-gradient(transparent 45%,#121928 45%,#121928 100%) no-repeat 83% bottom/20px 40%,linear-gradient(transparent 20%,#0d1221 20%,#0d1221 100%) no-repeat 87% bottom/38px 62%,linear-gradient(transparent 32%,#111825 32%,#111825 100%) no-repeat 92% bottom/28px 52%,linear-gradient(transparent 15%,#0e1422 15%,#0e1422 100%) no-repeat 96% bottom/45px 66%;opacity:.35}
+.skyline-bg::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(0,212,170,.015) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(77,159,255,.01) 0%,transparent 50%),linear-gradient(to bottom,transparent 50%,var(--bg) 100%)}
+.grid-overlay{position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 80 0 L 0 0 0 80' fill='none' stroke='%23ffffff' stroke-width='0.3' opacity='0.012'/%3E%3C/svg%3E");pointer-events:none}
+
+/* App shell */
+.app{position:relative;z-index:1;min-height:100vh;padding:32px 28px 40px}
+.container{max-width:1100px;margin:0 auto}
+
+/* Header */
+.header{margin-bottom:28px}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-icon{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--accent),#009e7e);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.15)}
+.brand-icon svg{width:22px;height:22px;fill:none;stroke:var(--bg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand-text h1{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.2}
+.brand-text .subtitle{font-size:10px;font-weight:400;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);text-decoration:none;margin-bottom:14px;transition:color .15s}.back-link:hover{color:var(--accent)}
+
+/* Data bar */
+.data-bar{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--text-secondary);letter-spacing:.04em}
+.data-item{display:flex;align-items:center;gap:5px}
+.data-label{color:var(--text-muted)}
+.data-val{font-weight:700;color:var(--text)}
+.data-val.vix-low{color:var(--accent)}.data-val.vix-mid{color:var(--amber)}.data-val.vix-high{color:var(--red)}
+
+/* Live indicator */
+.live-indicator{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.live-dot{width:7px;height:7px;border-radius:50%}
+.live-dot.live{background:var(--accent);box-shadow:0 0 8px var(--accent-glow);animation:blink 2s ease-in-out infinite}
+.live-dot.stale{background:var(--amber);box-shadow:0 0 8px rgba(255,176,32,.3)}
+.live-dot.offline{background:var(--red);box-shadow:0 0 8px rgba(255,77,106,.3)}
+.live-text.live{color:var(--accent)}.live-text.stale{color:var(--amber)}.live-text.offline{color:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* Status panels */
+.status-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.status-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;transition:border-color .3s}
+.status-label{font-size:9px;font-weight:500;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.status-value{font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.status-sub{font-size:10px;color:var(--text-muted);margin-top:4px;font-weight:400}
+
+/* Vol regime bar */
+.vol-bar-wrap{margin-top:8px;position:relative;height:6px;background:rgba(255,255,255,.04);border-radius:3px;overflow:visible}
+.vol-bar-fill{height:100%;border-radius:3px;transition:width .4s ease,background .4s ease}
+.vol-bar-marker{position:absolute;top:-2px;width:1px;height:10px;background:rgba(255,255,255,.2)}
+.vol-bar-marker.m35{left:35%}.vol-bar-marker.m70{left:70%}
+
+/* Canvas wrapper */
+.grid-wrap{position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
+.grid-canvas{display:block;width:100%;cursor:crosshair}
+
+/* Controls bar */
+.controls-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.slider-group{display:flex;align-items:center;gap:10px}
+.slider-label{font-size:10px;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.trail-slider{width:180px;accent-color:var(--accent);cursor:pointer}
+.slider-value{font-size:11px;color:var(--text-secondary);font-weight:500;min-width:70px}
+
+/* Awaiting data */
+.awaiting{text-align:center;padding:80px 20px;color:var(--text-muted);font-size:14px;letter-spacing:.04em}
+.awaiting-title{font-size:18px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;letter-spacing:.08em;text-transform:uppercase}
+
+/* Footer */
+.footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:20px;border-top:1px solid var(--border);font-size:10px;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase}
+.legend-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.legend-swatch{width:16px;height:10px;border-radius:2px}
+.legend-swatch.clean{background:rgba(18,40,65,1)}.legend-swatch.caution{background:rgba(200,100,20,1)}.legend-swatch.notrade{background:rgba(200,30,25,1);border:1px dashed rgba(255,255,255,.3)}
+
+/* Responsive */
+@media(max-width:768px){
+  .status-row{grid-template-columns:repeat(2,1fr)}
+  .header-top{flex-direction:column}
+  .data-bar{margin-top:12px}
+  .controls-bar{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){
+  .status-row{grid-template-columns:1fr}
+  .app{padding:20px 16px 32px}
+}
+</style>
+</head>
+<body>
+<div class="skyline-bg"></div>
+<div class="grid-overlay"></div>
+
+<div class="app">
+<div class="container">
+
+<!-- Back link -->
+<a href="index.html" class="back-link">&larr; Back to Dashboard</a>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      </div>
+      <div class="brand-text">
+        <h1>Market Weather Grid</h1>
+        <div class="subtitle">Direction &times; Magnitude &times; Volatility Regime</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div class="data-bar" id="dataBar">
+        <div class="data-item"><span class="data-label">DATE</span><span class="data-val" id="dbDate">—</span></div>
+        <div class="data-item"><span class="data-label">SPY</span><span class="data-val" id="dbSpy">—</span></div>
+        <div class="data-item"><span class="data-label">VIX</span><span class="data-val" id="dbVix">—</span></div>
+        <div class="data-item"><span class="data-label">IV RANK</span><span class="data-val" id="dbIvr">—</span></div>
+        <div class="data-item"><span class="data-label">EXP MOVE</span><span class="data-val" id="dbEm">—</span></div>
+      </div>
+      <div class="live-indicator">
+        <div class="live-dot offline" id="liveDot"></div>
+        <span class="live-text offline" id="liveText">OFFLINE</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status panels -->
+<div class="status-row" id="statusRow">
+  <div class="status-panel">
+    <div class="status-label">Direction</div>
+    <div class="status-value" id="stDirection" style="color:var(--text-muted)">—</div>
+    <div class="status-sub" id="stDirSub"></div>
+  </div>
+  <div class="status-panel">
+    <div class="status-label">Magnitude</div>
+    <div class="status-value" id="stMagnitude" style="color:var(--text-muted)">—</div>
+    <div class="status-sub" id="stMagSub"></div>
+  </div>
+  <div class="status-panel">
+    <div class="status-label">Momentum</div>
+    <div class="status-value" id="stMomentum" style="color:var(--text-muted)">—</div>
+    <div class="status-sub" id="stMomSub"></div>
+  </div>
+  <div class="status-panel">
+    <div class="status-label">Vol Regime</div>
+    <div class="status-value" id="stRegime" style="color:var(--text-muted)">—</div>
+    <div class="status-sub" id="stRegSub"></div>
+    <div class="vol-bar-wrap">
+      <div class="vol-bar-fill" id="volBarFill" style="width:0%;background:var(--accent)"></div>
+      <div class="vol-bar-marker m35"></div>
+      <div class="vol-bar-marker m70"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Grid canvas -->
+<div class="grid-wrap">
+  <canvas id="gridCanvas" class="grid-canvas" width="1000" height="700"></canvas>
+  <div class="awaiting" id="awaitingMsg" style="display:none">
+    <div class="awaiting-title">Awaiting Data</div>
+    <div>Grid data will appear once the market data fetcher runs during US market hours.</div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-bar">
+  <div class="slider-group">
+    <span class="slider-label">Trail Length</span>
+    <input type="range" class="trail-slider" id="trailSlider" min="4" max="80" value="12">
+    <span class="slider-value" id="trailValue">12 pts &middot; ~3h</span>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(142,70%,50%)"></div><span>Bull</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(210,70%,55%)"></div><span>Neutral</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:hsl(0,70%,55%)"></div><span>Bear</span></div>
+    <span style="margin:0 6px;opacity:.3">|</span>
+    <div class="legend-item"><div class="legend-swatch clean"></div><span>Clean</span></div>
+    <div class="legend-item"><div class="legend-swatch caution"></div><span>Caution</span></div>
+    <div class="legend-item"><div class="legend-swatch notrade"></div><span>No Trade</span></div>
+    <span style="margin:0 6px;opacity:.3">|</span>
+    <div class="legend-item"><div style="width:16px;height:2px;background:rgba(0,220,200,.5);border-radius:1px"></div><span>Trail</span></div>
+  </div>
+  <div style="font-weight:700;letter-spacing:.1em">Angelrow Trading Systems</div>
+</div>
+
+</div>
+</div>
+
+<script src="market-weather-grid.js"></script>
+</body>
+</html>
