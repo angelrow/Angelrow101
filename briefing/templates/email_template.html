@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Angelrow Morning Briefing</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0d1117;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+<!-- ─── Outer wrapper ─────────────────────────────────────────────────────── -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background-color:#0d1117;padding:20px 8px;">
+  <tr>
+    <td align="center">
+
+      <!-- ─── Main card ────────────────────────────────────────────────── -->
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;border-radius:12px;overflow:hidden;
+                    border:1px solid #30363d;">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             HEADER
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+                     padding:28px 32px;border-bottom:1px solid #30363d;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                               letter-spacing:3px;margin-bottom:6px;font-weight:600;">
+                    ANGELROW
+                  </div>
+                  <div style="font-size:24px;font-weight:700;color:#e6edf3;
+                               letter-spacing:-0.5px;line-height:1.2;">
+                    Morning Trading Briefing
+                  </div>
+                  <div style="font-size:13px;color:#8b949e;margin-top:8px;
+                               letter-spacing:0.3px;">
+                    {{ date_str }}&nbsp;&bull;&nbsp;{{ time_str }}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             REGIME BANNER
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:{{ regime.bg }};padding:24px 32px;
+                     border-left:5px solid {{ regime.color }};
+                     border-bottom:1px solid #30363d;">
+            <div style="font-size:10px;color:#8b949e;text-transform:uppercase;
+                         letter-spacing:2px;margin-bottom:8px;font-weight:600;">
+              MARKET REGIME
+            </div>
+            <div style="font-size:32px;font-weight:800;color:{{ regime.color }};
+                         letter-spacing:2px;line-height:1;">
+              {{ regime.regime }}
+            </div>
+            {% if vix_data.ok %}
+            <div style="font-size:15px;color:#c9d1d9;margin-top:10px;font-weight:500;">
+              VIX&nbsp;
+              <span style="font-weight:700;color:#e6edf3;">{{ "%.2f"|format(vix_data.value) }}</span>
+              &nbsp;
+              <span style="color:{{ vix_data.arrow_color }};">
+                {{ vix_data.arrow }}&nbsp;{{ "%+.2f"|format(vix_data.change_pct) }}%
+              </span>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             MARKET SNAPSHOT
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:#161b22;padding:24px 32px;
+                     border-bottom:1px solid #30363d;">
+            <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                         letter-spacing:2px;margin-bottom:18px;font-weight:600;">
+              MARKET SNAPSHOT
+            </div>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              {% for item in snapshot %}
+              {% if item.ok %}
+              <tr>
+                <td style="padding:11px 0;border-bottom:1px solid #21262d;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <!-- Label -->
+                      <td style="width:42%;vertical-align:middle;">
+                        <div style="font-size:12px;color:#6e7681;text-transform:uppercase;
+                                     letter-spacing:0.5px;font-weight:500;">
+                          {{ item.label }}
+                        </div>
+                      </td>
+                      <!-- Value -->
+                      <td style="width:33%;text-align:right;vertical-align:middle;">
+                        <div style="font-size:19px;font-weight:600;color:#e6edf3;
+                                     font-variant-numeric:tabular-nums;letter-spacing:-0.5px;">
+                          {%- if item.symbol == "^TNX" -%}
+                            {{ "%.3f"|format(item.value) }}%
+                          {%- elif item.symbol == "^VIX" -%}
+                            {{ "%.2f"|format(item.value) }}
+                          {%- else -%}
+                            {{ "{:,.2f}".format(item.value) }}
+                          {%- endif -%}
+                        </div>
+                      </td>
+                      <!-- Change -->
+                      <td style="width:25%;text-align:right;vertical-align:middle;">
+                        <span style="font-size:14px;font-weight:600;
+                                     color:{{ item.arrow_color }};white-space:nowrap;">
+                          {{ item.arrow }}&nbsp;{{ "%+.2f"|format(item.change_pct) }}%
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td style="padding:10px 0;border-bottom:1px solid #21262d;">
+                  <span style="font-size:12px;color:#6e7681;font-style:italic;">
+                    {{ item.label }} — data unavailable
+                  </span>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+            </table>
+
+            <!-- Put/Call Ratio pill -->
+            {% if pc_ratio.ok %}
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="margin-top:18px;">
+              <tr>
+                <td style="background-color:#1c2128;border-radius:8px;padding:12px 16px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td>
+                        <span style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                                     letter-spacing:1.5px;font-weight:600;">
+                          PUT / CALL RATIO
+                        </span>
+                      </td>
+                      <td style="text-align:right;">
+                        <span style="font-size:17px;font-weight:700;color:#e6edf3;">
+                          {{ "%.2f"|format(pc_ratio.value) }}
+                        </span>
+                        &nbsp;
+                        <span style="font-size:12px;color:#8b949e;">
+                          {{ pc_ratio.sentiment }}
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             STRATEGY RECOMMENDATION
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:#0d1117;padding:24px 32px;
+                     border-bottom:1px solid #30363d;">
+            <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                         letter-spacing:2px;margin-bottom:14px;font-weight:600;">
+              STRATEGY RECOMMENDATION
+            </div>
+
+            <!-- Main strategy line -->
+            <div style="font-size:15px;color:#c9d1d9;font-weight:500;
+                         line-height:1.6;margin-bottom:16px;">
+              {{ regime.strategy }}
+            </div>
+
+            <!-- Bullet points (table-based for email compatibility) -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              {% for point in regime.detail %}
+              <tr>
+                <td style="vertical-align:top;width:20px;padding:4px 10px 4px 0;">
+                  <span style="color:{{ regime.color }};font-size:14px;font-weight:700;">▸</span>
+                </td>
+                <td style="vertical-align:top;padding:4px 0;">
+                  <span style="font-size:14px;color:#8b949e;line-height:1.5;">{{ point }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+
+            <!-- Position sizing rules -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="margin-top:20px;">
+              <tr>
+                <td style="background-color:#1c2128;border-radius:8px;padding:14px 16px;
+                            border-left:3px solid #388bfd;">
+                  <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                               letter-spacing:1.5px;font-weight:600;margin-bottom:8px;">
+                    POSITION SIZING RULES
+                  </div>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="padding:3px 0;">
+                        <span style="font-size:13px;color:#388bfd;font-weight:600;">⬡</span>
+                        &nbsp;
+                        <span style="font-size:13px;color:#8b949e;">
+                          Max <strong style="color:#c9d1d9;">2%</strong> portfolio risk per trade
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;">
+                        <span style="font-size:13px;color:#388bfd;font-weight:600;">⬡</span>
+                        &nbsp;
+                        <span style="font-size:13px;color:#8b949e;">
+                          Max <strong style="color:#c9d1d9;">20%</strong> notional exposure
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:3px 0;">
+                        <span style="font-size:13px;color:#388bfd;font-weight:600;">⬡</span>
+                        &nbsp;
+                        <span style="font-size:13px;color:#8b949e;">
+                          Max <strong style="color:#c9d1d9;">4</strong> simultaneous positions
+                        </span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             ECONOMIC CALENDAR
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:#161b22;padding:24px 32px;
+                     border-bottom:1px solid #30363d;">
+            <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                         letter-spacing:2px;margin-bottom:18px;font-weight:600;">
+              ECONOMIC CALENDAR
+            </div>
+
+            {% if events %}
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <!-- Header row -->
+              <tr>
+                <td style="padding:0 8px 10px 0;border-bottom:1px solid #30363d;width:14%;">
+                  <span style="font-size:10px;color:#484f58;text-transform:uppercase;letter-spacing:1px;">
+                    TIME
+                  </span>
+                </td>
+                <td style="padding:0 8px 10px;border-bottom:1px solid #30363d;width:14%;
+                            text-align:center;">
+                  <span style="font-size:10px;color:#484f58;text-transform:uppercase;letter-spacing:1px;">
+                    IMPACT
+                  </span>
+                </td>
+                <td style="padding:0 0 10px;border-bottom:1px solid #30363d;">
+                  <span style="font-size:10px;color:#484f58;text-transform:uppercase;letter-spacing:1px;">
+                    EVENT
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Event rows -->
+              {% for event in events %}
+              <tr>
+                <!-- Time -->
+                <td style="padding:12px 8px 12px 0;border-bottom:1px solid #21262d;
+                            vertical-align:top;">
+                  <span style="font-size:13px;color:#e6edf3;font-variant-numeric:tabular-nums;
+                                font-weight:500;white-space:nowrap;">
+                    {{ event.time }}
+                  </span>
+                </td>
+                <!-- Impact badge -->
+                <td style="padding:12px 8px;border-bottom:1px solid #21262d;
+                            vertical-align:top;text-align:center;">
+                  <span style="font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px;
+                                white-space:nowrap;
+                                {% if event.impact == 'High' %}
+                                  background-color:#2d0000;color:#FF5252;
+                                {% else %}
+                                  background-color:#2d2700;color:#FFD700;
+                                {% endif %}">
+                    {{ event.impact.upper() }}
+                  </span>
+                </td>
+                <!-- Event details -->
+                <td style="padding:12px 0;border-bottom:1px solid #21262d;
+                            vertical-align:top;">
+                  <div style="font-size:13px;color:#c9d1d9;font-weight:500;line-height:1.4;">
+                    {{ event.title }}
+                  </div>
+                  <div style="font-size:11px;color:#6e7681;margin-top:3px;">
+                    {{ event.currency }}
+                    {% if event.forecast != '–' %}
+                      &nbsp;&bull;&nbsp;Forecast:&nbsp;<span style="color:#8b949e;">{{ event.forecast }}</span>
+                    {% endif %}
+                    {% if event.previous != '–' %}
+                      &nbsp;&bull;&nbsp;Previous:&nbsp;<span style="color:#8b949e;">{{ event.previous }}</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+
+            {% else %}
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="background-color:#1c2128;border-radius:8px;padding:14px 16px;">
+                  <span style="font-size:13px;color:#8b949e;">
+                    No high-impact events found today.
+                  </span>
+                  &nbsp;
+                  <a href="https://www.investing.com/economic-calendar/"
+                     style="color:#388bfd;text-decoration:none;font-size:13px;font-weight:500;">
+                    View full calendar &#8594;
+                  </a>
+                </td>
+              </tr>
+            </table>
+            {% endif %}
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             OVERNIGHT SUMMARY
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:#0d1117;padding:24px 32px;
+                     border-bottom:1px solid #30363d;">
+            <div style="font-size:10px;color:#6e7681;text-transform:uppercase;
+                         letter-spacing:2px;margin-bottom:14px;font-weight:600;">
+              OVERNIGHT SUMMARY
+            </div>
+            <div style="font-size:14px;color:#8b949e;line-height:1.8;">
+              {{ overnight }}
+            </div>
+          </td>
+        </tr>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             FOOTER
+        ══════════════════════════════════════════════════════════════════ -->
+        <tr>
+          <td style="background-color:#161b22;padding:18px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="text-align:center;">
+                  <div style="font-size:11px;color:#484f58;line-height:1.6;">
+                    Angelrow Trading Briefing &bull; Automated via GitHub Actions<br>
+                    <span style="font-size:10px;">
+                      Not financial advice. For informational purposes only.
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Main card -->
+
+    </td>
+  </tr>
+</table>
+<!-- /Outer wrapper -->
+
+</body>
+</html>
