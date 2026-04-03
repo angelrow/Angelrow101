@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Angelrow Limited — Resources & Analytics</title>
+<title>Trading Journal — Archive 1 | Angelrow Limited</title>
 <script>(function(){var KEY='angelrow-gate-date';var d=new Date();var today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(localStorage.getItem(KEY)!==today){window.location.replace('gate.html');}})();</script>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -259,39 +259,45 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-chart-wrap{position:relative;height:220px}
 @media(max-width:900px){.mc-grid-2,.mc-chart-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.mc-toggle-bar{flex-direction:column;align-items:flex-start}.mc-config-bar{flex-direction:column;align-items:flex-start}.mc-config-item input{width:100%}}
+/* ── Archive page specific ────────────────────────────────────────────────── */
+.archive-notice{display:flex;align-items:center;gap:10px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--text-muted)}
+.archive-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;background:rgba(255,176,32,.15);color:var(--amber);border:1px solid rgba(255,176,32,.3);flex-shrink:0}
+.archive-nav{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.archive-nav .back-btn{margin-bottom:0}
 </style>
 </head>
 <body>
 <div class="skyline-bg"></div>
 <div class="grid-overlay"></div>
 <div class="app"><div class="container">
+
 <header class="site-header">
 <div class="header-inner">
-<div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div class="brand-text"><h1>Angelrow Limited</h1><div class="tagline">Resources & Analytics</div></div></div>
+<div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div class="brand-text"><h1>Angelrow Limited</h1><div class="tagline">Resources &amp; Analytics</div></div></div>
 <div class="header-right"><div class="live-dot"></div><span id="headerDate"></span></div>
 </div>
-<nav class="nav-bar"><div class="nav-pills">
-<button class="nav-pill active" onclick="nav('home')"><span>◉</span> Home</button>
-<button class="nav-pill" onclick="nav('market')"><span>📈</span> The Market Today</button>
-<button class="nav-pill" onclick="nav('options')"><span>⚡</span> Options</button>
-<button class="nav-pill" onclick="nav('reports')"><span>📋</span> Weekly Reports</button>
-<button class="nav-pill" onclick="nav('journal')"><span>📓</span> Trading Journal</button>
-<a class="nav-pill" href="indicators.html"><span>📊</span> Indicators</a>
-<a class="nav-pill" href="trailing-stop.html"><span>🎯</span> Trailing Stop</a>
-<a class="nav-pill" href="market-weather-grid.html"><span>🌦</span> Weather Grid</a>
-</div></nav>
 </header>
 
-<!-- HOME -->
-<section class="page active" id="page-home">
-<div class="page-title">Dashboard</div>
-<div class="page-subtitle">Trading analytics, strategy reference, and performance tracking.</div>
+<section class="page active" style="padding:40px 0 80px">
+
+<div class="archive-nav">
+<a class="back-btn" href="index.html" style="text-decoration:none">&#8592; Back to Home</a>
+</div>
+
+<div class="archive-notice">
+<span class="archive-badge">Archive 1</span>
+<span>Jan &ndash; Mar 2026 &middot; 76 trades &middot; Frozen snapshot &middot; Starting capital: $50,000</span>
+</div>
+
+<div class="page-title">Trading Journal — Archive 1</div>
+<div class="page-subtitle" id="journal-subtitle">Frozen snapshot — 76 trades from Jan–Mar 2026 with full Monte Carlo analysis.</div>
+
 <div class="summary-row">
 <div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value" id="stat-total">34</div></div>
 <div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
 <div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="stat-wr">70%</div></div>
 <div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos" id="stat-best">+$5,800</div></div>
-</div>
+
 <div class="gauge-row">
 <div class="gauge-card">
 <div class="gauge-title">Total Win Rate</div>
@@ -317,98 +323,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <text id="gauge-week-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
 </svg>
 </div>
-</div>
-<div class="home-grid">
-<div class="home-card" onclick="nav('market')"><div class="card-icon icon-market">📈</div><h3>The Market Today</h3><p>VIX, S&P 500 futures, Fear & Greed Index, bond yields, and key indicators with signal interpretation.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="nav('options')"><div class="card-icon icon-options">⚡</div><h3>Options</h3><p>Greeks visualisation, interactive strategy matrix by IV regime, and full strategy reference library.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="nav('reports')"><div class="card-icon icon-reports">📋</div><h3>Weekly Trading Reports</h3><p>Archive of weekly performance reports with P&L analysis, strategy breakdowns, and lessons learned.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="nav('journal')"><div class="card-icon icon-journal">📓</div><h3>Trading Journal</h3><p>Full position log — 34 trades across CSPs, long calls, spreads, and calendars with P&L tracking.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="window.location='indicators.html'"><div class="card-icon icon-market">📊</div><h3>Technical Indicators</h3><p>20 indicators organised by category — setup, interpretation, key signals, edge cases, and pairing guides.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="window.location='trailing-stop.html'"><div class="card-icon icon-options">🎯</div><h3>Trailing Stop Optimizer</h3><p>Formula-driven calculator for optimal trailing stop width based on bid-ask noise, theta, and IV environment.</p><span class="card-arrow">→</span></div>
-<div class="home-card" onclick="window.location='market-weather-grid.html'"><div class="card-icon" style="background:var(--blue-dim)">🌦</div><h3>Market Weather Grid</h3><p>Live 3-axis regime visualiser — direction, magnitude, and volatility regime on a single grid with trailing dot.</p><span class="card-arrow">→</span></div>
-</div>
-</section>
 
-<!-- MARKET TODAY -->
-<section class="page" id="page-market">
-<button class="back-btn" onclick="nav('home')">← Back to Home</button>
-<div class="page-title">The Market Today</div>
-<div class="page-subtitle">Key US market indicators. Green = bullish, red = bearish, amber = neutral/mixed.</div>
-<div class="snapshot-bar">
-<div class="snapshot-label">&#9679; Live Snapshot</div>
-<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>{"symbols":[{"proName":"AMEX:VIXY","title":"VIX Proxy"},{"proName":"AMEX:SPY","title":"S&P 500"},{"proName":"NASDAQ:QQQ","title":"Nasdaq 100"},{"proName":"NASDAQ:TLT","title":"Bonds/Yields"},{"proName":"AMEX:GLD","title":"Gold"},{"proName":"AMEX:IWM","title":"Small Caps"},{"proName":"AMEX:UUP","title":"US Dollar"},{"proName":"AMEX:XLF","title":"Financials"}],"showSymbolLogo":false,"isTransparent":true,"displayMode":"compact","colorTheme":"dark","locale":"en"}</script></div>
-</div>
-
-<!-- FRED Macro Snapshot -->
-<div class="fred-section-hdr"><div class="section-label">FRED Macro Snapshot</div><span id="fred-status"></span></div>
-<div class="fred-grid">
-<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">VIX — Volatility Index</span><span class="fred-badge fb-load" id="fred-vix-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-vix-val">—</span><span class="fred-chg" id="fred-vix-chg"></span></div><div class="fred-spark"><canvas id="fred-vix-chart"></canvas></div><div class="fred-note" id="fred-vix-note"></div></div>
-<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">S&amp;P 500 Index</span><span class="fred-badge fb-load" id="fred-sp500-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-sp500-val">—</span><span class="fred-chg" id="fred-sp500-chg"></span></div><div class="fred-spark"><canvas id="fred-sp500-chart"></canvas></div><div class="fred-note" id="fred-sp500-note"></div></div>
-<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">10-Year Treasury Yield</span><span class="fred-badge fb-load" id="fred-dgs10-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-dgs10-val">—</span><span class="fred-chg" id="fred-dgs10-chg"></span></div><div class="fred-spark"><canvas id="fred-dgs10-chart"></canvas></div><div class="fred-note" id="fred-dgs10-note"></div></div>
-<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">US Dollar Index (DXY)</span><span class="fred-badge fb-load" id="fred-dxy-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-dxy-val">—</span><span class="fred-chg" id="fred-dxy-chg"></span></div><div class="fred-spark"><canvas id="fred-dxy-chart"></canvas></div><div class="fred-note" id="fred-dxy-note"></div></div>
-<div class="fred-card"><div class="fred-hdr"><span class="fred-lbl">Nasdaq Composite</span><span class="fred-badge fb-load" id="fred-nasdaq-badge">Loading</span></div><div class="fred-val-row"><span class="fred-val" id="fred-nasdaq-val">—</span><span class="fred-chg" id="fred-nasdaq-chg"></span></div><div class="fred-spark"><canvas id="fred-nasdaq-chart"></canvas></div><div class="fred-note" id="fred-nasdaq-note"></div></div>
-</div>
-
-<div class="chart-grid">
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Volatility — VIXY ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:VIXY","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,77,106,1)","underLineColor":"rgba(255,77,106,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bearish"></div>VIXY rising — fear increasing, VIX spiking</div><div class="key-item"><div class="key-dot bullish"></div>VIXY falling — calm market, low fear</div><div class="key-item"><div class="key-dot neutral"></div>Tracks VIX futures direction closely</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">S&amp;P 500 — SPY ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:SPY","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(77,159,255,1)","underLineColor":"rgba(77,159,255,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>Rising — broad market strength</div><div class="key-item"><div class="key-dot bearish"></div>Falling — risk-off, sell pressure</div><div class="key-item"><div class="key-dot neutral"></div>Tracks S&P 500 index 1:1</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Gold — Safe Haven / Fear Gauge</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:GLD","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bearish"></div>Gold rising — fear, uncertainty, risk-off</div><div class="key-item"><div class="key-dot bullish"></div>Gold falling — risk-on, confidence returning</div><div class="key-item"><div class="key-dot neutral"></div>GLD ETF tracks spot gold price</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Bonds — TLT (Yield Inverse)</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"NASDAQ:TLT","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>TLT rising — yields falling, risk-on conditions</div><div class="key-item"><div class="key-dot bearish"></div>TLT falling — yields rising, risk-off pressure</div><div class="key-item"><div class="key-dot neutral"></div>TLT moves OPPOSITE to 20Y Treasury yield</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Financials — XLF Sector</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:XLF","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,77,106,1)","underLineColor":"rgba(255,77,106,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>XLF outperforming — risk appetite high, bullish</div><div class="key-item"><div class="key-dot bearish"></div>XLF underperforming — risk-off, credit concerns</div><div class="key-item"><div class="key-dot neutral"></div>Banks lead bull markets, lag in downturns</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Market Breadth — IWM Small Caps</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:IWM","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(0,212,170,1)","underLineColor":"rgba(0,212,170,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>IWM keeping up with SPY — broad participation</div><div class="key-item"><div class="key-dot bearish"></div>IWM lagging SPY — narrow rally, hidden weakness</div><div class="key-item"><div class="key-dot neutral"></div>Russell 2000 small caps = true breadth proxy</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">Nasdaq 100 — QQQ ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"NASDAQ:QQQ","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(77,159,255,1)","underLineColor":"rgba(77,159,255,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bullish"></div>QQQ leading SPY — tech driving the rally</div><div class="key-item"><div class="key-dot bearish"></div>QQQ lagging SPY — tech weakness, risk-off</div><div class="key-item"><div class="key-dot neutral"></div>Tracks Nasdaq 100 megacap tech</div></div></div>
-<div class="chart-card"><div class="chart-header"><span class="chart-label">US Dollar — UUP ETF</span><span class="chart-badge badge-live">Live</span></div><div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div><script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>{"symbol":"AMEX:UUP","width":"100%","height":180,"locale":"en","dateRange":"1M","colorTheme":"dark","trendLineColor":"rgba(255,176,32,1)","underLineColor":"rgba(255,176,32,0.1)","underLineBottomColor":"rgba(0,0,0,0)","isTransparent":true,"autosize":false}</script></div><div class="chart-key-inline"><div class="key-item"><div class="key-dot bearish"></div>UUP rising — strong dollar, risk-off for equities</div><div class="key-item"><div class="key-dot bullish"></div>UUP falling — weak dollar, risk-on globally</div><div class="key-item"><div class="key-dot neutral"></div>Tracks DXY US Dollar Index direction</div></div></div>
-</div>
-</section>
-
-<!-- OPTIONS -->
-<section class="page" id="page-options">
-<button class="back-btn" onclick="nav('home')">← Back to Home</button>
-<div class="page-title">Options</div>
-<div class="page-subtitle">Greeks analysis, interactive strategy matrix, and complete strategy reference.</div>
-<a href="Csp_checklist.html" target="_blank" style="display:inline-flex;align-items:center;gap:10px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.25);color:var(--accent);text-decoration:none;padding:11px 22px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;margin-bottom:28px;transition:all .2s ease" onmouseover="this.style.background='rgba(0,212,170,.18)';this.style.borderColor='rgba(0,212,170,.4)'" onmouseout="this.style.background='var(--accent-dim)';this.style.borderColor='rgba(0,212,170,.25)'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>CSP Checklist</a>
-<div class="section-label" style="margin-top:8px">The Greeks — How They Change as Stock Price Moves</div>
-<div class="greeks-controls">
-  <div class="gc-row">
-    <div><div class="gc-label">Stock Price <span class="gc-badge gc-spot" id="gc-spot-badge">$273</span></div><input type="range" class="gc-slider" id="gc-spot" min="150" max="450" value="273" step="1" oninput="updateGreeksCharts()"></div>
-    <div><div class="gc-label">Strike Price <span class="gc-badge gc-strike" id="gc-strike-badge">$280</span></div><input type="range" class="gc-slider" id="gc-strike" min="150" max="450" value="280" step="1" oninput="updateGreeksCharts()"></div>
-    <div><div class="gc-label">Days to Expiry <span class="gc-badge gc-neutral" id="gc-dte-badge">20d</span></div><input type="range" class="gc-slider" id="gc-dte" min="1" max="90" value="20" step="1" oninput="updateGreeksCharts()"></div>
-    <div><div class="gc-label">Implied Vol <span class="gc-badge gc-neutral" id="gc-iv-badge">30%</span></div><input type="range" class="gc-slider" id="gc-iv" min="5" max="100" value="30" step="1" oninput="updateGreeksCharts()"></div>
-  </div>
-  <div class="greeks-legend" style="margin-top:14px">
-    <div class="gl-item"><div class="gl-line" style="background:#ff4d6a;height:2px;border-top:2px dashed #ff4d6a;background:none"></div>Strike price</div>
-    <div class="gl-item"><div class="gl-line" style="border-top:2px dashed #00d4aa;background:none"></div>Current spot</div>
-    <div class="gl-item" style="margin-left:auto;color:var(--text-muted);font-size:10px">Call option · Black-Scholes · r=5%</div>
-  </div>
-</div>
-<div class="greeks-chart-grid">
-  <div class="gcc gcc-delta"><div class="gcc-title"><span class="gcc-sym">Δ</span> Delta</div><span class="gcc-sub">How much option moves per $1 stock move — 0 (deep OTM) → 1 (deep ITM)</span><div class="gcc-canvas-wrap"><canvas id="chart-delta"></canvas></div></div>
-  <div class="gcc gcc-gamma"><div class="gcc-title"><span class="gcc-sym">Γ</span> Gamma</div><span class="gcc-sub">How fast delta changes — peaks at-the-money, fades away from strike</span><div class="gcc-canvas-wrap"><canvas id="chart-gamma"></canvas></div></div>
-  <div class="gcc gcc-vega"><div class="gcc-title"><span class="gcc-sym">V</span> Vega</div><span class="gcc-sub">Option value per 1% IV change — highest ATM, falls OTM &amp; ITM</span><div class="gcc-canvas-wrap"><canvas id="chart-vega"></canvas></div></div>
-  <div class="gcc gcc-theta"><div class="gcc-title"><span class="gcc-sym">Θ</span> Theta</div><span class="gcc-sub">Daily time decay — peaks at-the-money, accelerates near expiry</span><div class="gcc-canvas-wrap"><canvas id="chart-theta"></canvas></div></div>
-</div>
-<div class="section-label">Strategy Matrix — Interactive (Select IV Regime)</div>
-<iframe src="matrix.html" class="matrix-frame" style="margin-bottom:28px" title="Options Strategy Matrix"></iframe>
-</section>
-
-<!-- WEEKLY REPORTS -->
-<section class="page" id="page-reports">
-<button class="back-btn" onclick="nav('home')">← Back to Home</button>
-<div class="page-title">Weekly Trading Reports</div>
-<div class="page-subtitle">Performance summaries with strategy analysis and lessons learned.</div>
-<div class="report-list">
-<div class="report-item" onclick="openReport('week2')"><div class="report-info"><div class="report-icon weekly">📋</div><div><div class="report-title">Weekly Trading Report — Week 4 (Feb 20-27)</div><div class="report-date">10 trades | +$435 P&L | 60% win rate</div></div></div><button class="report-btn">View</button></div>
-<div class="report-item" onclick="openReport('week1')"><div class="report-info"><div class="report-icon csp">📊</div><div><div class="report-title">CSP Strategy Performance Report (Feb 9-19)</div><div class="report-date">10 trades | +$1,758 P&L | 80% win rate</div></div></div><button class="report-btn">View</button></div>
-</div>
-</section>
-
-<!-- TRADING JOURNAL -->
-<section class="page" id="page-journal">
-<button class="back-btn" onclick="nav('home')">← Back to Home</button><a class="back-btn" href="trading-journal-archive-1.html" style="text-decoration:none;margin-left:16px;">→ Archive 1</a>
-<div class="page-title">Trading Journal</div>
-<div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
-
-<!-- ── Monte Carlo Analysis ──────────────────────────────────────────────── -->
 <div class="mc-wrapper">
   <div class="mc-toggle-bar" onclick="MC.toggle()">
     <div class="mc-toggle-left">
@@ -459,7 +374,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
     <div class="mc-config-bar">
       <div class="mc-config-item">
         <label for="mc-capital">Starting Capital</label>
-        <input type="text" id="mc-capital" value="500000" placeholder="500000">
+        <input type="text" id="mc-capital" value="50000" placeholder="50000">
       </div>
       <div class="mc-config-item">
         <label for="mc-trades">Trades / Year</label>
@@ -585,14 +500,18 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 
   </div><!-- /mc-content -->
 </div><!-- /mc-wrapper -->
-<!-- ── End Monte Carlo ────────────────────────────────────────────────────── -->
 
-<div class="month-selector" id="monthSelector"></div>
+<div class="month-selector" id="monthSelector">
+<button class="month-btn active" onclick="filterMonth('all',this)">All Trades</button>
+<button class="month-btn" onclick="filterMonth('2026-02',this)">Feb 2026</button>
+<button class="month-btn" onclick="filterMonth('2026-01',this)">Jan 2026</button>
+</div>
 <div class="journal-table-wrap">
 <table class="journal-table"><thead><tr><th>#</th><th>Date</th><th>Ticker</th><th>Strategy</th><th>Strike</th><th>Cts</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Status</th></tr></thead>
 <tbody id="journalBody"></tbody>
 </table>
 </div>
+
 </section>
 
 <footer class="site-footer"><span>Angelrow Limited — Built with <a href="https://claude.ai" target="_blank">Claude</a></span><span>www.angelrow.co.uk</span></footer>
@@ -738,7 +657,7 @@ async function loadTradesCSV(){
   if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted)">Loading trades…</td></tr>';
   try{
     // Try new underscore filename first, fall back to legacy space name
-    const names=['Trade_Log-Table_1.csv','Trade Log-Table 1.csv'];
+    const names=['Trade_Log-Archive-1.csv'];
     let res;
     for(const name of names){res=await fetch(encodeURI(name));if(res.ok)break;}
     if(!res.ok)throw new Error(`CSV not found`);
@@ -774,12 +693,12 @@ async function loadTradesCSV(){
       const isError=mistakes.startsWith('ERROR');
       return{id:parseInt(g('id'))||i+1,date:parseDate(g('date')),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:parsePnL(g('pnl')),status,isError};
     }).filter(t=>t.date&&t.ticker);
-    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No trades yet — upload your CSV file to get started.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
+    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted)">No trades in archive CSV.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
     trades.length=0;parsed.forEach(t=>trades.push(t));
     rebuildMonthButtons();renderJournal('all');updateDashboardStats();setTimeout(updateGauges,120);
   }catch(err){
     console.error('Trade log load failed:',err);
-    if(tbody)tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red)">Could not load Trade Log-Table 1.csv — ${err.message}</td></tr>`;
+    if(tbody)tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red)">Could not load Trade_Log-Archive-1.csv — ${err.message}</td></tr>`;
   }
 }
 
@@ -797,178 +716,7 @@ function nav(page){
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 loadTradesCSV();
 
-// ─── FRED Market Data ────────────────────────────────────────────────────────
-const FRED_KEY='4f8556e2691bd5f3c2f5e819a5249ec3';
-const FRED_SERIES=[
-  {id:'vix',    series:'VIXCLS',    label:'VIX',           unit:'',  dec:2},
-  {id:'sp500',  series:'SP500',     label:'S&P 500',       unit:'',  dec:0},
-  {id:'dgs10',  series:'DGS10',     label:'10Y Yield',     unit:'%', dec:2},
-  {id:'dxy',    series:'DTWEXBGS',  label:'Dollar Index',  unit:'',  dec:2},
-  {id:'nasdaq', series:'NASDAQCOM', label:'Nasdaq',        unit:'',  dec:0}
-];
-const fredCharts={};
-
-async function fetchFred(seriesId,limit=35){
-  const url=`https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${FRED_KEY}&file_type=json&limit=${limit}&sort_order=desc`;
-  const r=await fetch(url);
-  if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  const d=await r.json();
-  return d.observations.filter(o=>o.value!=='.').reverse();
-}
-
-function vixRegime(v){
-  if(v<15)return{txt:'Low Fear',cls:'fb-bull'};
-  if(v<20)return{txt:'Moderate',cls:'fb-neut'};
-  if(v<30)return{txt:'Elevated',cls:'fb-bear'};
-  return{txt:'Extreme Fear',cls:'fb-bear'};
-}
-
-function renderFredCard(cfg,obs){
-  const vals=obs.map(o=>parseFloat(o.value));
-  const latest=vals[vals.length-1];
-  const prev=vals.length>1?vals[vals.length-2]:latest;
-  const change=latest-prev;
-  const pct=prev?change/prev*100:0;
-  const valEl=document.getElementById(`fred-${cfg.id}-val`);
-  const chgEl=document.getElementById(`fred-${cfg.id}-chg`);
-  const badgeEl=document.getElementById(`fred-${cfg.id}-badge`);
-  const noteEl=document.getElementById(`fred-${cfg.id}-note`);
-  if(!valEl)return;
-  const fmt=n=>cfg.unit==='%'?`${n.toFixed(cfg.dec)}%`:cfg.dec===0?n.toLocaleString('en-US',{maximumFractionDigits:0}):n.toFixed(cfg.dec);
-  valEl.textContent=fmt(latest);
-  const sign=change>=0?'+':'';
-  chgEl.textContent=`${sign}${change.toFixed(cfg.dec)} (${sign}${pct.toFixed(2)}%)`;
-  chgEl.className='fred-chg '+(change>=0?'fred-up':'fred-down');
-  if(cfg.id==='vix'){
-    const r=vixRegime(latest);
-    badgeEl.textContent=r.txt;badgeEl.className=`fred-badge ${r.cls}`;
-    noteEl.textContent=latest<15?'Sell premium aggressively — IV low, theta optimal':latest<20?'Neutral — standard CSP/IC sizing':latest<30?'Elevated fear — widen strikes, reduce size':'Extreme vol — defined-risk only, no naked puts';
-  }else if(cfg.id==='dgs10'){
-    badgeEl.textContent=change>0?'Yields Rising':'Yields Falling';
-    badgeEl.className=`fred-badge ${change>0?'fb-bear':'fb-bull'}`;
-    noteEl.textContent=change>0?'Rising yields → pressure on growth & tech':'Falling yields → supportive for equities & growth';
-  }else if(cfg.id==='dxy'){
-    badgeEl.textContent=change>0?'USD Strong':'USD Weak';
-    badgeEl.className=`fred-badge ${change>0?'fb-bear':'fb-bull'}`;
-    noteEl.textContent=change>0?'Strong dollar headwind for multinationals & commodities':'Weak dollar tailwind for international earnings & gold';
-  }else{
-    badgeEl.textContent=change>=0?'▲ Up':'▼ Down';
-    badgeEl.className=`fred-badge ${change>=0?'fb-bull':'fb-bear'}`;
-    noteEl.textContent='';
-  }
-  const canvas=document.getElementById(`fred-${cfg.id}-chart`);
-  if(!canvas)return;
-  if(fredCharts[cfg.id])fredCharts[cfg.id].destroy();
-  const lineColor=change>=0?'#00d4aa':'#ff4d6a';
-  fredCharts[cfg.id]=new Chart(canvas,{
-    type:'line',
-    data:{labels:obs.map(o=>o.date.substring(5)),datasets:[{data:vals,borderColor:lineColor,borderWidth:1.5,backgroundColor:change>=0?'rgba(0,212,170,0.08)':'rgba(255,77,106,0.08)',fill:true,tension:0.3,pointRadius:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{enabled:false}},scales:{x:{display:false},y:{display:false}},animation:{duration:500}}
-  });
-}
-
-// ─── Greeks Charts (Black-Scholes) ───────────────────────────────────────────
-function normPDF(x){return Math.exp(-0.5*x*x)/Math.sqrt(2*Math.PI)}
-function normCDF(x){
-  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
-  const sign=x<0?-1:1;const ax=Math.abs(x);
-  const t=1/(1+p*ax);
-  const y=1-(((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t)*Math.exp(-ax*ax);
-  return 0.5*(1+sign*y);
-}
-function bsGreeks(S,K,T,r,sigma){
-  if(T<=0||sigma<=0||S<=0)return{delta:S>=K?1:0,gamma:0,vega:0,theta:0};
-  const sqrtT=Math.sqrt(T);
-  const d1=(Math.log(S/K)+(r+0.5*sigma*sigma)*T)/(sigma*sqrtT);
-  const d2=d1-sigma*sqrtT;
-  const delta=normCDF(d1);
-  const gamma=normPDF(d1)/(S*sigma*sqrtT);
-  const vega=S*normPDF(d1)*sqrtT/100;
-  const theta=(-(S*normPDF(d1)*sigma/(2*sqrtT))-r*K*Math.exp(-r*T)*normCDF(d2))/365;
-  return{delta,gamma,vega,theta:-theta};
-}
-
-// Register inline vertical-line plugin (no extra CDN needed)
-Chart.register({
-  id:'vLinePlugin',
-  afterDraw(chart,_,opts){
-    if(!opts||!opts.lines)return;
-    const ctx=chart.ctx,xs=chart.scales.x,ys=chart.scales.y;
-    opts.lines.forEach(l=>{
-      const px=xs.getPixelForValue(l.x);
-      ctx.save();ctx.beginPath();
-      ctx.moveTo(px,ys.top);ctx.lineTo(px,ys.bottom);
-      ctx.strokeStyle=l.color;ctx.lineWidth=1.5;
-      ctx.setLineDash([5,4]);ctx.stroke();ctx.restore();
-    });
-  }
-});
-
-const greekCharts={};
-
-function buildGreekChart(id,label,data,color,prices,strike,spot,yLabel){
-  const canvas=document.getElementById(id);
-  if(!canvas)return;
-  if(greekCharts[id])greekCharts[id].destroy();
-  greekCharts[id]=new Chart(canvas,{
-    type:'line',
-    data:{datasets:[{label,data:prices.map((x,i)=>({x,y:data[i]})),borderColor:color,borderWidth:2,backgroundColor:color+'18',fill:true,tension:0.4,pointRadius:0}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{mode:'index',intersect:false,callbacks:{label:c=>`${label}: ${c.parsed.y.toFixed(4)}`},backgroundColor:'rgba(17,22,30,0.95)',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#8a95a5',bodyColor:'#eaf0f6'},
-        vLinePlugin:{lines:[{x:strike,color:'rgba(255,77,106,0.75)'},{x:spot,color:'rgba(0,212,170,0.75)'}]}
-      },
-      scales:{
-        x:{type:'linear',ticks:{color:'#5a6577',font:{size:10},maxTicksLimit:7,callback:v=>`$${v.toFixed(0)}`},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'}},
-        y:{ticks:{color:'#5a6577',font:{size:10},maxTicksLimit:5},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.06)'},title:{display:true,text:yLabel,color:'#5a6577',font:{size:10}}}
-      },
-      animation:{duration:250}
-    }
-  });
-}
-
-function updateGreeksCharts(){
-  const spot=parseFloat(document.getElementById('gc-spot').value);
-  const strike=parseFloat(document.getElementById('gc-strike').value);
-  const dte=parseInt(document.getElementById('gc-dte').value);
-  const iv=parseFloat(document.getElementById('gc-iv').value);
-  document.getElementById('gc-spot-badge').textContent=`$${spot}`;
-  document.getElementById('gc-strike-badge').textContent=`$${strike}`;
-  document.getElementById('gc-dte-badge').textContent=`${dte}d`;
-  document.getElementById('gc-iv-badge').textContent=`${iv}%`;
-  const T=dte/365,r=0.05,sigma=iv/100;
-  const range=strike*0.15,xMin=strike-range,xMax=strike+range,N=120;
-  const prices=[],dD=[],gD=[],vD=[],tD=[];
-  for(let i=0;i<=N;i++){
-    const S=xMin+(xMax-xMin)*i/N;
-    prices.push(parseFloat(S.toFixed(2)));
-    const g=bsGreeks(S,strike,T,r,sigma);
-    dD.push(parseFloat(g.delta.toFixed(5)));
-    gD.push(parseFloat((g.gamma*100).toFixed(5)));
-    vD.push(parseFloat(g.vega.toFixed(5)));
-    tD.push(parseFloat(g.theta.toFixed(5)));
-  }
-  buildGreekChart('chart-delta','Delta',dD,'#4d9fff',prices,strike,spot,'Delta');
-  buildGreekChart('chart-gamma','Gamma ×100',gD,'#c084fc',prices,strike,spot,'Gamma ×100');
-  buildGreekChart('chart-vega','Vega ($)',vD,'#ffb020',prices,strike,spot,'Vega ($)');
-  buildGreekChart('chart-theta','Theta ($/day)',tD,'#00d4aa',prices,strike,spot,'Theta ($/day)');
-}
-
-async function loadMarketData(){
-  const st=document.getElementById('fred-status');
-  if(st)st.textContent='Loading…';
-  const results=await Promise.allSettled(FRED_SERIES.map(cfg=>fetchFred(cfg.series).then(obs=>({cfg,obs}))));
-  let ok=0;
-  results.forEach(r=>{if(r.status==='fulfilled'){renderFredCard(r.value.cfg,r.value.obs);ok++;}else{console.warn('FRED error:',r.reason);}});
-  if(st){
-    const now=new Date();
-    st.textContent=ok>0?`Updated ${now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} · FRED prev-close, updated ~6pm ET`:'FRED data unavailable';
-  }
-}
-
 </script>
-<script src="monte-carlo.js" defer></script>
+<script src="monte-carlo-archive-1.js" defer></script>
 </body>
 </html>
