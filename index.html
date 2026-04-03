@@ -744,7 +744,7 @@ async function loadTradesCSV(){
     // Try new underscore filename first, fall back to legacy space name
     const names=['Trade_Log-Table_1.csv','Trade Log-Table 1.csv'];
     let res;
-    for(const name of names){res=await fetch(encodeURI(name));if(res.ok)break;}
+    for(const name of names){res=await fetch(encodeURI(name),{cache:'no-store'});if(res.ok)break;}
     if(!res.ok)throw new Error(`CSV not found`);
     const text=await res.text();
     const lines=text.trim().split('\n').filter(l=>l.trim());
