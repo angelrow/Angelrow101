@@ -259,11 +259,9 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-chart-wrap{position:relative;height:220px}
 @media(max-width:900px){.mc-grid-2,.mc-chart-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.mc-toggle-bar{flex-direction:column;align-items:flex-start}.mc-config-bar{flex-direction:column;align-items:flex-start}.mc-config-item input{width:100%}}
-/* ── Archive page specific ────────────────────────────────────────────────── */
-.archive-notice{display:flex;align-items:center;gap:10px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--text-muted)}
+/* ── Archive notice ───────────────────────────────────────────────────────── */
+.archive-notice{display:flex;align-items:center;gap:10px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:24px;font-size:13px;color:var(--text-muted)}
 .archive-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;background:rgba(255,176,32,.15);color:var(--amber);border:1px solid rgba(255,176,32,.3);flex-shrink:0}
-.archive-nav{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-.archive-nav .back-btn{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -276,13 +274,14 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div class="brand-text"><h1>Angelrow Limited</h1><div class="tagline">Resources &amp; Analytics</div></div></div>
 <div class="header-right"><div class="live-dot"></div><span id="headerDate"></span></div>
 </div>
+<nav class="nav-bar"><div class="nav-pills">
+<a class="nav-pill" href="index.html"><span>&#9650;</span> Home</a>
+<a class="nav-pill active" href="trading-journal-archive-1.html"><span>&#128211;</span> Archive 1</a>
+</div></nav>
 </header>
 
-<section class="page active" style="padding:40px 0 80px">
-
-<div class="archive-nav">
-<a class="back-btn" href="index.html" style="text-decoration:none">&#8592; Back to Home</a>
-</div>
+<section class="page active">
+<button class="back-btn" onclick="window.location='index.html'">&#8592; Back to Home</button>
 
 <div class="archive-notice">
 <span class="archive-badge">Archive 1</span>
@@ -297,6 +296,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
 <div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="stat-wr">70%</div></div>
 <div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos" id="stat-best">+$5,800</div></div>
+</div>
 
 <div class="gauge-row">
 <div class="gauge-card">
@@ -501,16 +501,16 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   </div><!-- /mc-content -->
 </div><!-- /mc-wrapper -->
 
-<div class="month-selector" id="monthSelector">
-<button class="month-btn active" onclick="filterMonth('all',this)">All Trades</button>
-<button class="month-btn" onclick="filterMonth('2026-02',this)">Feb 2026</button>
-<button class="month-btn" onclick="filterMonth('2026-01',this)">Jan 2026</button>
-</div>
+<div class="month-selector" id="monthSelector"></div>
 <div class="journal-table-wrap">
 <table class="journal-table"><thead><tr><th>#</th><th>Date</th><th>Ticker</th><th>Strategy</th><th>Strike</th><th>Cts</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Status</th></tr></thead>
 <tbody id="journalBody"></tbody>
 </table>
 </div>
+</section>
+
+<footer class="site-footer"><span>Angelrow Limited — Built with <a href="https://claude.ai" target="_blank">Claude</a></span><span>www.angelrow.co.uk</span></footer>
+</div></div>
 
 </section>
 
@@ -518,15 +518,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </div></div>
 
 <!-- MODAL -->
-<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
-<div class="modal-box"><div class="modal-top"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-content" id="modalContent"></div></div>
-</div>
-
 <script>
 const trades=[];
 
-function renderJournal(filter){
-  const tbody=document.getElementById('journalBody');
+<script>
   const filtered=filter==='all'?trades:trades.filter(t=>t.date.startsWith(filter));
   tbody.innerHTML=filtered.map(t=>{
     const pnlClass=t.pnl===null?'':t.pnl>=0?'pnl-pos':'pnl-neg';
@@ -659,7 +654,7 @@ async function loadTradesCSV(){
     // Try new underscore filename first, fall back to legacy space name
     const names=['Trade_Log-Archive-1.csv'];
     let res;
-    for(const name of names){res=await fetch(encodeURI(name));if(res.ok)break;}
+    for(const name of names){res=await fetch(encodeURI(name),{cache:'no-store'});if(res.ok)break;}
     if(!res.ok)throw new Error(`CSV not found`);
     const text=await res.text();
     const lines=text.trim().split('\n').filter(l=>l.trim());
@@ -693,7 +688,7 @@ async function loadTradesCSV(){
       const isError=mistakes.startsWith('ERROR');
       return{id:parseInt(g('id'))||i+1,date:parseDate(g('date')),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:parsePnL(g('pnl')),status,isError};
     }).filter(t=>t.date&&t.ticker);
-    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted)">No trades in archive CSV.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
+    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No trades in archive CSV.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
     trades.length=0;parsed.forEach(t=>trades.push(t));
     rebuildMonthButtons();renderJournal('all');updateDashboardStats();setTimeout(updateGauges,120);
   }catch(err){
@@ -715,6 +710,10 @@ function nav(page){
 
 document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 loadTradesCSV();
+
+// ─── FRED Market Data ────────────────────────────────────────────────────────
+const FRED_KEY='4f8556e2691bd5f3c2f5e819a5249ec3';
+const FRED_SERIES=[
 
 </script>
 <script src="monte-carlo-archive-1.js" defer></script>
