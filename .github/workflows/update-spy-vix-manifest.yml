@@ -1,0 +1,61 @@
+name: SPY/VIX Model — Update Data Manifest
+
+on:
+  push:
+    paths:
+      - 'data/spy_daily_historical-data-*.csv'
+      - 'data/vix_daily_historical-data-*.csv'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find latest CSVs and write manifest
+        run: |
+          # Find the most recently modified SPY and VIX CSVs
+          SPY_FILE=$(ls data/spy_daily_historical-data-*.csv 2>/dev/null | sort | tail -1)
+          VIX_FILE=$(ls data/vix_daily_historical-data-*.csv 2>/dev/null | sort | tail -1)
+
+          if [ -z "$SPY_FILE" ] || [ -z "$VIX_FILE" ]; then
+            echo "ERROR: Could not find both SPY and VIX CSV files in data/"
+            ls data/
+            exit 1
+          fi
+
+          SPY_BASENAME=$(basename "$SPY_FILE")
+          VIX_BASENAME=$(basename "$VIX_FILE")
+
+          echo "SPY: $SPY_BASENAME"
+          echo "VIX: $VIX_BASENAME"
+
+          # Extract date from filename (spy_daily_historical-data-DD-MM-YYYY.csv)
+          DATA_DATE=$(echo "$SPY_BASENAME" | grep -oP '\d{2}-\d{2}-\d{4}' | head -1)
+
+          cat > data/spy-vix-manifest.json << EOF
+          {
+            "spy": "$SPY_BASENAME",
+            "vix": "$VIX_BASENAME",
+            "dataDate": "$DATA_DATE",
+            "updatedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          }
+          EOF
+
+      - name: Commit and push manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/spy-vix-manifest.json
+          if git diff --cached --quiet; then
+            echo "Manifest unchanged — skipping commit"
+          else
+            git commit -m "chore: update SPY/VIX data manifest [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi

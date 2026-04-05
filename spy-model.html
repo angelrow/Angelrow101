@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPY Probability Model — Angelrow Trading Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b0f14;--bg-card:rgba(17,22,30,0.85);--bg-card-solid:#111620;
+  --border:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);
+  --text:#eaf0f6;--text-secondary:#8a95a5;--text-muted:#5a6577;
+  --accent:#00d4aa;--accent-dim:rgba(0,212,170,0.1);--accent-glow:rgba(0,212,170,0.15);
+  --red:#ff4d6a;--red-dim:rgba(255,77,106,0.1);
+  --amber:#ffb020;--amber-dim:rgba(255,176,32,0.1);
+  --blue:#4d9fff;--blue-dim:rgba(77,159,255,0.1);
+  --green:#00e676;--purple:#b388ff;
+  --radius:14px;--radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.skyline-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.skyline-bg::before{content:'';position:absolute;bottom:0;left:0;right:0;height:45%;
+  background:
+    linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 5% bottom/12px 55%,
+    linear-gradient(transparent 40%,#181d27 40%,#181d27 100%) no-repeat 8% bottom/28px 48%,
+    linear-gradient(transparent 25%,#141922 25%,#141922 100%) no-repeat 12% bottom/35px 58%,
+    linear-gradient(transparent 45%,#171c26 45%,#171c26 100%) no-repeat 18% bottom/22px 42%,
+    linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 22% bottom/45px 62%,
+    linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 28% bottom/18px 50%,
+    linear-gradient(transparent 15%,#121720 15%,#121720 100%) no-repeat 32% bottom/50px 65%,
+    linear-gradient(transparent 50%,#191e28 50%,#191e28 100%) no-repeat 38% bottom/25px 38%,
+    linear-gradient(transparent 10%,#111620 10%,#111620 100%) no-repeat 42% bottom/40px 70%,
+    linear-gradient(transparent 30%,#151a24 30%,#151a24 100%) no-repeat 48% bottom/55px 55%,
+    linear-gradient(transparent 22%,#131821 22%,#131821 100%) no-repeat 54% bottom/30px 60%,
+    linear-gradient(transparent 40%,#171c26 40%,#171c26 100%) no-repeat 58% bottom/20px 45%,
+    linear-gradient(transparent 18%,#141922 18%,#141922 100%) no-repeat 62% bottom/48px 63%,
+    linear-gradient(transparent 35%,#161b25 35%,#161b25 100%) no-repeat 68% bottom/35px 50%,
+    linear-gradient(transparent 12%,#121720 12%,#121720 100%) no-repeat 73% bottom/42px 68%,
+    linear-gradient(transparent 28%,#151a24 28%,#151a24 100%) no-repeat 78% bottom/55px 56%,
+    linear-gradient(transparent 45%,#191e28 45%,#191e28 100%) no-repeat 83% bottom/20px 40%,
+    linear-gradient(transparent 20%,#131821 20%,#131821 100%) no-repeat 87% bottom/38px 62%,
+    linear-gradient(transparent 32%,#171c26 32%,#171c26 100%) no-repeat 92% bottom/28px 52%,
+    linear-gradient(transparent 15%,#141922 15%,#141922 100%) no-repeat 96% bottom/45px 66%;
+  opacity:.5}
+.skyline-bg::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 20%,rgba(0,212,170,.02) 0%,transparent 50%),
+  radial-gradient(ellipse at 70% 80%,rgba(77,159,255,.015) 0%,transparent 50%),
+  linear-gradient(to bottom,transparent 50%,var(--bg) 100%)}
+.grid-overlay{position:fixed;inset:0;z-index:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M 80 0 L 0 0 0 80' fill='none' stroke='%23ffffff' stroke-width='0.3' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events:none}
+.app{position:relative;z-index:1;min-height:100vh}
+.container{max-width:1300px;margin:0 auto;padding:0 24px 60px}
+
+/* NAV */
+.top-nav{display:flex;align-items:center;padding:20px 0 0;margin-bottom:4px}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:13px;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:color .2s}
+.back-link:hover{color:var(--accent)}
+.back-link svg{width:14px;height:14px}
+
+/* HEADER */
+.page-header{padding:24px 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px}
+.page-header h1{font-size:22px;font-weight:700;letter-spacing:-.02em;background:linear-gradient(90deg,var(--accent),var(--blue),var(--purple,#b388ff));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.page-header .sub{color:var(--text-muted);font-size:13px;margin-bottom:16px}
+.status-bar{display:flex;gap:10px;flex-wrap:wrap}
+.status-pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary)}
+.status-pill.ok{border-color:rgba(0,212,170,.3);color:var(--accent)}
+.status-pill.err{border-color:rgba(255,77,106,.3);color:var(--red)}
+
+/* LAYOUT */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+.grid2 .full{grid-column:1/-1}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;backdrop-filter:blur(8px)}
+.card-title{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* LOADING / ERROR */
+.loader{text-align:center;padding:80px 20px}
+.spinner{display:inline-block;width:36px;height:36px;border:2px solid var(--border);border-top:2px solid var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{color:var(--text-muted);font-size:14px;font-family:'JetBrains Mono',monospace}
+.error-card{background:var(--red-dim);border:1px solid rgba(255,77,106,.3);border-radius:var(--radius);padding:24px;text-align:center;color:var(--red);font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:20px}
+.error-card strong{display:block;font-size:15px;margin-bottom:8px}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px;font-family:'JetBrains Mono',monospace}
+th{background:rgba(255,255,255,.03);color:var(--text-muted);padding:8px 10px;text-align:center;font-weight:500;border-bottom:1px solid var(--border);font-size:11px;white-space:nowrap}
+td{padding:7px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,.03);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.pos{color:var(--accent)}
+.neg{color:var(--red)}
+.amber{color:var(--amber)}
+
+/* REGIME TAGS */
+.rtag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.r-low{background:rgba(0,212,170,.12);color:var(--accent)}
+.r-normal{background:rgba(77,159,255,.12);color:var(--blue)}
+.r-elevated{background:rgba(255,176,32,.12);color:var(--amber)}
+.r-high{background:rgba(255,77,106,.12);color:var(--red)}
+.r-crisis{background:rgba(183,28,28,.2);color:#ff8a80}
+.r-all{background:rgba(179,136,255,.12);color:var(--purple,#b388ff)}
+
+/* CHART */
+.chart-wrap{position:relative;height:280px;margin-top:4px}
+
+/* CALCULATOR */
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:600px){.calc-grid{grid-template-columns:1fr}}
+.field label{display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.field input,.field select{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field select option{background:#1a2030}
+.calc-result{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.calc-result .pct{font-family:'JetBrains Mono',monospace;font-size:2.2em;font-weight:700;line-height:1}
+.calc-result .label{font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.calc-result .detail{font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;margin-top:4px}
+
+/* TAIL RISK */
+.tail-box{background:var(--red-dim);border:1px solid rgba(255,77,106,.15);border-radius:var(--radius-sm);padding:12px 14px;margin-top:14px;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.7;color:var(--text-secondary)}
+.tail-box strong{color:var(--red)}
+
+/* ALL ROW */
+tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(--accent)}
+
+/* FOOTER */
+.page-footer{text-align:center;padding:24px 0;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:10px}
+</style>
+</head>
+<body>
+<script>(function(){var KEY='angelrow-gate-date';var d=new Date();var today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(localStorage.getItem(KEY)!==today){window.location.replace('gate.html');}})();</script>
+
+<div class="skyline-bg"></div>
+<div class="grid-overlay"></div>
+
+<div class="app">
+<div class="container">
+
+  <nav class="top-nav">
+    <a href="index.html" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Dashboard
+    </a>
+  </nav>
+
+  <div class="page-header">
+    <h1>SPY DAILY MOVE PROBABILITY MODEL</h1>
+    <div class="sub">Angelrow Trading Systems — 0DTE Strike Selection Tool</div>
+    <div class="status-bar">
+      <span class="status-pill" id="s-data">Loading data...</span>
+      <span class="status-pill" id="s-days"></span>
+      <span class="status-pill" id="s-range"></span>
+      <span class="status-pill" id="s-date"></span>
+    </div>
+  </div>
+
+  <div id="loader" class="loader">
+    <div class="spinner"></div>
+    <p>Fetching market data...</p>
+  </div>
+
+  <div id="err-box" class="error-card" style="display:none">
+    <strong>Data Load Error</strong>
+    <span id="err-msg"></span>
+  </div>
+
+  <div id="dashboard" style="display:none">
+
+    <div class="grid2">
+
+      <!-- Histogram -->
+      <div class="card">
+        <div class="card-title">Daily Return Distribution — All Regimes</div>
+        <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+      </div>
+
+      <!-- Calculator -->
+      <div class="card">
+        <div class="card-title">0DTE Strike Probability Calculator</div>
+        <div class="calc-grid">
+          <div class="field">
+            <label>SPY Price ($)</label>
+            <input type="number" id="c-price" value="560" step="0.01">
+          </div>
+          <div class="field">
+            <label>Strike Distance (% OTM)</label>
+            <input type="number" id="c-dist" value="1.5" step="0.1" min="0">
+          </div>
+          <div class="field">
+            <label>Direction</label>
+            <select id="c-dir">
+              <option value="put">Put (downside breach)</option>
+              <option value="call">Call (upside breach)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>VIX Regime Filter</label>
+            <select id="c-regime">
+              <option value="all">All Regimes</option>
+              <option value="low">Low (&lt;12)</option>
+              <option value="normal">Normal (12–18)</option>
+              <option value="elevated">Elevated (18–25)</option>
+              <option value="high">High (25–35)</option>
+              <option value="crisis">Crisis (&gt;35)</option>
+            </select>
+          </div>
+        </div>
+        <div class="calc-result" id="calc-result">
+          <div class="label">Probability of breach</div>
+          <div class="pct" id="calc-pct">—</div>
+          <div class="detail" id="calc-detail"></div>
+        </div>
+      </div>
+
+      <!-- Regime Table -->
+      <div class="card full">
+        <div class="card-title">Move Probability by VIX Regime</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>VIX Regime</th><th>Days</th><th>Avg |Move|</th><th>Std Dev</th>
+                <th>&gt;0.5%</th><th>&gt;1.0%</th><th>&gt;1.5%</th><th>&gt;2.0%</th><th>&gt;3.0%</th><th>&gt;5.0%</th>
+                <th>Max Up</th><th>Max Down</th>
+              </tr>
+            </thead>
+            <tbody id="regime-tbody"></tbody>
+          </table>
+        </div>
+        <div class="tail-box" id="tail-box"></div>
+      </div>
+
+      <!-- Day of Week -->
+      <div class="card">
+        <div class="card-title">Move by Day of Week</div>
+        <div class="chart-wrap"><canvas id="dowChart"></canvas></div>
+      </div>
+
+      <!-- Monthly -->
+      <div class="card">
+        <div class="card-title">Monthly Volatility</div>
+        <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+      </div>
+
+      <!-- Directional table -->
+      <div class="card full">
+        <div class="card-title">Directional Move Probability by Regime</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>VIX Regime</th><th>% Days Up</th><th>% Days Down</th>
+                <th>Avg Up Move</th><th>Avg Down Move</th>
+                <th>Put OTM 1% Safe?</th><th>Call OTM 1% Safe?</th>
+              </tr>
+            </thead>
+            <tbody id="dir-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /grid2 -->
+  </div><!-- /dashboard -->
+
+  <div class="page-footer">
+    Angelrow Trading Systems &nbsp;|&nbsp; SPY Probability Model &nbsp;|&nbsp; Data: Barchart &nbsp;|&nbsp; Not financial advice
+  </div>
+
+</div><!-- /container -->
+</div><!-- /app -->
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let globalData = null;
+let charts = {};
+
+// ─── Barchart CSV parser ──────────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+
+  // Strip BOM if present
+  const firstLine = lines[0].replace(/^\uFEFF/, '');
+  const rawHeaders = firstLine.split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+
+  // Detect format
+  const isBarchart = rawHeaders.some(h => ['Symbol','Time','Trading Day','Last'].includes(h));
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // CSV field parser (handles quoted commas)
+    const vals = [];
+    let cur = '', inQ = false;
+    for (const ch of line) {
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    vals.push(cur.trim());
+
+    const raw = {};
+    rawHeaders.forEach((h, i) => { raw[h] = vals[i] || ''; });
+
+    // Normalise to {Date, Open, High, Low, Close}
+    let dateStr, closeStr, highStr, lowStr;
+
+    if (isBarchart) {
+      dateStr  = raw['Time'] || raw['Trading Day'] || raw['Date'] || '';
+      closeStr = raw['Last'] || raw['Close'] || '';
+      highStr  = raw['High'] || '';
+      lowStr   = raw['Low'] || '';
+    } else {
+      // Yahoo Finance fallback
+      dateStr  = raw['Date'] || '';
+      closeStr = raw['Adj Close'] || raw['Close'] || '';
+      highStr  = raw['High'] || '';
+      lowStr   = raw['Low'] || '';
+    }
+
+    // Normalise date: MM/DD/YYYY → YYYY-MM-DD
+    if (dateStr.includes('/')) {
+      const [m, d, y] = dateStr.split('/');
+      const yr = y.length === 2 ? '20' + y : y;
+      dateStr = `${yr}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+
+    // Strip commas from numeric strings (Barchart uses 1,234.56)
+    closeStr = closeStr.replace(/,/g, '');
+    highStr  = highStr.replace(/,/g, '');
+    lowStr   = lowStr.replace(/,/g, '');
+
+    const close = parseFloat(closeStr);
+    const high  = parseFloat(highStr);
+    const low   = parseFloat(lowStr);
+
+    if (!dateStr || isNaN(close) || close <= 0) continue;
+    rows.push({ Date: dateStr, Close: close, High: high, Low: low });
+  }
+
+  return rows;
+}
+
+// ─── Fetch & process ──────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    // 1. Fetch manifest
+    const mResp = await fetch('data/spy-vix-manifest.json?_=' + Date.now());
+    if (!mResp.ok) throw new Error(`Manifest fetch failed (${mResp.status})`);
+    const manifest = await mResp.json();
+
+    const spyFile = manifest.spy;
+    const vixFile = manifest.vix;
+    const dataDate = manifest.dataDate || '';
+
+    // 2. Fetch CSVs in parallel
+    const [spyResp, vixResp] = await Promise.all([
+      fetch(`data/${spyFile}?_=` + Date.now()),
+      fetch(`data/${vixFile}?_=` + Date.now())
+    ]);
+    if (!spyResp.ok) throw new Error(`SPY CSV fetch failed (${spyResp.status}) — file: ${spyFile}`);
+    if (!vixResp.ok) throw new Error(`VIX CSV fetch failed (${vixResp.status}) — file: ${vixFile}`);
+
+    const [spyText, vixText] = await Promise.all([spyResp.text(), vixResp.text()]);
+
+    // 3. Parse
+    const spyRows = parseCSV(spyText).sort((a,b) => a.Date.localeCompare(b.Date));
+    const vixRows = parseCSV(vixText).sort((a,b) => a.Date.localeCompare(b.Date));
+
+    if (spyRows.length < 10) throw new Error('SPY CSV appears empty or malformed.');
+    if (vixRows.length < 10) throw new Error('VIX CSV appears empty or malformed.');
+
+    // 4. Build VIX lookup
+    const vixMap = {};
+    vixRows.forEach(r => { vixMap[r.Date] = r.Close; });
+
+    // 5. Compute daily returns
+    const data = [];
+    for (let i = 1; i < spyRows.length; i++) {
+      const prev = spyRows[i-1].Close;
+      const curr = spyRows[i].Close;
+      const { Date: date, High: high, Low: low } = spyRows[i];
+      if (!prev || !curr || prev === 0) continue;
+
+      const dailyReturn = ((curr - prev) / prev) * 100;
+      const absReturn   = Math.abs(dailyReturn);
+      const vix = vixMap[date];
+      const regime = classifyRegime(vix);
+      const dt = new Date(date + 'T00:00:00Z');
+
+      data.push({
+        date, dailyReturn, absReturn, vix: vix || null, regime,
+        dayOfWeek: dt.getUTCDay(), month: dt.getUTCMonth()
+      });
+    }
+
+    return { data, dataDate, spyFile, vixFile };
+
+  } catch (e) {
+    throw e;
+  }
+}
+
+function classifyRegime(vix) {
+  if (vix == null || isNaN(vix)) return 'unknown';
+  if (vix < 12)  return 'low';
+  if (vix < 18)  return 'normal';
+  if (vix < 25)  return 'elevated';
+  if (vix < 35)  return 'high';
+  return 'crisis';
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderDashboard(data, dataDate) {
+  const valid = data.filter(d => d.regime !== 'unknown');
+
+  // Status pills
+  setPill('s-data', '✓ Data loaded', 'ok');
+  setPill('s-days', `${valid.length.toLocaleString()} trading days`);
+  if (data.length) setPill('s-range', `${data[0].date} → ${data[data.length-1].date}`);
+  if (dataDate) setPill('s-date', `Barchart ${dataDate}`);
+
+  renderRegimeTable(valid);
+  renderDirectionalTable(valid);
+  renderHistogram(data);
+  renderDOW(valid);
+  renderMonths(valid);
+  renderTailRisk(data);
+  setupCalc(valid);
+
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+}
+
+function setPill(id, text, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  if (cls) el.classList.add(cls);
+}
+
+// ─── Regime table ─────────────────────────────────────────────────────────────
+function renderRegimeTable(data) {
+  const regimes = ['low','normal','elevated','high','crisis'];
+  const labels  = {low:'VIX < 12',normal:'VIX 12–18',elevated:'VIX 18–25',high:'VIX 25–35',crisis:'VIX > 35'};
+  const tagCls  = {low:'r-low',normal:'r-normal',elevated:'r-elevated',high:'r-high',crisis:'r-crisis'};
+  const tbody = document.getElementById('regime-tbody');
+  tbody.innerHTML = '';
+
+  regimes.forEach(regime => {
+    const rd = data.filter(d => d.regime === regime);
+    if (!rd.length) return;
+    tbody.appendChild(regimeRow(rd, `<span class="rtag ${tagCls[regime]}">${labels[regime]}</span>`));
+  });
+
+  const allRow = regimeRow(data, `<span class="rtag r-all">ALL REGIMES</span>`);
+  allRow.classList.add('all-row');
+  tbody.appendChild(allRow);
+}
+
+function regimeRow(rd, labelHTML) {
+  const abs  = rd.map(d => d.absReturn);
+  const rets = rd.map(d => d.dailyReturn);
+  const n    = rd.length;
+  const avg  = (abs.reduce((s,v) => s+v, 0) / n).toFixed(2);
+  const mean = rets.reduce((s,v) => s+v, 0) / n;
+  const std  = Math.sqrt(rets.reduce((s,r) => s + (r-mean)**2, 0) / n).toFixed(2);
+  const pcts = [0.5,1,1.5,2,3,5].map(t => ((abs.filter(r => r > t).length / n) * 100).toFixed(1));
+  const maxUp   = Math.max(...rets).toFixed(2);
+  const maxDown = Math.min(...rets).toFixed(2);
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="text-align:left">${labelHTML}</td>
+    <td>${n.toLocaleString()}</td>
+    <td>${avg}%</td>
+    <td>${std}%</td>
+    ${pcts.map(p => `<td class="${parseFloat(p)>50?'neg':parseFloat(p)>30?'amber':''}">${p}%</td>`).join('')}
+    <td class="pos">+${maxUp}%</td>
+    <td class="neg">${maxDown}%</td>
+  `;
+  return tr;
+}
+
+// ─── Directional table ────────────────────────────────────────────────────────
+function renderDirectionalTable(data) {
+  const regimes = ['low','normal','elevated','high','crisis'];
+  const labels  = {low:'< 12',normal:'12–18',elevated:'18–25',high:'25–35',crisis:'> 35'};
+  const tbody = document.getElementById('dir-tbody');
+  tbody.innerHTML = '';
+
+  regimes.forEach(regime => {
+    const rd = data.filter(d => d.regime === regime);
+    if (!rd.length) return;
+    const n    = rd.length;
+    const up   = rd.filter(d => d.dailyReturn > 0);
+    const down = rd.filter(d => d.dailyReturn < 0);
+    const pUp   = ((up.length/n)*100).toFixed(1);
+    const pDown = ((down.length/n)*100).toFixed(1);
+    const avgUp   = up.length   ? (up.reduce((s,d)=>s+d.dailyReturn,0)/up.length).toFixed(2)   : '0.00';
+    const avgDown = down.length ? (down.reduce((s,d)=>s+d.dailyReturn,0)/down.length).toFixed(2) : '0.00';
+    const putSafe  = ((rd.filter(d=>d.dailyReturn>-1).length/n)*100).toFixed(1);
+    const callSafe = ((rd.filter(d=>d.dailyReturn<1).length/n)*100).toFixed(1);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${labels[regime]}</td>
+      <td class="pos">${pUp}%</td>
+      <td class="neg">${pDown}%</td>
+      <td class="pos">+${avgUp}%</td>
+      <td class="neg">${avgDown}%</td>
+      <td class="${parseFloat(putSafe)>=95?'pos':'amber'}">${putSafe}%</td>
+      <td class="${parseFloat(callSafe)>=95?'pos':'amber'}">${callSafe}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── Tail risk ────────────────────────────────────────────────────────────────
+function renderTailRisk(data) {
+  const n   = data.length;
+  const gt3 = data.filter(d=>d.absReturn>3).length;
+  const gt5 = data.filter(d=>d.absReturn>5).length;
+  const gt7 = data.filter(d=>d.absReturn>7).length;
+  const worst = Math.min(...data.map(d=>d.dailyReturn)).toFixed(2);
+  const best  = Math.max(...data.map(d=>d.dailyReturn)).toFixed(2);
+  document.getElementById('tail-box').innerHTML =
+    `<strong>Tail Risk:</strong> Over ${n.toLocaleString()} days — ` +
+    `<strong>${gt3}</strong> days moved >3% (${((gt3/n)*100).toFixed(1)}%), ` +
+    `<strong>${gt5}</strong> moved >5% (${((gt5/n)*100).toFixed(2)}%), ` +
+    `<strong>${gt7}</strong> moved >7% (${((gt7/n)*100).toFixed(2)}%). ` +
+    `Worst: <span class="neg">${worst}%</span>. Best: <span class="pos">+${best}%</span>.`;
+}
+
+// ─── Histogram ────────────────────────────────────────────────────────────────
+function renderHistogram(data) {
+  const bins = [];
+  for (let i = -6; i < 6; i += 0.25) bins.push({ min:i, max:i+0.25, count:0 });
+  data.forEach(d => {
+    const idx = bins.findIndex(b => d.dailyReturn >= b.min && d.dailyReturn < b.max);
+    if (idx >= 0) bins[idx].count++;
+  });
+  const ctx = document.getElementById('histChart').getContext('2d');
+  destroyChart('hist');
+  charts.hist = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: bins.map(b => b.min.toFixed(2)+'%'),
+      datasets:[{
+        data: bins.map(b=>b.count),
+        backgroundColor: bins.map(b => Math.abs(b.min)>2?'rgba(255,77,106,0.45)':b.min>=-0.25&&b.max<=0.25?'rgba(0,212,170,0.5)':'rgba(77,159,255,0.3)'),
+        borderWidth:0
+      }]
+    },
+    options:chartOpts(false)
+  });
+}
+
+// ─── Day of week ──────────────────────────────────────────────────────────────
+function renderDOW(data) {
+  const dayNames = ['Mon','Tue','Wed','Thu','Fri'];
+  const dayIdx   = [1,2,3,4,5];
+  const rows = dayIdx.map((dow,i) => {
+    const dd = data.filter(d=>d.dayOfWeek===dow);
+    return {
+      label: dayNames[i],
+      avgAbs: dd.length ? dd.reduce((s,d)=>s+d.absReturn,0)/dd.length : 0,
+      gt1: dd.length ? (dd.filter(d=>d.absReturn>1).length/dd.length)*100 : 0
+    };
+  });
+  const ctx = document.getElementById('dowChart').getContext('2d');
+  destroyChart('dow');
+  charts.dow = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: rows.map(r=>r.label),
+      datasets:[
+        {label:'Avg |Move| %',data:rows.map(r=>r.avgAbs.toFixed(2)),backgroundColor:'rgba(0,212,170,0.4)',borderColor:'rgba(0,212,170,0.8)',borderWidth:1,yAxisID:'y'},
+        {label:'% Days >1%',data:rows.map(r=>r.gt1.toFixed(1)),backgroundColor:'rgba(255,176,32,0.3)',borderColor:'rgba(255,176,32,0.8)',borderWidth:1,yAxisID:'y1'}
+      ]
+    },
+    options:chartOpts(true)
+  });
+}
+
+// ─── Monthly ─────────────────────────────────────────────────────────────────
+function renderMonths(data) {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const rows = months.map((m,i) => {
+    const md = data.filter(d=>d.month===i);
+    return { label:m, avg: md.length ? md.reduce((s,d)=>s+d.absReturn,0)/md.length : 0 };
+  });
+  const ctx = document.getElementById('monthChart').getContext('2d');
+  destroyChart('month');
+  charts.month = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: rows.map(r=>r.label),
+      datasets:[{
+        label:'Avg |Daily Move| %',
+        data: rows.map(r=>r.avg.toFixed(2)),
+        backgroundColor: rows.map(r=>r.avg>1?'rgba(255,77,106,0.4)':'rgba(179,136,255,0.4)'),
+        borderColor:     rows.map(r=>r.avg>1?'rgba(255,77,106,0.8)':'rgba(179,136,255,0.8)'),
+        borderWidth:1
+      }]
+    },
+    options:chartOpts(false)
+  });
+}
+
+// ─── Calculator ───────────────────────────────────────────────────────────────
+function setupCalc(data) {
+  ['c-price','c-dist','c-dir','c-regime'].forEach(id => {
+    document.getElementById(id).addEventListener('input',  () => updateCalc(data));
+    document.getElementById(id).addEventListener('change', () => updateCalc(data));
+  });
+  updateCalc(data);
+}
+
+function updateCalc(data) {
+  const price    = parseFloat(document.getElementById('c-price').value);
+  const dist     = parseFloat(document.getElementById('c-dist').value);
+  const dir      = document.getElementById('c-dir').value;
+  const regime   = document.getElementById('c-regime').value;
+
+  let filtered = regime === 'all' ? data : data.filter(d=>d.regime===regime);
+  if (!filtered.length) {
+    document.getElementById('calc-pct').textContent = 'No data';
+    return;
+  }
+
+  const breaches = dir === 'put'
+    ? filtered.filter(d=>d.dailyReturn < -dist).length
+    : filtered.filter(d=>d.dailyReturn >  dist).length;
+
+  const pct    = ((breaches/filtered.length)*100).toFixed(2);
+  const safe   = (100-parseFloat(pct)).toFixed(2);
+  const strike = dir === 'put' ? price*(1-dist/100) : price*(1+dist/100);
+  const color  = parseFloat(pct)<5?'var(--accent)':parseFloat(pct)<15?'var(--amber)':'var(--red)';
+
+  document.getElementById('calc-pct').textContent = pct + '%';
+  document.getElementById('calc-pct').style.color = color;
+  document.getElementById('calc-detail').innerHTML =
+    `Safe: <span style="color:var(--accent)">${safe}%</span> &nbsp;|&nbsp; ` +
+    `Strike: $${strike.toFixed(2)} &nbsp;|&nbsp; ` +
+    `${filtered.length.toLocaleString()} days (${breaches} breaches)`;
+}
+
+// ─── Chart helpers ────────────────────────────────────────────────────────────
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function chartOpts(dualAxis) {
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ labels:{ color:'#8a95a5', font:{size:11}, boxWidth:12 } } },
+    scales:{
+      x:{ ticks:{color:'#5a6577',font:{size:10},maxRotation:45,autoSkip:true,maxTicksLimit:15}, grid:{color:'rgba(255,255,255,0.04)'} },
+      y:{ ticks:{color:'#5a6577',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} }
+    }
+  };
+  if (dualAxis) {
+    base.plugins.legend.display = true;
+    base.scales.y1 = { position:'right', ticks:{color:'#5a6577',font:{size:10}}, grid:{display:false} };
+  } else {
+    base.plugins.legend.display = false;
+  }
+  return base;
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  try {
+    const { data, dataDate } = await loadData();
+    globalData = data;
+    renderDashboard(data, dataDate);
+  } catch (e) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('err-box').style.display = 'block';
+    document.getElementById('err-msg').textContent = e.message;
+    setPill('s-data', 'Error loading data', 'err');
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
