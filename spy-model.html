@@ -55,10 +55,11 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .container{max-width:1300px;margin:0 auto;padding:0 24px 60px}
 
 /* NAV */
-.top-nav{display:flex;align-items:center;padding:20px 0 0;margin-bottom:4px}
-.back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:13px;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:color .2s}
-.back-link:hover{color:var(--accent)}
-.back-link svg{width:14px;height:14px}
+.site-nav{padding:28px 0 0;margin-bottom:8px}
+.nav-pills{display:flex;gap:6px;list-style:none;flex-wrap:wrap}
+.nav-pill{padding:10px 18px;border-radius:10px;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all .2s ease;border:1px solid transparent;background:none;font-family:'Outfit',sans-serif;display:inline-flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap}
+.nav-pill:hover{color:var(--text-secondary);background:rgba(255,255,255,.03);border-color:var(--border)}
+.nav-pill.active{color:var(--accent);background:var(--accent-dim);border-color:rgba(0,212,170,.15)}
 
 /* HEADER */
 .page-header{padding:24px 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px}
@@ -141,11 +142,14 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
 <div class="app">
 <div class="container">
 
-  <nav class="top-nav">
-    <a href="index.html" class="back-link">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Dashboard
-    </a>
+  <nav class="site-nav">
+    <ul class="nav-pills">
+      <li><a class="nav-pill" href="index.html">◉ Dashboard</a></li>
+      <li><a class="nav-pill active" href="spy-model.html">📊 SPY Model</a></li>
+      <li><a class="nav-pill" href="indicators.html">📈 Indicators</a></li>
+      <li><a class="nav-pill" href="trailing-stop.html">🎯 Trailing Stop</a></li>
+      <li><a class="nav-pill" href="market-weather-grid.html">🌦 Weather Grid</a></li>
+    </ul>
   </nav>
 
   <div class="page-header">
