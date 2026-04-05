@@ -318,7 +318,7 @@ function parseCSV(text) {
 
     if (isBarchart) {
       dateStr  = raw['Time'] || raw['Trading Day'] || raw['Date'] || '';
-      closeStr = raw['Last'] || raw['Close'] || '';
+      closeStr = raw['Latest'] || raw['Last'] || raw['Close'] || '';
       highStr  = raw['High'] || '';
       lowStr   = raw['Low'] || '';
     } else {
