@@ -98,7 +98,7 @@ const MC = (() => {
   async function fetchCSV() {
     const names = ['Trade_Log-Table_1.csv', 'Trade Log-Table 1.csv'];
     for (const name of names) {
-      const res = await fetch(encodeURI(name));
+      const res = await fetch(encodeURI(name), {cache: 'no-store'});
       if (res.ok) return res.text();
     }
     throw new Error('CSV not found (tried Trade_Log-Table_1.csv and Trade Log-Table 1.csv)');
