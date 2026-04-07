@@ -259,7 +259,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
 .mc-chart-sub{font-size:11px;color:var(--text-muted);margin-bottom:12px;line-height:1.4}
 .mc-chart-wrap{position:relative;height:220px}
-/* ── Archive notice ───────────────────────────────────────────── */
+@media(max-width:900px){.mc-grid-2,.mc-chart-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.mc-toggle-bar{flex-direction:column;align-items:flex-start}.mc-config-bar{flex-direction:column;align-items:flex-start}.mc-config-item input{width:100%}}
 .archive-notice{display:flex;align-items:center;gap:10px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:24px;font-size:13px;color:var(--text-muted)}
 .archive-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;background:rgba(255,176,32,.15);color:var(--amber);border:1px solid rgba(255,176,32,.3);flex-shrink:0}
 </style>
@@ -268,7 +269,6 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="skyline-bg"></div>
 <div class="grid-overlay"></div>
 <div class="app"><div class="container">
-
 <header class="site-header">
 <div class="header-inner">
 <div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div class="brand-text"><h1>Angelrow Limited</h1><div class="tagline">Resources &amp; Analytics</div></div></div>
@@ -291,16 +291,13 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="page-title">Trading Journal — Archive 1</div>
 <div class="page-subtitle" id="journal-subtitle">Frozen snapshot — 76 trades from Jan–Mar 2026 with full Monte Carlo analysis.</div>
 
-<section class="page active" id="page-home">
-<div class="page-title">Dashboard</div>
-<div class="page-subtitle">Trading analytics, strategy reference, and performance tracking.</div>
 <div class="summary-row">
 <div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value" id="stat-total">34</div></div>
 <div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
-
 <div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="stat-wr">70%</div></div>
 <div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value pnl-pos" id="stat-best">+$5,800</div></div>
 </div>
+
 <div class="gauge-row">
 <div class="gauge-card">
 <div class="gauge-title">Total Win Rate</div>
@@ -324,11 +321,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <path id="gauge-week-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
 <text id="gauge-week-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
 <text id="gauge-week-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
+</div>
 
-<div class="page-title">Trading Journal</div>
-<div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
-
-<!-- ── Monte Carlo Analysis ──────────────────────────────────────────────── -->
 <div class="mc-wrapper">
   <div class="mc-toggle-bar" onclick="MC.toggle()">
     <div class="mc-toggle-left">
@@ -501,10 +497,10 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
         <div class="mc-chart-sub">1st–99th percentile outcomes · Green fill = positive · Red fill = negative</div>
         <div class="mc-chart-wrap"><canvas id="mc-c4"></canvas></div>
       </div>
+    </div>
 
-</div><!-- /mc-content -->
+  </div><!-- /mc-content -->
 </div><!-- /mc-wrapper -->
-<!-- ── End Monte Carlo ────────────────────────────────────────────────────── -->
 
 <div class="month-selector" id="monthSelector"></div>
 <div class="journal-table-wrap">
@@ -512,7 +508,6 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <tbody id="journalBody"></tbody>
 </table>
 </div>
-
 </section>
 
 <footer class="site-footer"><span>Angelrow Limited — Built with <a href="https://claude.ai" target="_blank">Claude</a></span><span>www.angelrow.co.uk</span></footer>
