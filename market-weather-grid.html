@@ -82,6 +82,38 @@ body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);c
 .legend-swatch{width:16px;height:10px;border-radius:2px}
 .legend-swatch.clean{background:rgba(18,40,65,1)}.legend-swatch.caution{background:rgba(200,100,20,1)}.legend-swatch.notrade{background:rgba(200,30,25,1);border:1px dashed rgba(255,255,255,.3)}
 
+/* Explainer panel */
+.explainer{margin-bottom:24px}
+.explainer-toggle{display:flex;align-items:center;gap:8px;width:100%;padding:14px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;transition:border-color .2s,color .2s;text-align:left}
+.explainer-toggle:hover{border-color:var(--border-hover);color:var(--text-secondary)}
+.explainer-chevron{font-size:10px;transition:transform .25s ease;display:inline-block;width:12px}
+.explainer.open .explainer-chevron{transform:rotate(90deg)}
+.explainer-body{display:none;background:var(--bg-card);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);padding:28px 24px 24px;overflow:hidden}
+.explainer.open .explainer-body{display:block}
+.explainer.open .explainer-toggle{border-radius:var(--radius-sm) var(--radius-sm) 0 0;border-bottom-color:transparent}
+.ex-section{margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.ex-section:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.ex-h2{font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.ex-h3{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:16px 0 8px}
+.ex-h3.dir{color:#00d4aa}.ex-h3.mag{color:#ffb020}.ex-h3.vol{color:#4d9fff}
+.ex-p{font-size:12px;color:var(--text-muted);line-height:1.8;margin-bottom:10px;font-weight:400}
+.ex-p strong{color:var(--text-secondary);font-weight:600}
+.ex-p .v-dir{color:#00d4aa;font-weight:500}.ex-p .v-mag{color:#ffb020;font-weight:500}.ex-p .v-vol{color:#4d9fff;font-weight:500}
+.ex-list{list-style:none;margin:0 0 12px;padding:0}
+.ex-list li{font-size:12px;color:var(--text-muted);line-height:1.7;padding:3px 0 3px 16px;position:relative;font-weight:400}
+.ex-list li::before{content:'';position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--text-muted);opacity:.3}
+.ex-list.dir li::before{background:#00d4aa;opacity:.5}
+.ex-list.mag li::before{background:#ffb020;opacity:.5}
+.ex-list.vol li::before{background:#4d9fff;opacity:.5}
+.ex-list li strong{color:var(--text-secondary);font-weight:600}
+.ex-code{font-size:11px;line-height:1.7;padding:12px 16px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.04);border-radius:6px;margin:10px 0 14px;color:var(--text-muted);white-space:pre-wrap;overflow-x:auto}
+.ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.ex-card{padding:12px 14px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px}
+.ex-card-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.ex-card p{font-size:11px;color:var(--text-muted);line-height:1.6}
+.ex-note{font-size:11px;color:var(--text-muted);line-height:1.7;padding:12px 16px;border-left:2px solid rgba(255,255,255,.08);margin:14px 0;font-style:italic}
+@media(max-width:600px){.ex-grid{grid-template-columns:1fr}}
+
 /* Responsive */
 @media(max-width:768px){
   .status-row{grid-template-columns:repeat(2,1fr)}
@@ -177,6 +209,168 @@ body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);c
     <span class="slider-label">Trail Length</span>
     <input type="range" class="trail-slider" id="trailSlider" min="0" max="14" step="0.5" value="1">
     <span class="slider-value" id="trailValue">1 day</span>
+  </div>
+</div>
+
+<!-- Explainer -->
+<div class="explainer" id="explainer">
+  <button class="explainer-toggle" onclick="document.getElementById('explainer').classList.toggle('open')">
+    <span class="explainer-chevron">&#9656;</span> HOW IT WORKS — VARIABLES &amp; MECHANICS
+  </button>
+  <div class="explainer-body">
+
+    <!-- THE THREE AXES -->
+    <div class="ex-section">
+      <div class="ex-h2">The Three Axes</div>
+      <p class="ex-p"><strong>The grid plots three independent measures of market state:</strong></p>
+      <ul class="ex-list">
+        <li><strong><span class="v-dir">DIRECTION</span></strong> (vertical axis) — Where is the market trending?</li>
+        <li><strong><span class="v-mag">MAGNITUDE</span></strong> (horizontal axis) — How big are the expected price moves?</li>
+        <li><strong><span class="v-vol">VOLATILITY REGIME</span></strong> (background heatmap) — How much should I trust the conditions?</li>
+      </ul>
+      <p class="ex-p">Each axis is computed from different inputs and moves the dot or background independently.</p>
+    </div>
+
+    <!-- DIRECTION -->
+    <div class="ex-section">
+      <div class="ex-h3 dir">Direction Axis (Vertical)</div>
+      <p class="ex-p"><strong>What it measures:</strong> The trend bias of SPY relative to its key moving averages.</p>
+      <p class="ex-p"><strong>Range:</strong> Strong Bull (top) &rarr; Lean Bull &rarr; Neutral &rarr; Lean Bear &rarr; Strong Bear (bottom)</p>
+      <p class="ex-p"><strong>Inputs:</strong></p>
+      <ul class="ex-list dir">
+        <li><strong>SPY price vs 50-day SMA</strong> — How far above or below the medium-term trend line is the current price?</li>
+        <li><strong>SPY price vs 200-day SMA</strong> — How far above or below the long-term trend line?</li>
+        <li><strong>50/200 SMA alignment</strong> — Is the 50-day above the 200-day (golden cross territory) or below (death cross)?</li>
+      </ul>
+      <div class="ex-code">direction = (price_vs_50sma &times; 2) + (price_vs_200sma &times; 1) + (sma_alignment &times; 0.3)
+direction = clamp(direction / 0.50, -1, 1)</div>
+      <p class="ex-p">The 50-day moving average is weighted twice as heavily as the 200-day because it responds faster to current conditions. The alignment factor adds a small bias to reflect overall trend structure.</p>
+      <p class="ex-p"><strong>What pushes the dot UP (toward Strong Bull):</strong></p>
+      <ul class="ex-list dir">
+        <li>SPY rallying above its 50-day SMA</li>
+        <li>SPY trading above its 200-day SMA</li>
+        <li>50-day SMA above 200-day SMA (uptrend structure intact)</li>
+      </ul>
+      <p class="ex-p"><strong>What pushes the dot DOWN (toward Strong Bear):</strong></p>
+      <ul class="ex-list dir">
+        <li>SPY breaking below its 50-day SMA</li>
+        <li>SPY losing the 200-day SMA</li>
+        <li>50-day crossing below 200-day SMA (death cross)</li>
+      </ul>
+    </div>
+
+    <!-- MAGNITUDE -->
+    <div class="ex-section">
+      <div class="ex-h3 mag">Magnitude Axis (Horizontal)</div>
+      <p class="ex-p"><strong>What it measures:</strong> How large is the market's expected price move compared to its recent baseline?</p>
+      <p class="ex-p"><strong>Range:</strong> Compression (left) &rarr; Below Avg &rarr; Normal &rarr; Above Avg &rarr; Expansion (right)</p>
+      <p class="ex-p"><strong>Inputs:</strong></p>
+      <ul class="ex-list mag">
+        <li><strong>Expected move %</strong> — The market's implied 1-standard-deviation price range derived from ATM straddle pricing (or approximated from VIX &times; &radic;DTE if straddle data unavailable)</li>
+        <li><strong>30-day rolling baseline</strong> — The average expected move over the last 30 days, used as the comparison point</li>
+      </ul>
+      <div class="ex-code">magnitude = (current_expected_move - baseline) / baseline
+magnitude = clamp(magnitude, -1, 1)</div>
+      <p class="ex-p">This is a <strong>relative</strong> measure, not an absolute one. A 1.5% expected move could be "expansion" if the recent baseline was 0.8%, or "compression" if the baseline was 2.5%. The grid tells you whether expected moves are growing or shrinking compared to the recent normal.</p>
+      <p class="ex-p"><strong>What pushes the dot RIGHT (toward Expansion):</strong></p>
+      <ul class="ex-list mag">
+        <li>Expected move growing larger than recent baseline</li>
+        <li>Options market pricing in bigger moves (often before news events, earnings, or stress)</li>
+        <li>Straddle prices climbing</li>
+      </ul>
+      <p class="ex-p"><strong>What pushes the dot LEFT (toward Compression):</strong></p>
+      <ul class="ex-list mag">
+        <li>Expected move shrinking below recent baseline</li>
+        <li>Options market pricing in tighter ranges</li>
+        <li>Quiet, consolidating market with low premium</li>
+      </ul>
+      <div class="ex-note">Important distinction from volatility: Magnitude tells you the <em>priced range</em> of possible movement. It doesn't tell you whether the market will move violently or smoothly within that range — that's what the heatmap measures.</div>
+    </div>
+
+    <!-- VOLATILITY REGIME -->
+    <div class="ex-section">
+      <div class="ex-h3 vol">Volatility Regime (Background Heatmap)</div>
+      <p class="ex-p"><strong>What it measures:</strong> A composite read on overall market stress and the <em>character</em> of price movement.</p>
+      <p class="ex-p"><strong>Range:</strong> Clean (cool blue) &rarr; Caution (amber) &rarr; No Trade (red)</p>
+      <p class="ex-p"><strong>Inputs:</strong></p>
+      <ul class="ex-list vol">
+        <li><strong>VIX level</strong> (50% weight) — The current VIX spot price, normalised so VIX 12 &rarr; 0 and VIX 40 &rarr; 1</li>
+        <li><strong>IV Rank</strong> (30% weight) — Current implied volatility as a percentile of the last 52 weeks. High IVR means options are expensive relative to recent history.</li>
+        <li><strong>VIX term structure</strong> (20% weight) — Front-month VIX futures vs second-month. Backwardation (front &gt; second) signals near-term stress and is the most dangerous condition. Contango (front &lt; second) is the calm default state.</li>
+      </ul>
+      <div class="ex-code">volScore = (vix_score &times; 0.5) + (ivr_score &times; 0.3) + (term_structure_score &times; 0.2)</div>
+      <p class="ex-p"><strong>Thresholds:</strong></p>
+      <ul class="ex-list vol">
+        <li><strong style="color:#00d4aa">CLEAN</strong> (volScore &lt; 0.35) — Trade normal size</li>
+        <li><strong style="color:#ffb020">CAUTION</strong> (0.35 &le; volScore &lt; 0.70) — Reduce position size, tighten stops</li>
+        <li><strong style="color:#ff4d6a">NO TRADE</strong> (volScore &ge; 0.70) — Sit out entirely, capital preservation mode</li>
+      </ul>
+      <div class="ex-note">Why volatility is separate from magnitude: A market can have a <em>small</em> expected move (compression) but a <em>high</em> volatility regime — meaning prices may stay roughly within a range but get there via violent whipsaws that stop you out. Conversely, a market can have a <em>large</em> expected move with <em>low</em> realised volatility — a smooth, orderly trend. The two axes capture genuinely different things and should be read together.</div>
+      <p class="ex-p"><strong>What pushes the heatmap RED (toward No Trade):</strong></p>
+      <ul class="ex-list vol">
+        <li>VIX spiking above 25</li>
+        <li>IV Rank climbing above 70 (options unusually expensive)</li>
+        <li>VIX futures going into backwardation (market expects near-term stress)</li>
+        <li>Combination of all three is the most dangerous signal</li>
+      </ul>
+      <p class="ex-p"><strong>What keeps the heatmap COOL (Clean):</strong></p>
+      <ul class="ex-list vol">
+        <li>VIX below 18</li>
+        <li>IV Rank below 30</li>
+        <li>VIX futures in normal contango</li>
+      </ul>
+      <p class="ex-p"><strong>Cell-level danger:</strong> Even in a generally clean regime, the bear + expansion cells (bottom-right of grid) get an inherent danger multiplier (+0.15 to volScore). This is because trades placed in that quadrant are inherently more vulnerable, regardless of overall market vol.</p>
+    </div>
+
+    <!-- THE TRAIL -->
+    <div class="ex-section">
+      <div class="ex-h2">The Trail</div>
+      <p class="ex-p">The trail shows the dot's previous positions, fading out over time. It's a momentum visualiser:</p>
+      <ul class="ex-list">
+        <li><strong>Smooth diagonal trail</strong> — Trending market, regime in steady transition</li>
+        <li><strong>Tight cluster</strong> — Range-bound, no clear regime shift</li>
+        <li><strong>Sudden jump</strong> — Regime break (often around news, Fed days, or stress events)</li>
+        <li><strong>Trail moving toward bottom-right</strong> — Market deteriorating (becoming more bearish AND more volatile)</li>
+        <li><strong>Trail moving toward top-left</strong> — Market improving (becoming more bullish AND quieter)</li>
+      </ul>
+      <p class="ex-p">Use the trail length slider to see different time horizons — from a single day's character to two weeks of regime context.</p>
+    </div>
+
+    <!-- DECISION-MAKING -->
+    <div class="ex-section">
+      <div class="ex-h2">How to Read the Grid for Decision-Making</div>
+      <div class="ex-grid">
+        <div class="ex-card">
+          <div class="ex-card-title" style="color:#00d4aa">Top-Left: Bull + Compression / Clean</div>
+          <p>The premium-selling sweet spot. Bull put spreads and cash-secured puts have favourable conditions.</p>
+        </div>
+        <div class="ex-card">
+          <div class="ex-card-title" style="color:#ffb020">Top-Right: Bull + Expansion / Caution</div>
+          <p>Bullish bias but options are pricing larger moves. Iron condors are risky here. Consider directional bull call spreads with tighter strikes.</p>
+        </div>
+        <div class="ex-card">
+          <div class="ex-card-title" style="color:#ff4d6a">Bottom-Right: Bear + Expansion / No Trade</div>
+          <p>The danger corner. Defined-risk only, smaller size, or sit out entirely. Premium selling is mathematically attractive here but the gap risk is real.</p>
+        </div>
+        <div class="ex-card">
+          <div class="ex-card-title" style="color:#8a95a5">Bottom-Left: Bear + Compression / Clean</div>
+          <p>Bearish drift in calm conditions. Bear call spreads work, but watch for regime change — bear quiet often precedes bear volatile.</p>
+        </div>
+      </div>
+      <div class="ex-card" style="margin-top:10px">
+        <div class="ex-card-title" style="color:#4d9fff">Centre: Neutral + Normal / Clean</div>
+        <p>The textbook iron condor environment. Range-bound, predictable, low surprise risk.</p>
+      </div>
+    </div>
+
+    <!-- REMINDERS -->
+    <div class="ex-section">
+      <div class="ex-h2">Important Reminders</div>
+      <p class="ex-p">This grid is a <strong>decision-support tool</strong>, not a trade signal generator. It tells you what the market environment looks like — it does not tell you what to trade or when.</p>
+      <p class="ex-p">The thresholds and weights in the formulas are starting points and will be calibrated over time. If the dot consistently sits in one part of the grid for weeks, the normalisation needs adjusting.</p>
+      <p class="ex-p">Always combine the grid reading with the rest of the Angelrow Trading Systems framework: pre-trade gate, position sizing rules, beta limits, and 2&times; premium stop-loss discipline.</p>
+    </div>
+
   </div>
 </div>
 
