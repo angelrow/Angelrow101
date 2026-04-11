@@ -129,6 +129,16 @@ tr:hover td{background:rgba(255,255,255,.02)}
 /* ALL ROW */
 tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(--accent)}
 
+/* LIVE DATA LINE */
+.live-data-line{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:10px;min-height:15px}
+.live-data-line.unavail{color:var(--amber)}
+
+/* STRIKE ROW — input + inline OTM badge */
+.strike-row{display:flex;gap:8px;align-items:stretch}
+.strike-row input{flex:1;min-width:0}
+.otm-badge{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(0,0,0,.2);white-space:nowrap;display:flex;align-items:center;flex-shrink:0}
+.otm-badge.itm{color:var(--amber)}
+
 /* FOOTER */
 .page-footer{text-align:center;padding:24px 0;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:10px}
 </style>
@@ -161,6 +171,7 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
       <span class="status-pill" id="s-range"></span>
       <span class="status-pill" id="s-date"></span>
     </div>
+    <div class="live-data-line" id="live-data-line"></div>
   </div>
 
   <div id="loader" class="loader">
@@ -192,8 +203,11 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
             <input type="number" id="c-price" value="560" step="0.01">
           </div>
           <div class="field">
-            <label>Strike Distance (% OTM)</label>
-            <input type="number" id="c-dist" value="1.5" step="0.1" min="0">
+            <label>Strike Price ($)</label>
+            <div class="strike-row">
+              <input type="number" id="c-strike" step="0.01" placeholder="e.g. 551.60">
+              <span class="otm-badge" id="otm-badge">—</span>
+            </div>
           </div>
           <div class="field">
             <label>Direction</label>
@@ -281,6 +295,7 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
 <script>
 // ─── State ───────────────────────────────────────────────────────────────────
 let globalData = null;
+let calcData   = null;   // filtered valid data kept for post-load calc updates
 let charts = {};
 
 // ─── Barchart CSV parser ──────────────────────────────────────────────────────
@@ -431,6 +446,7 @@ function renderDashboard(data, dataDate) {
   if (data.length) setPill('s-range', `${data[0].date} → ${data[data.length-1].date}`);
   if (dataDate) setPill('s-date', `Barchart ${dataDate}`);
 
+  calcData = valid;
   renderRegimeTable(valid);
   renderDirectionalTable(valid);
   renderHistogram(data);
@@ -621,7 +637,7 @@ function renderMonths(data) {
 
 // ─── Calculator ───────────────────────────────────────────────────────────────
 function setupCalc(data) {
-  ['c-price','c-dist','c-dir','c-regime'].forEach(id => {
+  ['c-price','c-strike','c-dir','c-regime'].forEach(id => {
     document.getElementById(id).addEventListener('input',  () => updateCalc(data));
     document.getElementById(id).addEventListener('change', () => updateCalc(data));
   });
@@ -629,32 +645,109 @@ function setupCalc(data) {
 }
 
 function updateCalc(data) {
-  const price    = parseFloat(document.getElementById('c-price').value);
-  const dist     = parseFloat(document.getElementById('c-dist').value);
-  const dir      = document.getElementById('c-dir').value;
-  const regime   = document.getElementById('c-regime').value;
+  const price  = parseFloat(document.getElementById('c-price').value);
+  const strike = parseFloat(document.getElementById('c-strike').value);
+  const dir    = document.getElementById('c-dir').value;
+  const regime = document.getElementById('c-regime').value;
+
+  // Derive OTM distance from absolute strike price
+  // Put:  positive dist = strike is below spot (OTM), negative = above spot (ITM)
+  // Call: positive dist = strike is above spot (OTM), negative = below spot (ITM)
+  let dist = NaN;
+  if (!isNaN(price) && !isNaN(strike) && price > 0) {
+    dist = dir === 'put'
+      ? ((price - strike) / price) * 100
+      : ((strike - price) / price) * 100;
+  }
+
+  // Update OTM badge
+  const badge = document.getElementById('otm-badge');
+  if (!isNaN(dist)) {
+    const itm = dist < 0;
+    badge.textContent = `${Math.abs(dist).toFixed(2)}% ${itm ? 'ITM' : 'OTM'}`;
+    badge.classList.toggle('itm', itm);
+  } else {
+    badge.textContent = '—';
+    badge.classList.remove('itm');
+  }
 
   let filtered = regime === 'all' ? data : data.filter(d=>d.regime===regime);
-  if (!filtered.length) {
-    document.getElementById('calc-pct').textContent = 'No data';
+  if (!filtered.length || isNaN(dist)) {
+    document.getElementById('calc-pct').textContent = isNaN(dist) ? '—' : 'No data';
+    document.getElementById('calc-detail').textContent = '';
     return;
   }
 
+  // Positive dist → OTM (normal case); negative dist → ITM (high breach probability)
   const breaches = dir === 'put'
-    ? filtered.filter(d=>d.dailyReturn < -dist).length
-    : filtered.filter(d=>d.dailyReturn >  dist).length;
+    ? filtered.filter(d => d.dailyReturn < -dist).length
+    : filtered.filter(d => d.dailyReturn >  dist).length;
 
-  const pct    = ((breaches/filtered.length)*100).toFixed(2);
-  const safe   = (100-parseFloat(pct)).toFixed(2);
-  const strike = dir === 'put' ? price*(1-dist/100) : price*(1+dist/100);
-  const color  = parseFloat(pct)<5?'var(--accent)':parseFloat(pct)<15?'var(--amber)':'var(--red)';
+  const pct   = ((breaches / filtered.length) * 100).toFixed(2);
+  const safe  = (100 - parseFloat(pct)).toFixed(2);
+  const color = parseFloat(pct) < 5 ? 'var(--accent)' : parseFloat(pct) < 15 ? 'var(--amber)' : 'var(--red)';
 
-  document.getElementById('calc-pct').textContent = pct + '%';
-  document.getElementById('calc-pct').style.color = color;
+  document.getElementById('calc-pct').textContent  = pct + '%';
+  document.getElementById('calc-pct').style.color  = color;
   document.getElementById('calc-detail').innerHTML =
     `Safe: <span style="color:var(--accent)">${safe}%</span> &nbsp;|&nbsp; ` +
     `Strike: $${strike.toFixed(2)} &nbsp;|&nbsp; ` +
     `${filtered.length.toLocaleString()} days (${breaches} breaches)`;
+}
+
+// ─── Live data (SPY price + VIX regime) ──────────────────────────────────────
+async function loadLiveData() {
+  let spyTs = null, vixTs = null;
+
+  // Fetch SPY price
+  try {
+    const r = await fetch('data/spy.json?_=' + Date.now());
+    if (r.ok) {
+      const d = await r.json();
+      if (d.price && !isNaN(d.price)) {
+        const priceInput = document.getElementById('c-price');
+        priceInput.value = d.price.toFixed(2);
+        // Default strike to SPY * 0.985 (1.5% OTM put) on first load
+        const strikeInput = document.getElementById('c-strike');
+        if (!strikeInput.value) {
+          strikeInput.value = (d.price * 0.985).toFixed(2);
+        }
+      }
+      spyTs = d.last_updated_utc || null;
+    }
+  } catch (e) {
+    console.warn('SPY live data unavailable:', e);
+  }
+
+  // Fetch VIX — auto-select regime bucket
+  try {
+    const r = await fetch('data/vix.json?_=' + Date.now());
+    if (r.ok) {
+      const d = await r.json();
+      if (d.price && !isNaN(d.price)) {
+        document.getElementById('c-regime').value = classifyRegime(d.price);
+      }
+      vixTs = d.last_updated_utc || null;
+    }
+  } catch (e) {
+    console.warn('VIX live data unavailable:', e);
+  }
+
+  // Render live-data timestamp line
+  const line = document.getElementById('live-data-line');
+  if (line) {
+    if (spyTs || vixTs) {
+      const fmt = ts => ts ? new Date(ts).toISOString().slice(11, 16) + ' UTC' : '—';
+      line.textContent = `Live data: SPY ${fmt(spyTs)} · VIX ${fmt(vixTs)}`;
+      line.classList.remove('unavail');
+    } else {
+      line.textContent = 'Live data: unavailable';
+      line.classList.add('unavail');
+    }
+  }
+
+  // Re-run calc with populated values
+  if (calcData) updateCalc(calcData);
 }
 
 // ─── Chart helpers ────────────────────────────────────────────────────────────
@@ -686,6 +779,8 @@ function chartOpts(dualAxis) {
     const { data, dataDate } = await loadData();
     globalData = data;
     renderDashboard(data, dataDate);
+    // Load live SPY/VIX prices after historical data is ready
+    await loadLiveData();
   } catch (e) {
     document.getElementById('loader').style.display = 'none';
     document.getElementById('err-box').style.display = 'block';

@@ -1,0 +1,41 @@
+name: SPY/VIX Live Data Fetcher
+
+on:
+  schedule:
+    # Every 5 min, 13:30–20:00 UTC Mon–Fri (covers US market hours in both DST and standard time)
+    - cron: '*/5 13-20 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install yfinance
+        run: pip install yfinance
+
+      - name: Fetch SPY and VIX prices
+        run: python scripts/fetch_spy_vix.py
+
+      - name: Commit and push updated prices
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/spy.json data/vix.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update SPY/VIX live prices [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi
