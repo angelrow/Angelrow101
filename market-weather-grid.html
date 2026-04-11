@@ -242,6 +242,7 @@ body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);c
         <li><strong>SPY price vs 200-day SMA</strong> — How far above or below the long-term trend line?</li>
         <li><strong>50/200 SMA alignment</strong> — Is the 50-day above the 200-day (golden cross territory) or below (death cross)?</li>
       </ul>
+      <!-- SYNC: divisor must match DIRECTION_DIVISOR in data-fetcher/fetch_market_data.py -->
       <div class="ex-code">direction = (price_vs_50sma &times; 2) + (price_vs_200sma &times; 1) + (sma_alignment &times; 0.3)
 direction = clamp(direction / 0.50, -1, 1)</div>
       <p class="ex-p">The 50-day moving average is weighted twice as heavily as the 200-day because it responds faster to current conditions. The alignment factor adds a small bias to reflect overall trend structure.</p>
@@ -298,6 +299,7 @@ magnitude = clamp(magnitude, -1, 1)</div>
         <li><strong>IV Rank</strong> (30% weight) — Current implied volatility as a percentile of the last 52 weeks. High IVR means options are expensive relative to recent history.</li>
         <li><strong>VIX term structure</strong> (20% weight) — Front-month VIX futures vs second-month. Backwardation (front &gt; second) signals near-term stress and is the most dangerous condition. Contango (front &lt; second) is the calm default state.</li>
       </ul>
+      <!-- SYNC: weights must match compute_vol_score() in data-fetcher/fetch_market_data.py -->
       <div class="ex-code">volScore = (vix_score &times; 0.5) + (ivr_score &times; 0.3) + (term_structure_score &times; 0.2)</div>
       <p class="ex-p"><strong>Thresholds:</strong></p>
       <ul class="ex-list vol">
