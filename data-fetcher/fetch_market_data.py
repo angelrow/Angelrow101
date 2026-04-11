@@ -21,11 +21,13 @@ import yfinance as yf
 
 # ── Configuration ──────────────────────────────────────────────────────────────
 
-MAX_POINTS = 200            # Rolling window size
+MAX_POINTS = 400            # Rolling window size (~15 trading days at 26 pts/day)
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'grid-data.json')
 
 # Direction normalisation divisor — tune for good spread across -1 to +1
-DIRECTION_DIVISOR = 0.06
+# 0.06 was too small (clamped at 1.0 in any bull market)
+# 0.50 gives full range: strong bull ~0.9, neutral ~0, strong bear ~-0.9
+DIRECTION_DIVISOR = 0.50
 
 # Volatility thresholds (for reference — frontend uses these too)
 VIX_FLOOR = 12
