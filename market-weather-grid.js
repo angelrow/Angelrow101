@@ -11,9 +11,11 @@
     POLL_INTERVAL:     60000,          // 60 seconds
     FRESH_THRESHOLD:   20 * 60 * 1000, // 20 minutes
     STALE_THRESHOLD:   60 * 60 * 1000, // 60 minutes
-    DEFAULT_TRAIL:     12,
-    MIN_TRAIL:         4,
-    MAX_TRAIL:         80,
+    DEFAULT_TRAIL_DAYS: 1,
+    MIN_TRAIL_DAYS:    0,
+    MAX_TRAIL_DAYS:    14,
+    TRAIL_STEP:        0.5,
+    POINTS_PER_DAY:    26,   // 6.5 trading hours × 4 per hour
     CLEAN_THRESHOLD:   0.35,
     CAUTION_THRESHOLD: 0.70,
     DANGER_BOOST:      0.15,  // added to bear+expansion cells
@@ -48,7 +50,8 @@
   // ── State ─────────────────────────────────────────────────────────────────
 
   let gridData = [];
-  let trailLength = CONFIG.DEFAULT_TRAIL;
+  let trailDays = CONFIG.DEFAULT_TRAIL_DAYS;
+  let trailLength = Math.round(CONFIG.DEFAULT_TRAIL_DAYS * CONFIG.POINTS_PER_DAY);
 
   // Animation state
   let currentDotX = 0.5;  // 0–1 normalised canvas coords
@@ -519,6 +522,29 @@
     volBar.style.width = (d.volScore * 100) + '%';
   }
 
+  function isMarketOpen() {
+    // Check if US markets are currently open (Mon–Fri 09:30–16:00 ET)
+    try {
+      const now = new Date();
+      const et = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric', minute: 'numeric', hour12: false, weekday: 'short'
+      }).formatToParts(now);
+
+      const parts = {};
+      et.forEach(function (p) { parts[p.type] = p.value; });
+      const hour = parseInt(parts.hour);
+      const minute = parseInt(parts.minute);
+      const day = parts.weekday; // Mon, Tue, etc.
+      const timeMin = hour * 60 + minute;
+      const weekend = day === 'Sat' || day === 'Sun';
+
+      return !weekend && timeMin >= 570 && timeMin < 960; // 09:30=570, 16:00=960
+    } catch (e) {
+      return true; // assume open if timezone check fails
+    }
+  }
+
   function updateFreshness(timestamp) {
     const age = Date.now() - new Date(timestamp).getTime();
     const dot = document.getElementById('liveDot');
@@ -535,6 +561,11 @@
       dot.classList.add('stale');
       text.classList.add('stale');
       text.textContent = 'STALE';
+    } else if (!isMarketOpen()) {
+      // Market is closed — don't show OFFLINE, show MARKET CLOSED
+      dot.classList.add('stale');
+      text.classList.add('stale');
+      text.textContent = 'MKT CLOSED';
     } else {
       dot.classList.add('offline');
       text.classList.add('offline');
@@ -571,21 +602,23 @@
     const slider = document.getElementById('trailSlider');
     const label = document.getElementById('trailValue');
 
-    function formatTrailTime(pts) {
-      const minutes = pts * 15;
-      if (minutes < 60) return pts + ' pts \u00B7 ~' + minutes + 'min';
-      const hours = minutes / 60;
-      if (hours < 8) return pts + ' pts \u00B7 ~' + hours.toFixed(1) + 'h';
-      const days = hours / 6.5; // ~6.5 trading hours/day
-      return pts + ' pts \u00B7 ~' + days.toFixed(1) + 'd';
+    function formatDays(d) {
+      if (d === 0) return 'No trail';
+      if (d === 1) return '1 day';
+      // Show as "0.5 days", "2 days", "14 days", etc.
+      return d + (d === 1 ? ' day' : ' days');
     }
 
-    slider.value = trailLength;
-    label.textContent = formatTrailTime(trailLength);
+    slider.min = CONFIG.MIN_TRAIL_DAYS;
+    slider.max = CONFIG.MAX_TRAIL_DAYS;
+    slider.step = CONFIG.TRAIL_STEP;
+    slider.value = trailDays;
+    label.textContent = formatDays(trailDays);
 
     slider.addEventListener('input', function () {
-      trailLength = parseInt(this.value);
-      label.textContent = formatTrailTime(trailLength);
+      trailDays = parseFloat(this.value);
+      trailLength = Math.round(trailDays * CONFIG.POINTS_PER_DAY);
+      label.textContent = formatDays(trailDays);
       draw();
     });
   }
