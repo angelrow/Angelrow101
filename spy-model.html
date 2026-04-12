@@ -779,10 +779,10 @@ async function loadLiveData() {
       if (d.price && !isNaN(d.price)) {
         const priceInput = document.getElementById('c-price');
         priceInput.value = d.price.toFixed(2);
-        // Default strike to SPY * 0.985 (1.5% OTM put) on first load
+        // Default strike to nearest $1 increment at ~1.5% OTM (SPY trades in $1 strikes)
         const strikeInput = document.getElementById('c-strike');
         if (!strikeInput.value) {
-          strikeInput.value = (d.price * 0.985).toFixed(2);
+          strikeInput.value = Math.round(d.price * 0.985);
         }
       }
       spyTs = d.last_updated_utc || null;
