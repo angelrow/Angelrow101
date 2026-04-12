@@ -139,6 +139,17 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
 .otm-badge{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:rgba(0,0,0,.2);white-space:nowrap;display:flex;align-items:center;flex-shrink:0}
 .otm-badge.itm{color:var(--amber)}
 
+/* REGIME BREAKDOWN GRID */
+.regime-breakdown{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.rb-header{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:8px}
+.rb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+@media(max-width:600px){.rb-grid{grid-template-columns:repeat(3,1fr)}}
+.rb-cell{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px;padding:8px 4px;text-align:center;transition:border-color .2s}
+.rb-cell.rb-active{border-color:rgba(0,212,170,.3);background:rgba(0,212,170,.04)}
+.rb-regime{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--text-secondary);line-height:1.3}
+.rb-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);margin-bottom:5px;line-height:1.2}
+.rb-pct{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+
 /* FOOTER */
 .page-footer{text-align:center;padding:24px 0;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:10px}
 </style>
@@ -212,8 +223,8 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
           <div class="field">
             <label>Direction</label>
             <select id="c-dir">
-              <option value="put">Put (downside breach)</option>
-              <option value="call">Call (upside breach)</option>
+              <option value="put">Put — P(close &lt; strike)</option>
+              <option value="call">Call — P(close &gt; strike)</option>
             </select>
           </div>
           <div class="field">
@@ -229,9 +240,19 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
           </div>
         </div>
         <div class="calc-result" id="calc-result">
-          <div class="label">Probability of breach</div>
+          <div class="label" id="calc-label">Probability expires ITM</div>
           <div class="pct" id="calc-pct">—</div>
           <div class="detail" id="calc-detail"></div>
+        </div>
+        <div class="regime-breakdown">
+          <div class="rb-header">P(expires ITM) by VIX regime</div>
+          <div class="rb-grid" id="rb-grid">
+            <div class="rb-cell"><div class="rb-regime">Low</div><div class="rb-sub">&lt; 12</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+            <div class="rb-cell"><div class="rb-regime">Normal</div><div class="rb-sub">12–18</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+            <div class="rb-cell"><div class="rb-regime">Elev.</div><div class="rb-sub">18–25</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+            <div class="rb-cell"><div class="rb-regime">High</div><div class="rb-sub">25–35</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+            <div class="rb-cell"><div class="rb-regime">Crisis</div><div class="rb-sub">&gt; 35</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+          </div>
         </div>
       </div>
 
@@ -671,14 +692,28 @@ function updateCalc(data) {
     badge.classList.remove('itm');
   }
 
+  // Update label based on ITM/OTM state
+  const labelEl = document.getElementById('calc-label');
+  if (labelEl) {
+    if (isNaN(dist)) {
+      labelEl.textContent = 'Probability expires ITM';
+    } else if (dist < 0) {
+      labelEl.textContent = `Already ITM — probability of staying ITM`;
+    } else {
+      labelEl.textContent = `Probability ${dir === 'put' ? 'put' : 'call'} expires ITM`;
+    }
+  }
+
   let filtered = regime === 'all' ? data : data.filter(d=>d.regime===regime);
   if (!filtered.length || isNaN(dist)) {
     document.getElementById('calc-pct').textContent = isNaN(dist) ? '—' : 'No data';
     document.getElementById('calc-detail').textContent = '';
+    renderRegimeBreakdown(data, dist, dir, regime);
     return;
   }
 
-  // Positive dist → OTM (normal case); negative dist → ITM (high breach probability)
+  // P(expires ITM): for put = P(close < strike), for call = P(close > strike)
+  // dist is positive when OTM, negative when ITM; -dist flips sign correctly for the filter
   const breaches = dir === 'put'
     ? filtered.filter(d => d.dailyReturn < -dist).length
     : filtered.filter(d => d.dailyReturn >  dist).length;
@@ -690,9 +725,46 @@ function updateCalc(data) {
   document.getElementById('calc-pct').textContent  = pct + '%';
   document.getElementById('calc-pct').style.color  = color;
   document.getElementById('calc-detail').innerHTML =
-    `Safe: <span style="color:var(--accent)">${safe}%</span> &nbsp;|&nbsp; ` +
+    `Safe (OTM at expiry): <span style="color:var(--accent)">${safe}%</span> &nbsp;|&nbsp; ` +
     `Strike: $${strike.toFixed(2)} &nbsp;|&nbsp; ` +
-    `${filtered.length.toLocaleString()} days (${breaches} breaches)`;
+    `${filtered.length.toLocaleString()} days`;
+
+  renderRegimeBreakdown(data, dist, dir, regime);
+}
+
+// ─── Per-regime ITM probability breakdown ────────────────────────────────────
+function renderRegimeBreakdown(data, dist, dir, activeRegime) {
+  const rbGrid = document.getElementById('rb-grid');
+  if (!rbGrid) return;
+
+  const regimes = [
+    { key:'low',      label:'Low',    sub:'< 12'  },
+    { key:'normal',   label:'Normal', sub:'12–18' },
+    { key:'elevated', label:'Elev.',  sub:'18–25' },
+    { key:'high',     label:'High',   sub:'25–35' },
+    { key:'crisis',   label:'Crisis', sub:'> 35'  },
+  ];
+
+  rbGrid.innerHTML = regimes.map(({ key, label, sub }) => {
+    const rd = data.filter(d => d.regime === key);
+    const isActive = activeRegime === key;
+
+    if (!rd.length || isNaN(dist)) {
+      return `<div class="rb-cell${isActive?' rb-active':''}">
+        <div class="rb-regime">${label}</div><div class="rb-sub">${sub}</div>
+        <div class="rb-pct" style="color:var(--text-muted)">—</div></div>`;
+    }
+
+    const b = dir === 'put'
+      ? rd.filter(d => d.dailyReturn < -dist).length
+      : rd.filter(d => d.dailyReturn >  dist).length;
+    const p    = ((b / rd.length) * 100).toFixed(1);
+    const col  = parseFloat(p) < 5 ? 'var(--accent)' : parseFloat(p) < 15 ? 'var(--amber)' : 'var(--red)';
+
+    return `<div class="rb-cell${isActive?' rb-active':''}">
+      <div class="rb-regime">${label}</div><div class="rb-sub">${sub}</div>
+      <div class="rb-pct" style="color:${col}">${p}%</div></div>`;
+  }).join('');
 }
 
 // ─── Live data (SPY price + VIX regime) ──────────────────────────────────────
