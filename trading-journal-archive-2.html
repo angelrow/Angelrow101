@@ -2,11 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trading Journal — Archive 1 | Angelrow Limited</title>
-<script>(function(){var KEY='angelrow-gate-date';var d=new Date();var today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');if(localStorage.getItem(KEY)!==today){window.location.replace('gate.html');}})();</script>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trading Journal — Archive 2 | Angelrow</title>
 <style>
 :root{--bg:#0b0f14;--bg-card:rgba(17,22,30,0.85);--bg-card-solid:#111620;--border:rgba(255,255,255,0.06);--border-hover:rgba(255,255,255,0.12);--text:#eaf0f6;--text-secondary:#8a95a5;--text-muted:#5a6577;--accent:#00d4aa;--accent-dim:rgba(0,212,170,0.1);--accent-glow:rgba(0,212,170,0.15);--red:#ff4d6a;--red-dim:rgba(255,77,106,0.1);--amber:#ffb020;--amber-dim:rgba(255,176,32,0.1);--blue:#4d9fff;--blue-dim:rgba(77,159,255,0.1);--radius:14px;--radius-sm:8px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -261,36 +258,24 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .mc-chart-wrap{position:relative;height:220px}
 @media(max-width:900px){.mc-grid-2,.mc-chart-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.mc-toggle-bar{flex-direction:column;align-items:flex-start}.mc-config-bar{flex-direction:column;align-items:flex-start}.mc-config-item input{width:100%}}
-.archive-notice{display:flex;align-items:center;gap:10px;background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:24px;font-size:13px;color:var(--text-muted)}
-.archive-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:20px;background:rgba(255,176,32,.15);color:var(--amber);border:1px solid rgba(255,176,32,.3);flex-shrink:0}
+</style>
+
 </style>
 </head>
 <body>
-<div class="skyline-bg"></div>
-<div class="grid-overlay"></div>
-<div class="app"><div class="container">
+<div class="app">
 <header class="site-header">
-<div class="header-inner">
-<div class="brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div class="brand-text"><h1>Angelrow Limited</h1><div class="tagline">Resources &amp; Analytics</div></div></div>
-<div class="header-right"><div class="live-dot"></div><span id="headerDate"></span></div>
-</div>
-<nav class="nav-bar"><div class="nav-pills">
-<a class="nav-pill" href="index.html"><span>&#9650;</span> Home</a>
-<a class="nav-pill active" href="trading-journal-archive-1.html"><span>&#128211;</span> Archive 1</a>
-</div></nav>
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="logo">Angelrow</span>
+    </div>
+  </div>
 </header>
-
-<section class="page active">
-<button class="back-btn" onclick="window.location='index.html'">&#8592; Back to Home</button><a class="back-btn" href="trading-journal-archive-2.html" style="text-decoration:none;margin-left:16px;">→ Archive 2</a>
-
-<div class="archive-notice">
-<span class="archive-badge">Archive 1</span>
-<span>Jan &ndash; Mar 2026 &middot; 76 trades &middot; Frozen snapshot &middot; Starting capital: $50,000</span>
-</div>
-
-<div class="page-title">Trading Journal — Archive 1</div>
-<div class="page-subtitle" id="journal-subtitle">Frozen snapshot — 76 trades from Jan–Mar 2026 with full Monte Carlo analysis.</div>
-
+<div class="main-content">
+<section class="page active" id="page-archive2">
+<button class="back-btn" onclick="window.location.href='index.html'">← Back to Home</button><a class="back-btn" href="trading-journal-archive-1.html" style="text-decoration:none;margin-left:16px;">← Archive 1</a>
+<div class="page-title">Archive 2</div>
+<div class="page-subtitle">Trades 77–99 · Apr 2026 · Frozen snapshot</div>
 <div class="summary-row">
 <div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value" id="stat-total">34</div></div>
 <div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value pnl-pos" id="stat-pnl">+$2,193</div></div>
@@ -502,6 +487,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
   </div><!-- /mc-content -->
 </div><!-- /mc-wrapper -->
 
+</div><!-- /mc-wrapper -->
 <div class="month-selector" id="monthSelector"></div>
 <div class="journal-table-wrap">
 <table class="journal-table"><thead><tr><th>#</th><th>Date</th><th>Ticker</th><th>Strategy</th><th>Strike</th><th>Cts</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Status</th></tr></thead>
@@ -510,12 +496,16 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 </div>
 </section>
 
+</section>
+
 <footer class="site-footer"><span>Angelrow Limited — Built with <a href="https://claude.ai" target="_blank">Claude</a></span><span>www.angelrow.co.uk</span></footer>
 </div></div>
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
 <div class="modal-box"><div class="modal-top"><h3 id="modalTitle"></h3><button class="modal-close" onclick="closeModal()">×</button></div><div class="modal-content" id="modalContent"></div></div>
+</div>
+
 </div>
 
 <script>
@@ -653,7 +643,7 @@ async function loadTradesCSV(){
   if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text-muted)">Loading trades…</td></tr>';
   try{
     // Try new underscore filename first, fall back to legacy space name
-    const names=['Trade_Log-Archive-1.csv'];
+    const names=['Trade_Log-Archive-2.csv'];
     let res;
     for(const name of names){res=await fetch(encodeURI(name),{cache:'no-store'});if(res.ok)break;}
     if(!res.ok)throw new Error(`CSV not found`);
@@ -689,12 +679,12 @@ async function loadTradesCSV(){
       const isError=mistakes.startsWith('ERROR');
       return{id:parseInt(g('id'))||i+1,date:parseDate(g('date')),ticker:g('ticker').toUpperCase(),strategy:g('strategy'),strike:g('strike'),cts:parseInt(g('cts','0'))||0,entry:g('entry'),exit:g('exit','—')||'—',pnl:parsePnL(g('pnl')),status,isError};
     }).filter(t=>t.date&&t.ticker);
-    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No trades in archive CSV.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
+    if(!parsed.length){if(tbody)tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">No trades yet — upload your CSV file to get started.</td></tr>';rebuildMonthButtons();updateDashboardStats();setTimeout(updateGauges,120);return;}
     trades.length=0;parsed.forEach(t=>trades.push(t));
     rebuildMonthButtons();renderJournal('all');updateDashboardStats();setTimeout(updateGauges,120);
   }catch(err){
     console.error('Trade log load failed:',err);
-    if(tbody)tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red)">Could not load Trade_Log-Archive-1.csv — ${err.message}</td></tr>`;
+    if(tbody)tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--red)">Could not load Trade Log-Table 1.csv — ${err.message}</td></tr>`;
   }
 }
 
@@ -713,6 +703,6 @@ document.getElementById('headerDate').textContent=new Date().toLocaleDateString(
 loadTradesCSV();
 
 </script>
-<script src="monte-carlo-archive-1.js" defer></script>
+<script src="monte-carlo-archive-2.js" defer></script>
 </body>
 </html>
