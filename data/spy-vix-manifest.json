@@ -1,6 +1,7 @@
 {
   "spy": "spy_daily_historical-data-04-04-2026.csv",
   "vix": "vix_daily_historical-data-04-04-2026.csv",
+  "spx": "spx_daily_historical-data-04-18-2026.csv",
   "dataDate": "04-04-2026",
   "updatedAt": "2026-04-05T09:16:28Z"
 }

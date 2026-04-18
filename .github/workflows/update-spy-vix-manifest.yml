@@ -5,6 +5,7 @@ on:
     paths:
       - 'data/spy_daily_historical-data-*.csv'
       - 'data/vix_daily_historical-data-*.csv'
+      - 'data/spx_daily_historical-data-*.csv'
   workflow_dispatch:
 
 permissions:
@@ -19,9 +20,10 @@ jobs:
 
       - name: Find latest CSVs and write manifest
         run: |
-          # Find the most recently modified SPY and VIX CSVs
+          # Find the most recently modified SPY, VIX, and SPX CSVs
           SPY_FILE=$(ls data/spy_daily_historical-data-*.csv 2>/dev/null | sort | tail -1)
           VIX_FILE=$(ls data/vix_daily_historical-data-*.csv 2>/dev/null | sort | tail -1)
+          SPX_FILE=$(ls data/spx_daily_historical-data-*.csv 2>/dev/null | sort | tail -1)
 
           if [ -z "$SPY_FILE" ] || [ -z "$VIX_FILE" ]; then
             echo "ERROR: Could not find both SPY and VIX CSV files in data/"
@@ -31,9 +33,11 @@ jobs:
 
           SPY_BASENAME=$(basename "$SPY_FILE")
           VIX_BASENAME=$(basename "$VIX_FILE")
+          SPX_BASENAME=$([ -n "$SPX_FILE" ] && basename "$SPX_FILE" || echo "")
 
           echo "SPY: $SPY_BASENAME"
           echo "VIX: $VIX_BASENAME"
+          echo "SPX: $SPX_BASENAME"
 
           # Extract date from filename (spy_daily_historical-data-DD-MM-YYYY.csv)
           DATA_DATE=$(echo "$SPY_BASENAME" | grep -oP '\d{2}-\d{2}-\d{4}' | head -1)
@@ -42,6 +46,7 @@ jobs:
           {
             "spy": "$SPY_BASENAME",
             "vix": "$VIX_BASENAME",
+            "spx": "$SPX_BASENAME",
             "dataDate": "$DATA_DATE",
             "updatedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           }

@@ -65,12 +65,14 @@ def write_json(filename: str, symbol: str, price: float | None) -> bool:
 def main() -> None:
     spy_price = fetch_price("SPY")
     vix_price = fetch_price("^VIX")
+    spx_price = fetch_price("^GSPC")
 
     spy_ok = write_json("spy.json", "SPY", spy_price)
     vix_ok = write_json("vix.json", "VIX", vix_price)
+    spx_ok = write_json("spx.json", "SPX", spx_price)
 
-    if not spy_ok and not vix_ok:
-        print("WARNING: Both fetches failed — no files updated", file=sys.stderr)
+    if not spy_ok and not vix_ok and not spx_ok:
+        print("WARNING: All fetches failed — no files updated", file=sys.stderr)
 
     # Always exit 0 so transient Yahoo hiccups don't trigger failure emails
     sys.exit(0)

@@ -49,7 +49,8 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 .home-card:nth-child(6)::before{background:linear-gradient(90deg,var(--purple,#c084fc),transparent)}
 .home-card:nth-child(7)::before{background:linear-gradient(90deg,var(--accent),transparent)}
 .home-card:nth-child(8)::before{background:linear-gradient(90deg,var(--blue),transparent)}
-.home-card:nth-child(1){animation:fadeUp .5s ease-out .15s both}.home-card:nth-child(2){animation:fadeUp .5s ease-out .22s both}.home-card:nth-child(3){animation:fadeUp .5s ease-out .29s both}.home-card:nth-child(4){animation:fadeUp .5s ease-out .36s both}.home-card:nth-child(5){animation:fadeUp .5s ease-out .43s both}.home-card:nth-child(6){animation:fadeUp .5s ease-out .50s both}.home-card:nth-child(7){animation:fadeUp .5s ease-out .57s both}.home-card:nth-child(8){animation:fadeUp .5s ease-out .64s both}
+.home-card:nth-child(9)::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.home-card:nth-child(1){animation:fadeUp .5s ease-out .15s both}.home-card:nth-child(2){animation:fadeUp .5s ease-out .22s both}.home-card:nth-child(3){animation:fadeUp .5s ease-out .29s both}.home-card:nth-child(4){animation:fadeUp .5s ease-out .36s both}.home-card:nth-child(5){animation:fadeUp .5s ease-out .43s both}.home-card:nth-child(6){animation:fadeUp .5s ease-out .50s both}.home-card:nth-child(7){animation:fadeUp .5s ease-out .57s both}.home-card:nth-child(8){animation:fadeUp .5s ease-out .64s both}.home-card:nth-child(9){animation:fadeUp .5s ease-out .71s both}
 .card-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:20px}
 .icon-market{background:var(--accent-dim)}.icon-options{background:var(--blue-dim)}.icon-reports{background:var(--amber-dim)}.icon-journal{background:var(--red-dim)}
 .home-card h3{font-size:18px;font-weight:600;margin-bottom:8px}.home-card p{font-size:14px;color:var(--text-secondary);line-height:1.5}
@@ -282,6 +283,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <a class="nav-pill" href="trailing-stop.html"><span>🎯</span> Trailing Stop</a>
 <a class="nav-pill" href="market-weather-grid.html"><span>🌦</span> Weather Grid</a>
 <a class="nav-pill" href="spy-model.html"><span>🎲</span> SPY Model</a>
+<a class="nav-pill" href="spx-model.html"><span>📈</span> SPX Model</a>
 </div></nav>
 </header>
 
@@ -330,6 +332,7 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="home-card" onclick="window.location='trailing-stop.html'"><div class="card-icon icon-options">🎯</div><h3>Trailing Stop Optimizer</h3><p>Formula-driven calculator for optimal trailing stop width based on bid-ask noise, theta, and IV environment.</p><span class="card-arrow">→</span></div>
 <div class="home-card" onclick="window.location='market-weather-grid.html'"><div class="card-icon" style="background:var(--blue-dim)">🌦</div><h3>Market Weather Grid</h3><p>Live 3-axis regime visualiser — direction, magnitude, and volatility regime on a single grid with trailing dot.</p><span class="card-arrow">→</span></div>
 <div class="home-card" onclick="window.location='spy-model.html'"><div class="card-icon" style="background:var(--accent-dim)">🎲</div><h3>SPY Probability Model</h3><p>0DTE strike selection tool — move probability by VIX regime, day-of-week seasonality, and breach probability calculator.</p><span class="card-arrow">→</span></div>
+<div class="home-card" onclick="window.location='spx-model.html'"><div class="card-icon" style="background:var(--amber-dim)">📈</div><h3>SPX Probability Model</h3><p>0DTE strike selection tool using SPX index data — move probability by VIX regime with $5 increment strike calculator.</p><span class="card-arrow">→</span></div>
 </div>
 </section>
 

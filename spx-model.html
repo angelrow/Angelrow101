@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SPY Probability Model — Angelrow Trading Systems</title>
+<title>SPX Probability Model — Angelrow Trading Systems</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -166,8 +166,8 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
   <nav class="site-nav">
     <ul class="nav-pills">
       <li><a class="nav-pill" href="index.html">◉ Dashboard</a></li>
-      <li><a class="nav-pill active" href="spy-model.html">📊 SPY Model</a></li>
-      <li><a class="nav-pill" href="spx-model.html">📈 SPX Model</a></li>
+      <li><a class="nav-pill" href="spy-model.html">📊 SPY Model</a></li>
+      <li><a class="nav-pill active" href="spx-model.html">📈 SPX Model</a></li>
       <li><a class="nav-pill" href="indicators.html">📈 Indicators</a></li>
       <li><a class="nav-pill" href="trailing-stop.html">🎯 Trailing Stop</a></li>
       <li><a class="nav-pill" href="market-weather-grid.html">🌦 Weather Grid</a></li>
@@ -175,7 +175,7 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
   </nav>
 
   <div class="page-header">
-    <h1>SPY DAILY MOVE PROBABILITY MODEL</h1>
+    <h1>SPX DAILY MOVE PROBABILITY MODEL</h1>
     <div class="sub">Angelrow Trading Systems — 0DTE Strike Selection Tool</div>
     <div class="status-bar">
       <span class="status-pill" id="s-data">Loading data...</span>
@@ -211,13 +211,13 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
         <div class="card-title">0DTE Strike Probability Calculator</div>
         <div class="calc-grid">
           <div class="field">
-            <label>SPY Price ($)</label>
-            <input type="number" id="c-price" value="560" step="0.01">
+            <label>SPX Price ($)</label>
+            <input type="number" id="c-price" value="5500" step="0.01">
           </div>
           <div class="field">
             <label>Strike Price ($)</label>
             <div class="strike-row">
-              <input type="number" id="c-strike" step="0.01" placeholder="e.g. 551.60">
+              <input type="number" id="c-strike" step="0.01" placeholder="e.g. 5500">
               <span class="otm-badge" id="otm-badge">—</span>
             </div>
           </div>
@@ -308,7 +308,7 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
   </div><!-- /dashboard -->
 
   <div class="page-footer">
-    Angelrow Trading Systems &nbsp;|&nbsp; SPY Probability Model &nbsp;|&nbsp; Data: Barchart &nbsp;|&nbsp; Not financial advice
+    Angelrow Trading Systems &nbsp;|&nbsp; SPX Probability Model &nbsp;|&nbsp; Data: Barchart &nbsp;|&nbsp; Not financial advice
   </div>
 
 </div><!-- /container -->
@@ -397,25 +397,25 @@ async function loadData() {
     if (!mResp.ok) throw new Error(`Manifest fetch failed (${mResp.status})`);
     const manifest = await mResp.json();
 
-    const spyFile = manifest.spy;
+    const spxFile = manifest.spx;
     const vixFile = manifest.vix;
     const dataDate = manifest.dataDate || '';
 
     // 2. Fetch CSVs in parallel
-    const [spyResp, vixResp] = await Promise.all([
-      fetch(`data/${spyFile}?_=` + Date.now()),
+    const [spxResp, vixResp] = await Promise.all([
+      fetch(`data/${spxFile}?_=` + Date.now()),
       fetch(`data/${vixFile}?_=` + Date.now())
     ]);
-    if (!spyResp.ok) throw new Error(`SPY CSV fetch failed (${spyResp.status}) — file: ${spyFile}`);
+    if (!spxResp.ok) throw new Error(`SPX CSV fetch failed (${spxResp.status}) — file: ${spxFile}`);
     if (!vixResp.ok) throw new Error(`VIX CSV fetch failed (${vixResp.status}) — file: ${vixFile}`);
 
-    const [spyText, vixText] = await Promise.all([spyResp.text(), vixResp.text()]);
+    const [spxText, vixText] = await Promise.all([spxResp.text(), vixResp.text()]);
 
     // 3. Parse
-    const spyRows = parseCSV(spyText).sort((a,b) => a.Date.localeCompare(b.Date));
+    const spxRows = parseCSV(spxText).sort((a,b) => a.Date.localeCompare(b.Date));
     const vixRows = parseCSV(vixText).sort((a,b) => a.Date.localeCompare(b.Date));
 
-    if (spyRows.length < 10) throw new Error('SPY CSV appears empty or malformed.');
+    if (spxRows.length < 10) throw new Error('SPX CSV appears empty or malformed.');
     if (vixRows.length < 10) throw new Error('VIX CSV appears empty or malformed.');
 
     // 4. Build VIX lookup
@@ -424,10 +424,10 @@ async function loadData() {
 
     // 5. Compute daily returns
     const data = [];
-    for (let i = 1; i < spyRows.length; i++) {
-      const prev = spyRows[i-1].Close;
-      const curr = spyRows[i].Close;
-      const { Date: date, High: high, Low: low } = spyRows[i];
+    for (let i = 1; i < spxRows.length; i++) {
+      const prev = spxRows[i-1].Close;
+      const curr = spxRows[i].Close;
+      const { Date: date, High: high, Low: low } = spxRows[i];
       if (!prev || !curr || prev === 0) continue;
 
       const dailyReturn = ((curr - prev) / prev) * 100;
@@ -442,7 +442,7 @@ async function loadData() {
       });
     }
 
-    return { data, dataDate, spyFile, vixFile };
+    return { data, dataDate, spxFile, vixFile };
 
   } catch (e) {
     throw e;
@@ -770,11 +770,11 @@ function renderRegimeBreakdown(data, dist, dir, activeRegime) {
 
 // ─── Live data (SPY price + VIX regime) ──────────────────────────────────────
 async function loadLiveData() {
-  let spyTs = null, vixTs = null;
+  let spxTs = null, vixTs = null;
 
-  // Fetch SPY price
+  // Fetch SPX price
   try {
-    const r = await fetch('data/spy.json?_=' + Date.now());
+    const r = await fetch('data/spx.json?_=' + Date.now());
     if (r.ok) {
       const d = await r.json();
       if (d.price && !isNaN(d.price)) {
@@ -783,13 +783,13 @@ async function loadLiveData() {
         // Default strike to nearest $1 increment at ~1.5% OTM (SPY trades in $1 strikes)
         const strikeInput = document.getElementById('c-strike');
         if (!strikeInput.value) {
-          strikeInput.value = Math.round(d.price * 0.985);
+          strikeInput.value = Math.round(d.price * 0.985 / 5) * 5;
         }
       }
-      spyTs = d.last_updated_utc || null;
+      spxTs = d.last_updated_utc || null;
     }
   } catch (e) {
-    console.warn('SPY live data unavailable:', e);
+    console.warn('SPX live data unavailable:', e);
   }
 
   // Fetch VIX — auto-select regime bucket
@@ -809,9 +809,9 @@ async function loadLiveData() {
   // Render live-data timestamp line
   const line = document.getElementById('live-data-line');
   if (line) {
-    if (spyTs || vixTs) {
+    if (spxTs || vixTs) {
       const fmt = ts => ts ? new Date(ts).toISOString().slice(11, 16) + ' UTC' : '—';
-      line.textContent = `Live data: SPY ${fmt(spyTs)} · VIX ${fmt(vixTs)}`;
+      line.textContent = `Live data: SPX ${fmt(spxTs)} · VIX ${fmt(vixTs)}`;
       line.classList.remove('unavail');
     } else {
       line.textContent = 'Live data: unavailable';
