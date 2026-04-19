@@ -101,9 +101,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
 /* REGIME TAGS */
 .rtag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
 .r-low{background:rgba(0,212,170,.12);color:var(--accent)}
-.r-normal{background:rgba(77,159,255,.12);color:var(--blue)}
+.r-normal-low{background:rgba(77,159,255,.08);color:rgba(77,159,255,.75)}
+.r-normal{background:rgba(77,159,255,.14);color:var(--blue)}
+.r-normal-high{background:rgba(77,159,255,.2);color:#70b0ff}
 .r-elevated{background:rgba(255,176,32,.12);color:var(--amber)}
+.r-elevated-high{background:rgba(255,176,32,.2);color:#ffc040}
 .r-high{background:rgba(255,77,106,.12);color:var(--red)}
+.r-very-high{background:rgba(255,77,106,.2);color:#ff6b80}
 .r-crisis{background:rgba(183,28,28,.2);color:#ff8a80}
 .r-all{background:rgba(179,136,255,.12);color:var(--purple,#b388ff)}
 
@@ -142,13 +146,36 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
 /* REGIME BREAKDOWN GRID */
 .regime-breakdown{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 .rb-header{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:8px}
-.rb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-@media(max-width:600px){.rb-grid{grid-template-columns:repeat(3,1fr)}}
-.rb-cell{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px;padding:8px 4px;text-align:center;transition:border-color .2s}
+.rb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.rb-cell{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px;padding:7px 3px;text-align:center;transition:border-color .2s}
 .rb-cell.rb-active{border-color:rgba(0,212,170,.3);background:rgba(0,212,170,.04)}
-.rb-regime{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--text-secondary);line-height:1.3}
-.rb-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-muted);margin-bottom:5px;line-height:1.2}
-.rb-pct{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700}
+.rb-regime{font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:600;color:var(--text-secondary);line-height:1.3}
+.rb-sub{font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text-muted);margin-bottom:4px;line-height:1.2}
+.rb-pct{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700}
+
+/* VIX DIRECTION */
+.vix-dir-row{display:flex;align-items:center;gap:8px;margin-top:6px}
+.vix-dir-badge{font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:4px;user-select:none;white-space:nowrap}
+.vix-dir-badge.rising{background:rgba(255,77,106,.12);color:var(--red);border-color:rgba(255,77,106,.35)}
+.vix-dir-badge.falling{background:rgba(0,212,170,.12);color:var(--accent);border-color:rgba(0,212,170,.35)}
+.vix-dir-badge.all{background:rgba(179,136,255,.1);color:var(--purple,#b388ff);border-color:rgba(179,136,255,.3)}
+.vix-dir-detail{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace}
+.dir-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.dir-split-cell{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center;transition:border-color .2s}
+.dir-split-cell.dir-active{border-color:rgba(0,212,170,.3);background:rgba(0,212,170,.04)}
+.dir-split-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:3px}
+.dir-split-pct{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700}
+/* Regime table direction sub-rows */
+tr.dir-sub-row td{font-size:10.5px;background:rgba(0,0,0,.12);border-bottom:1px solid rgba(255,255,255,.015)}
+tr.dir-sub-row.rising-row td{color:rgba(255,100,120,.9)}
+tr.dir-sub-row.falling-row td{color:rgba(0,200,160,.9)}
+tr.dir-sub-row td:first-child{padding-left:22px}
+tr.regime-main{cursor:pointer}
+tr.regime-main td:first-child::after{content:' ▸';font-size:9px;color:var(--text-muted);margin-left:4px;transition:transform .2s}
+tr.regime-main.expanded td:first-child::after{content:' ▾'}
+/* VIX Direction Analysis section */
+.vix-dir-section{margin-bottom:20px}
+.vix-dir-callout{background:rgba(0,212,170,.04);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:13px 16px;font-size:12.5px;color:var(--text-secondary);line-height:1.65;margin-top:14px}
 
 /* FOOTER */
 .page-footer{text-align:center;padding:24px 0;color:var(--text-muted);font-size:11px;font-family:'JetBrains Mono',monospace;border-top:1px solid var(--border);margin-top:10px}
@@ -233,11 +260,22 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
             <select id="c-regime">
               <option value="all">All Regimes</option>
               <option value="low">Low (&lt;12)</option>
-              <option value="normal">Normal (12–18)</option>
-              <option value="elevated">Elevated (18–25)</option>
-              <option value="high">High (25–35)</option>
-              <option value="crisis">Crisis (&gt;35)</option>
+              <option value="normal-low">Normal-Low (12–14)</option>
+              <option value="normal">Normal (14–16)</option>
+              <option value="normal-high">Normal-High (16–18)</option>
+              <option value="elevated">Elevated (18–21)</option>
+              <option value="elevated-high">Elevated-High (21–25)</option>
+              <option value="high">High (25–30)</option>
+              <option value="very-high">Very High (30–40)</option>
+              <option value="crisis">Crisis (&gt;40)</option>
             </select>
+          </div>
+          <div class="field" style="grid-column:1/-1">
+            <label>VIX Direction</label>
+            <div class="vix-dir-row">
+              <span id="vix-dir-badge" class="vix-dir-badge all">◈ All</span>
+              <span class="vix-dir-detail" id="vix-dir-detail">Click to filter by rising / falling VIX</span>
+            </div>
           </div>
         </div>
         <div class="calc-result" id="calc-result">
@@ -245,15 +283,19 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
           <div class="pct" id="calc-pct">—</div>
           <div class="detail" id="calc-detail"></div>
         </div>
-        <div class="regime-breakdown">
-          <div class="rb-header">P(expires ITM) by VIX regime</div>
-          <div class="rb-grid" id="rb-grid">
-            <div class="rb-cell"><div class="rb-regime">Low</div><div class="rb-sub">&lt; 12</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
-            <div class="rb-cell"><div class="rb-regime">Normal</div><div class="rb-sub">12–18</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
-            <div class="rb-cell"><div class="rb-regime">Elev.</div><div class="rb-sub">18–25</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
-            <div class="rb-cell"><div class="rb-regime">High</div><div class="rb-sub">25–35</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
-            <div class="rb-cell"><div class="rb-regime">Crisis</div><div class="rb-sub">&gt; 35</div><div class="rb-pct" style="color:var(--text-muted)">—</div></div>
+        <div class="dir-split" id="dir-split">
+          <div class="dir-split-cell" id="dir-rising-cell">
+            <div class="dir-split-label">▲ Rising VIX</div>
+            <div class="dir-split-pct" id="dir-rising-pct" style="color:var(--red)">—</div>
           </div>
+          <div class="dir-split-cell" id="dir-falling-cell">
+            <div class="dir-split-label">▼ Falling VIX</div>
+            <div class="dir-split-pct" id="dir-falling-pct" style="color:var(--accent)">—</div>
+          </div>
+        </div>
+        <div class="regime-breakdown">
+          <div class="rb-header" id="rb-header">P(expires ITM) by VIX regime — All directions</div>
+          <div class="rb-grid" id="rb-grid"></div>
         </div>
       </div>
 
@@ -305,6 +347,35 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
       </div>
 
     </div><!-- /grid2 -->
+
+    <!-- VIX Direction Analysis -->
+    <div class="vix-dir-section card">
+      <div class="card-title">VIX Direction Analysis — 1% Put Breach Rate</div>
+      <div class="grid2" style="margin-bottom:0">
+        <div>
+          <div class="chart-wrap" style="height:300px"><canvas id="vixDirChart"></canvas></div>
+        </div>
+        <div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="text-align:left">VIX Bucket</th>
+                  <th>▲ Rising N</th><th>▲ Breach</th>
+                  <th>▼ Falling N</th><th>▼ Breach</th>
+                  <th>Diff</th>
+                </tr>
+              </thead>
+              <tbody id="vix-dir-tbody"></tbody>
+            </table>
+          </div>
+          <div class="vix-dir-callout">
+            VIX direction significantly affects breach probability across regime bands. Rising VIX days show substantially higher put breach rates in elevated regimes. The direction signal is strongest in high-volatility conditions — use the direction badge in the calculator to filter to the current market environment.
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /dashboard -->
 
   <div class="page-footer">
@@ -317,8 +388,9 @@ tr.all-row td{font-weight:700;border-top:1px solid rgba(0,212,170,.2);color:var(
 <script>
 // ─── State ───────────────────────────────────────────────────────────────────
 let globalData = null;
-let calcData   = null;   // filtered valid data kept for post-load calc updates
+let calcData   = null;
 let charts = {};
+let vixDirFilter = 'all'; // 'all' | 'rising' | 'falling'
 
 // ─── Barchart CSV parser ──────────────────────────────────────────────────────
 function parseCSV(text) {
@@ -418,9 +490,12 @@ async function loadData() {
     if (spxRows.length < 10) throw new Error('SPX CSV appears empty or malformed.');
     if (vixRows.length < 10) throw new Error('VIX CSV appears empty or malformed.');
 
-    // 4. Build VIX lookup
+    // 4. Build VIX lookup + direction
     const vixMap = {};
     vixRows.forEach(r => { vixMap[r.Date] = r.Close; });
+    const vixSorted = vixRows.slice().sort((a,b) => a.Date.localeCompare(b.Date));
+    const vixDateIdx = {};
+    vixSorted.forEach((r, i) => { vixDateIdx[r.Date] = i; });
 
     // 5. Compute daily returns
     const data = [];
@@ -436,9 +511,17 @@ async function loadData() {
       const regime = classifyRegime(vix);
       const dt = new Date(date + 'T00:00:00Z');
 
+      // VIX direction: compare today's VIX to previous VIX day
+      const vixIdx = vixDateIdx[date];
+      let vixDir = null;
+      if (vixIdx != null && vixIdx > 0 && vix != null) {
+        const prevVix = vixSorted[vixIdx - 1].Close;
+        if (prevVix != null) vixDir = vix > prevVix ? 'rising' : 'falling';
+      }
+
       data.push({
         date, dailyReturn, absReturn, vix: vix || null, regime,
-        dayOfWeek: dt.getUTCDay(), month: dt.getUTCMonth()
+        dayOfWeek: dt.getUTCDay(), month: dt.getUTCMonth(), vixDir
       });
     }
 
@@ -452,9 +535,13 @@ async function loadData() {
 function classifyRegime(vix) {
   if (vix == null || isNaN(vix)) return 'unknown';
   if (vix < 12)  return 'low';
-  if (vix < 18)  return 'normal';
-  if (vix < 25)  return 'elevated';
-  if (vix < 35)  return 'high';
+  if (vix < 14)  return 'normal-low';
+  if (vix < 16)  return 'normal';
+  if (vix < 18)  return 'normal-high';
+  if (vix < 21)  return 'elevated';
+  if (vix < 25)  return 'elevated-high';
+  if (vix < 30)  return 'high';
+  if (vix < 40)  return 'very-high';
   return 'crisis';
 }
 
@@ -475,10 +562,37 @@ function renderDashboard(data, dataDate) {
   renderDOW(valid);
   renderMonths(valid);
   renderTailRisk(data);
+  renderVixDirectionSection(valid);
   setupCalc(valid);
+
+  // Direction badge click — cycle all → rising → falling → all
+  const badge = document.getElementById('vix-dir-badge');
+  if (badge) {
+    badge.addEventListener('click', () => {
+      const cycle = { all:'rising', rising:'falling', falling:'all' };
+      setVixDirFilter(cycle[vixDirFilter] || 'all');
+    });
+  }
 
   document.getElementById('loader').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
+}
+
+function setVixDirFilter(dir) {
+  vixDirFilter = dir;
+  const badge = document.getElementById('vix-dir-badge');
+  if (badge) {
+    const cfg = { all:['all','◈ All'], rising:['rising','▲ Rising'], falling:['falling','▼ Falling'] };
+    const [cls, text] = cfg[dir] || cfg.all;
+    badge.className = `vix-dir-badge ${cls}`;
+    badge.textContent = text;
+  }
+  const hdr = document.getElementById('rb-header');
+  if (hdr) {
+    const lbl = { all:'All directions', rising:'▲ Rising VIX', falling:'▼ Falling VIX' };
+    hdr.textContent = `P(expires ITM) by VIX regime — ${lbl[dir]}`;
+  }
+  if (calcData) updateCalc(calcData);
 }
 
 function setPill(id, text, cls) {
@@ -490,16 +604,52 @@ function setPill(id, text, cls) {
 
 // ─── Regime table ─────────────────────────────────────────────────────────────
 function renderRegimeTable(data) {
-  const regimes = ['low','normal','elevated','high','crisis'];
-  const labels  = {low:'VIX < 12',normal:'VIX 12–18',elevated:'VIX 18–25',high:'VIX 25–35',crisis:'VIX > 35'};
-  const tagCls  = {low:'r-low',normal:'r-normal',elevated:'r-elevated',high:'r-high',crisis:'r-crisis'};
+  const regimes = ['low','normal-low','normal','normal-high','elevated','elevated-high','high','very-high','crisis'];
+  const labels  = {
+    'low':'VIX < 12','normal-low':'VIX 12–14','normal':'VIX 14–16','normal-high':'VIX 16–18',
+    'elevated':'VIX 18–21','elevated-high':'VIX 21–25','high':'VIX 25–30','very-high':'VIX 30–40','crisis':'VIX > 40'
+  };
+  const tagCls = {
+    'low':'r-low','normal-low':'r-normal-low','normal':'r-normal','normal-high':'r-normal-high',
+    'elevated':'r-elevated','elevated-high':'r-elevated-high','high':'r-high','very-high':'r-very-high','crisis':'r-crisis'
+  };
   const tbody = document.getElementById('regime-tbody');
   tbody.innerHTML = '';
 
   regimes.forEach(regime => {
     const rd = data.filter(d => d.regime === regime);
     if (!rd.length) return;
-    tbody.appendChild(regimeRow(rd, `<span class="rtag ${tagCls[regime]}">${labels[regime]}</span>`));
+
+    const mainRow = regimeRow(rd, `<span class="rtag ${tagCls[regime]}">${labels[regime]}</span>`);
+    mainRow.classList.add('regime-main');
+    mainRow.dataset.regime = regime;
+    tbody.appendChild(mainRow);
+
+    // Direction sub-rows (collapsed by default)
+    const rising  = rd.filter(d => d.vixDir === 'rising');
+    const falling = rd.filter(d => d.vixDir === 'falling');
+    [
+      [rising,  'rising-row',  '&nbsp;&nbsp;▲ Rising'],
+      [falling, 'falling-row', '&nbsp;&nbsp;▼ Falling'],
+    ].forEach(([arr, cls, lbl]) => {
+      if (!arr.length) return;
+      const tr = regimeRow(arr, lbl);
+      tr.classList.add('dir-sub-row', cls);
+      tr.style.display = 'none';
+      tr.dataset.regime = regime;
+      tbody.appendChild(tr);
+    });
+  });
+
+  // Toggle direction rows on main-row click
+  tbody.addEventListener('click', e => {
+    const main = e.target.closest('tr.regime-main');
+    if (!main) return;
+    const reg = main.dataset.regime;
+    const subs = [...tbody.querySelectorAll(`.dir-sub-row[data-regime="${reg}"]`)];
+    const open = subs.some(r => r.style.display !== 'none');
+    subs.forEach(r => { r.style.display = open ? 'none' : ''; });
+    main.classList.toggle('expanded', !open);
   });
 
   const allRow = regimeRow(data, `<span class="rtag r-all">ALL REGIMES</span>`);
@@ -533,8 +683,11 @@ function regimeRow(rd, labelHTML) {
 
 // ─── Directional table ────────────────────────────────────────────────────────
 function renderDirectionalTable(data) {
-  const regimes = ['low','normal','elevated','high','crisis'];
-  const labels  = {low:'< 12',normal:'12–18',elevated:'18–25',high:'25–35',crisis:'> 35'};
+  const regimes = ['low','normal-low','normal','normal-high','elevated','elevated-high','high','very-high','crisis'];
+  const labels  = {
+    'low':'< 12','normal-low':'12–14','normal':'14–16','normal-high':'16–18',
+    'elevated':'18–21','elevated-high':'21–25','high':'25–30','very-high':'30–40','crisis':'> 40'
+  };
   const tbody = document.getElementById('dir-tbody');
   tbody.innerHTML = '';
 
@@ -705,16 +858,17 @@ function updateCalc(data) {
     }
   }
 
-  let filtered = regime === 'all' ? data : data.filter(d=>d.regime===regime);
+  const base = regime === 'all' ? data : data.filter(d=>d.regime===regime);
+  let filtered = vixDirFilter === 'all' ? base : base.filter(d => d.vixDir === vixDirFilter);
+
   if (!filtered.length || isNaN(dist)) {
     document.getElementById('calc-pct').textContent = isNaN(dist) ? '—' : 'No data';
     document.getElementById('calc-detail').textContent = '';
+    updateDirSplit(base, dist, dir);
     renderRegimeBreakdown(data, dist, dir, regime);
     return;
   }
 
-  // P(expires ITM): for put = P(close < strike), for call = P(close > strike)
-  // dist is positive when OTM, negative when ITM; -dist flips sign correctly for the filter
   const breaches = dir === 'put'
     ? filtered.filter(d => d.dailyReturn < -dist).length
     : filtered.filter(d => d.dailyReturn >  dist).length;
@@ -730,7 +884,28 @@ function updateCalc(data) {
     `Strike: $${strike.toFixed(2)} &nbsp;|&nbsp; ` +
     `${filtered.length.toLocaleString()} days`;
 
+  updateDirSplit(base, dist, dir);
   renderRegimeBreakdown(data, dist, dir, regime);
+}
+
+function updateDirSplit(base, dist, dir) {
+  const calc = arr => {
+    if (!arr.length || isNaN(dist)) return null;
+    const b = dir === 'put'
+      ? arr.filter(d => d.dailyReturn < -dist).length
+      : arr.filter(d => d.dailyReturn >  dist).length;
+    return ((b / arr.length) * 100).toFixed(1);
+  };
+  const rPct = calc(base.filter(d => d.vixDir === 'rising'));
+  const fPct = calc(base.filter(d => d.vixDir === 'falling'));
+  const rEl = document.getElementById('dir-rising-pct');
+  const fEl = document.getElementById('dir-falling-pct');
+  const rCell = document.getElementById('dir-rising-cell');
+  const fCell = document.getElementById('dir-falling-cell');
+  if (rEl)   rEl.textContent  = rPct  !== null ? rPct + '%'  : '—';
+  if (fEl)   fEl.textContent  = fPct  !== null ? fPct + '%'  : '—';
+  if (rCell) rCell.classList.toggle('dir-active', vixDirFilter === 'rising');
+  if (fCell) fCell.classList.toggle('dir-active', vixDirFilter === 'falling');
 }
 
 // ─── Per-regime ITM probability breakdown ────────────────────────────────────
@@ -739,15 +914,20 @@ function renderRegimeBreakdown(data, dist, dir, activeRegime) {
   if (!rbGrid) return;
 
   const regimes = [
-    { key:'low',      label:'Low',    sub:'< 12'  },
-    { key:'normal',   label:'Normal', sub:'12–18' },
-    { key:'elevated', label:'Elev.',  sub:'18–25' },
-    { key:'high',     label:'High',   sub:'25–35' },
-    { key:'crisis',   label:'Crisis', sub:'> 35'  },
+    { key:'low',          label:'Low',     sub:'<12'   },
+    { key:'normal-low',   label:'Nrm-Lo',  sub:'12–14' },
+    { key:'normal',       label:'Normal',  sub:'14–16' },
+    { key:'normal-high',  label:'Nrm-Hi',  sub:'16–18' },
+    { key:'elevated',     label:'Elev.',   sub:'18–21' },
+    { key:'elevated-high',label:'Elv-Hi',  sub:'21–25' },
+    { key:'high',         label:'High',    sub:'25–30' },
+    { key:'very-high',    label:'V-High',  sub:'30–40' },
+    { key:'crisis',       label:'Crisis',  sub:'>40'   },
   ];
 
   rbGrid.innerHTML = regimes.map(({ key, label, sub }) => {
-    const rd = data.filter(d => d.regime === key);
+    let rd = data.filter(d => d.regime === key);
+    if (vixDirFilter !== 'all') rd = rd.filter(d => d.vixDir === vixDirFilter);
     const isActive = activeRegime === key;
 
     if (!rd.length || isNaN(dist)) {
@@ -759,13 +939,87 @@ function renderRegimeBreakdown(data, dist, dir, activeRegime) {
     const b = dir === 'put'
       ? rd.filter(d => d.dailyReturn < -dist).length
       : rd.filter(d => d.dailyReturn >  dist).length;
-    const p    = ((b / rd.length) * 100).toFixed(1);
-    const col  = parseFloat(p) < 5 ? 'var(--accent)' : parseFloat(p) < 15 ? 'var(--amber)' : 'var(--red)';
+    const p   = ((b / rd.length) * 100).toFixed(1);
+    const col = parseFloat(p) < 5 ? 'var(--accent)' : parseFloat(p) < 15 ? 'var(--amber)' : 'var(--red)';
 
     return `<div class="rb-cell${isActive?' rb-active':''}">
       <div class="rb-regime">${label}</div><div class="rb-sub">${sub}</div>
       <div class="rb-pct" style="color:${col}">${p}%</div></div>`;
   }).join('');
+}
+
+// ─── VIX Direction Analysis section ──────────────────────────────────────────
+function renderVixDirectionSection(data) {
+  const regimes = [
+    { key:'low',          label:'<12'   },
+    { key:'normal-low',   label:'12–14' },
+    { key:'normal',       label:'14–16' },
+    { key:'normal-high',  label:'16–18' },
+    { key:'elevated',     label:'18–21' },
+    { key:'elevated-high',label:'21–25' },
+    { key:'high',         label:'25–30' },
+    { key:'very-high',    label:'30–40' },
+    { key:'crisis',       label:'>40'   },
+  ];
+
+  const BENCH = 1.0; // 1% put breach benchmark
+  const rows = regimes.map(({ key, label }) => {
+    const rd      = data.filter(d => d.regime === key);
+    const rising  = rd.filter(d => d.vixDir === 'rising');
+    const falling = rd.filter(d => d.vixDir === 'falling');
+    const rate = arr => arr.length ? (arr.filter(d => d.dailyReturn < -BENCH).length / arr.length) * 100 : null;
+    const rRate = rate(rising);
+    const fRate = rate(falling);
+    return { label, rN: rising.length, fN: falling.length, rRate, fRate,
+             diff: rRate !== null && fRate !== null ? rRate - fRate : null };
+  });
+
+  // Grouped bar chart
+  const canvas = document.getElementById('vixDirChart');
+  if (canvas) {
+    destroyChart('vixDir');
+    charts.vixDir = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: rows.map(r => r.label),
+        datasets: [
+          { label:'▲ Rising VIX', data: rows.map(r => r.rRate !== null ? +r.rRate.toFixed(1) : null),
+            backgroundColor:'rgba(255,77,106,0.5)', borderColor:'rgba(255,77,106,0.85)', borderWidth:1 },
+          { label:'▼ Falling VIX', data: rows.map(r => r.fRate !== null ? +r.fRate.toFixed(1) : null),
+            backgroundColor:'rgba(0,212,170,0.4)', borderColor:'rgba(0,212,170,0.8)', borderWidth:1 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ labels:{ color:'#8a95a5', font:{size:11}, boxWidth:12 } },
+          title:{ display:true, text:'1% Put Breach Rate by Regime & VIX Direction', color:'#8a95a5', font:{size:11} }
+        },
+        scales:{
+          x:{ ticks:{color:'#5a6577',font:{size:10}}, grid:{color:'rgba(255,255,255,0.04)'} },
+          y:{ ticks:{color:'#5a6577',font:{size:10},callback:v=>v+'%'}, grid:{color:'rgba(255,255,255,0.04)'},
+              title:{display:true,text:'Breach Rate (%)',color:'#5a6577',font:{size:10}} }
+        }
+      }
+    });
+  }
+
+  // Summary table
+  const tbody = document.getElementById('vix-dir-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  rows.forEach(({ label, rN, fN, rRate, fRate, diff }) => {
+    const fmtR = v => v !== null ? v.toFixed(1)+'%' : '—';
+    const diffTxt = diff !== null ? (diff > 0 ? '+' : '') + diff.toFixed(1)+'%' : '—';
+    const diffStyle = diff === null ? '' : diff > 0 ? 'color:var(--red)' : 'color:var(--accent)';
+    const bold = diff !== null && Math.abs(diff) > 10 ? 'font-weight:700' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="text-align:left">${label}</td>
+      <td>${rN}</td><td>${fmtR(rRate)}</td>
+      <td>${fN}</td><td>${fmtR(fRate)}</td>
+      <td style="${diffStyle};${bold}">${diffTxt}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 // ─── Live data (SPY price + VIX regime) ──────────────────────────────────────
@@ -792,13 +1046,25 @@ async function loadLiveData() {
     console.warn('SPX live data unavailable:', e);
   }
 
-  // Fetch VIX — auto-select regime bucket
+  // Fetch VIX — auto-select regime bucket + detect direction vs last historical close
   try {
     const r = await fetch('data/vix.json?_=' + Date.now());
     if (r.ok) {
       const d = await r.json();
       if (d.price && !isNaN(d.price)) {
         document.getElementById('c-regime').value = classifyRegime(d.price);
+
+        // Auto-detect direction: live VIX vs last known historical VIX close
+        if (globalData && globalData.length > 0) {
+          const lastVixDay = [...globalData].reverse().find(row => row.vix != null);
+          if (lastVixDay) {
+            const detectedDir = d.price > lastVixDay.vix ? 'rising' : 'falling';
+            setVixDirFilter(detectedDir);
+            const detail = document.getElementById('vix-dir-detail');
+            if (detail) detail.textContent =
+              `Live VIX ${d.price.toFixed(2)} vs prev close ${lastVixDay.vix.toFixed(2)} — click to override`;
+          }
+        }
       }
       vixTs = d.last_updated_utc || null;
     }
