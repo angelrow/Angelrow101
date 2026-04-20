@@ -1,6 +1,6 @@
 {
   "symbol": "SPX",
-  "price": 6582.69,
-  "last_updated_utc": "2026-04-03T20:00:00Z",
-  "source": "barchart-csv-seed"
+  "price": 7119.91,
+  "last_updated_utc": "2026-04-20T14:26:41Z",
+  "source": "yfinance"
 }
