@@ -25,9 +25,10 @@ MAX_POINTS = 400            # Rolling window size (~15 trading days at 26 pts/da
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'grid-data.json')
 
 # Direction normalisation divisor — tune for good spread across -1 to +1
-# 0.06 was too small (clamped at 1.0 in any bull market)
-# 0.50 gives full range: strong bull ~0.9, neutral ~0, strong bear ~-0.9
-DIRECTION_DIVISOR = 0.50
+# 0.06 was too small (always clamped). 0.50 still clamped because sma_alignment
+# dominated. Now using 0.20 with reduced alignment weight (0.10 instead of 0.30).
+# This gives good spread: e.g. SPY 1% above SMA50 → raw ≈ 0.03 → direction ≈ 0.15
+DIRECTION_DIVISOR = 0.20
 
 # Volatility thresholds (for reference — frontend uses these too)
 VIX_FLOOR = 12
@@ -134,7 +135,7 @@ def compute_direction(spy_price, sma50, sma200):
     price_vs_200 = (spy_price - sma200) / sma200
     sma_alignment = 1.0 if sma50 > sma200 else -1.0
 
-    raw = (price_vs_50 * 2.0) + (price_vs_200 * 1.0) + (sma_alignment * 0.3)
+    raw = (price_vs_50 * 2.0) + (price_vs_200 * 1.0) + (sma_alignment * 0.1)
     return clamp(raw / DIRECTION_DIVISOR, -1.0, 1.0)
 
 

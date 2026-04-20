@@ -243,8 +243,8 @@ body{font-family:'JetBrains Mono','Courier New',monospace;background:var(--bg);c
         <li><strong>50/200 SMA alignment</strong> — Is the 50-day above the 200-day (golden cross territory) or below (death cross)?</li>
       </ul>
       <!-- SYNC: divisor must match DIRECTION_DIVISOR in data-fetcher/fetch_market_data.py -->
-      <div class="ex-code">direction = (price_vs_50sma &times; 2) + (price_vs_200sma &times; 1) + (sma_alignment &times; 0.3)
-direction = clamp(direction / 0.50, -1, 1)</div>
+      <div class="ex-code">direction = (price_vs_50sma &times; 2) + (price_vs_200sma &times; 1) + (sma_alignment &times; 0.1)
+direction = clamp(direction / 0.20, -1, 1)</div>
       <p class="ex-p">The 50-day moving average is weighted twice as heavily as the 200-day because it responds faster to current conditions. The alignment factor adds a small bias to reflect overall trend structure.</p>
       <p class="ex-p"><strong>What pushes the dot UP (toward Strong Bull):</strong></p>
       <ul class="ex-list dir">
