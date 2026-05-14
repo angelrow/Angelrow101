@@ -282,10 +282,13 @@ input[type=number]:focus { border-color: var(--accent); }
         <div class="panel-title">Market Data</div>
 
         <div class="sub-label">SPX 1-Minute CSV Files</div>
+        <div class="status-row" id="autoLoadStatus" style="margin-bottom:10px;display:none">
+          <span class="pill" id="autoLoadPill">Scanning data folder...</span>
+        </div>
         <div class="dropzone" id="spxZone">
           <input type="file" id="spxInput" accept=".csv" multiple>
           <div class="dz-text">
-            Drop files here or <strong>click to browse</strong><br>
+            Drop additional files here or <strong>click to browse</strong><br>
             <span class="dz-mono">spx_intraday-1min_*.csv (Barchart format)</span>
           </div>
         </div>
@@ -1140,10 +1143,89 @@ function runSim() {
 }
 
 // ══════════════════════════════════════════════════════
+// AUTO-LOAD FROM data/manifest.json
+// ══════════════════════════════════════════════════════
+function mergeNewBars(newBars) {
+  const existing = new Map(st.bars.map(b => [b.date + 'T' + b.time, b]));
+  for (const b of newBars) existing.set(b.date + 'T' + b.time, b);
+  st.bars = [...existing.values()].sort((a, b) =>
+    a.date !== b.date ? a.date.localeCompare(b.date) : a.minsFromMid - b.minsFromMid
+  );
+}
+
+async function autoLoadFromManifest() {
+  const statusWrap = document.getElementById('autoLoadStatus');
+  const pill       = document.getElementById('autoLoadPill');
+
+  // Show scanning state
+  statusWrap.style.display = '';
+  pill.textContent = 'Scanning data folder...';
+  pill.className = 'pill';
+
+  let manifest;
+  try {
+    const resp = await fetch('data/manifest.json');
+    if (!resp.ok) throw new Error('no manifest');
+    manifest = await resp.json();
+  } catch {
+    statusWrap.style.display = 'none'; // silent — fall back to manual upload
+    return;
+  }
+
+  const spxFiles = Array.isArray(manifest.spx) ? manifest.spx : [];
+  const vixFile  = manifest.vix || null;
+
+  if (!spxFiles.length && !vixFile) {
+    statusWrap.style.display = 'none';
+    return;
+  }
+
+  // ── Load SPX files ──
+  if (spxFiles.length) {
+    pill.textContent = `Loading ${spxFiles.length} SPX file${spxFiles.length !== 1 ? 's' : ''}...`;
+
+    try {
+      const fetches = spxFiles.map(async f => {
+        const r = await fetch('data/' + f);
+        if (!r.ok) { console.warn('IC manifest: could not fetch', f); return []; }
+        return parseSPXCSV(await r.text());
+      });
+      const results = await Promise.all(fetches);
+      mergeNewBars(results.flat());
+      updateSPXStatus();
+      pill.textContent = `Auto-loaded from data/ — ${spxFiles.length} file${spxFiles.length !== 1 ? 's' : ''}`;
+      pill.className = 'pill ok';
+    } catch (e) {
+      pill.textContent = 'Auto-load failed — use manual upload below';
+      pill.className = 'pill err';
+    }
+  }
+
+  // ── Load VIX file and switch to VIX mode ──
+  if (vixFile) {
+    try {
+      const vResp = await fetch('data/' + vixFile);
+      if (vResp.ok) {
+        st.vixMap = parseVIXCSV(await vResp.text());
+        const n = Object.keys(st.vixMap).length;
+        if (n > 0) {
+          setIVMode('vix');
+          document.getElementById('vixStatus').innerHTML =
+            `<span class="pill ok">${n} VIX dates — auto-loaded</span>`;
+        }
+      }
+    } catch { /* VIX load failure is non-fatal */ }
+  }
+}
+
+// ══════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════
 setupDrop('spxZone', 'spxInput', loadSPXFiles);
 setupDrop('vixZone', 'vixInput', f => loadVIXFile(f[0]));
+
+// Try manifest auto-load first; manual upload still works as an override
+autoLoadFromManifest();
 </script>
 </body>
 </html>
