@@ -23,6 +23,8 @@
   --amber: #ffb020;
   --blue: #4d9fff;
   --blue-d: rgba(77,159,255,0.10);
+  --purple: #b07dff;
+  --purple-d: rgba(176,125,255,0.10);
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Outfit', sans-serif;
 }
@@ -187,6 +189,7 @@ input[type=number]:focus { border-color: var(--accent); }
 .cs1 { color: var(--blue) !important; }
 .cs2 { color: var(--amber) !important; }
 .cs3 { color: var(--accent) !important; }
+.cs4 { color: var(--purple) !important; }
 .pos { color: var(--accent) !important; }
 .neg { color: var(--red) !important; }
 
@@ -372,6 +375,14 @@ input[type=number]:focus { border-color: var(--accent); }
             <input type="number" id="riskFree" value="5.0" min="0" max="20" step="0.25">
           </div>
 
+          <div class="param" style="grid-column:span 2">
+            <div class="param-label">Stop multiplier &nbsp;<span style="color:var(--text-m);font-size:9px;font-family:var(--mono)">(close if IC cost &gt; credit × N)</span></div>
+            <div class="slider-row">
+              <input type="range" id="stopMult" min="1.0" max="5.0" step="0.5" value="2.0" oninput="syncVal('stopMult','stopMultVal',1)">
+              <span class="param-val" id="stopMultVal">2.0</span>
+            </div>
+          </div>
+
         </div>
         <button class="run-btn" id="runBtn" onclick="runSim()">▶ &nbsp;Run Simulation</button>
       </div>
@@ -448,6 +459,7 @@ const st = {
   sortKey: 'date',
   sortDir: 1,
   monthlyOpen: true,
+  stopMult: 2.0,
   charts: { equity: null, hist: null }
 };
 
@@ -624,7 +636,7 @@ const r5 = x => Math.round(x / 5) * 5;
 const minsToT = m => m / YEAR_MINS;
 
 function simulate(bars, vixMap, params) {
-  const { entryMins, offset, putWing, callWing, contracts, r, fixedIV } = params;
+  const { entryMins, offset, putWing, callWing, contracts, r, fixedIV, stopMult } = params;
   const entryTarget = CLOSE_MINS - entryMins;
 
   // Group bars by date (already sorted within each day from parseSPXCSV)
@@ -674,8 +686,10 @@ function simulate(bars, vixMap, params) {
 
     // Strategy 2: close on short-strike touch
     // Strategy 3: close on breakeven breach
+    // Strategy 4: close when IC mark exceeds credit × stopMult
     let s2 = { pnl: null, time: null, early: false };
     let s3 = { pnl: null, time: null, early: false };
+    let s4 = { pnl: null, time: null, early: false };
 
     for (const bar of fwdBars) {
       const minsLeft = Math.max(0, CLOSE_MINS - bar.minsFromMid);
@@ -690,6 +704,9 @@ function simulate(bars, vixMap, params) {
       if (!s3.early && (bar.high >= upperBE || bar.low <= lowerBE)) {
         s3 = { pnl, time: bar.time, early: true };
       }
+      if (!s4.early && mark > credit * stopMult) {
+        s4 = { pnl, time: bar.time, early: true };
+      }
     }
 
     // Settlement: last bar of the day (closest to 16:00)
@@ -701,11 +718,12 @@ function simulate(bars, vixMap, params) {
     // Strategy 1: always hold to expiry
     const s1 = { pnl: expiryPnL, time: settlBar.time, early: false };
 
-    // Strategies 2 & 3: if never triggered, use expiry result
+    // Strategies 2, 3 & 4: if never triggered, use expiry result
     if (!s2.early) s2 = { pnl: expiryPnL, time: settlBar.time, early: false };
     if (!s3.early) s3 = { pnl: expiryPnL, time: settlBar.time, early: false };
+    if (!s4.early) s4 = { pnl: expiryPnL, time: settlBar.time, early: false };
 
-    trades.push({ date, spxEntry: Sentry, sc, lc, sp, lp, credit, sigma, settlement: settlBar.close, s1, s2, s3 });
+    trades.push({ date, spxEntry: Sentry, sc, lc, sp, lp, credit, sigma, settlement: settlBar.close, s1, s2, s3, s4 });
   }
 
   return trades;
@@ -779,6 +797,8 @@ function renderSummary(trades) {
   const m1 = calcMetrics(trades, 's1');
   const m2 = calcMetrics(trades, 's2');
   const m3 = calcMetrics(trades, 's3');
+  const m4 = calcMetrics(trades, 's4');
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
 
   const rows = [
     ['Total Trades',      m => m.n,       v => v],
@@ -801,6 +821,7 @@ function renderSummary(trades) {
       <th class="cs1">Hold to Expiry</th>
       <th class="cs2">Close on Strike</th>
       <th class="cs3">Close on Breakeven</th>
+      <th class="cs4">${s4Label}</th>
     </tr></thead>
     <tbody>
       ${rows.map(([label, getter, fmt]) => `
@@ -809,6 +830,7 @@ function renderSummary(trades) {
           <td>${fmt(getter(m1))}</td>
           <td>${fmt(getter(m2))}</td>
           <td>${fmt(getter(m3))}</td>
+          <td>${fmt(getter(m4))}</td>
         </tr>`).join('')}
     </tbody>`;
 }
@@ -846,14 +868,16 @@ const CHART_OPTS = {
 function renderEquity(trades) {
   if (st.charts.equity) st.charts.equity.destroy();
   const labels = trades.map(t => t.date);
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
   const cfg = {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',  borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',  borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',    borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: s4Label,             data: cumPnL(trades,'s4'), borderColor: '#b07dff', backgroundColor: 'rgba(176,125,255,.06)', borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
       ]
     },
     options: {
@@ -878,7 +902,8 @@ function renderEquity(trades) {
 function renderHist(trades) {
   if (st.charts.hist) st.charts.hist.destroy();
 
-  const allP = [...trades.map(t => t.s1.pnl), ...trades.map(t => t.s2.pnl), ...trades.map(t => t.s3.pnl)];
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+  const allP = [...trades.map(t => t.s1.pnl), ...trades.map(t => t.s2.pnl), ...trades.map(t => t.s3.pnl), ...trades.map(t => t.s4.pnl)];
   const minP = Math.min(...allP), maxP = Math.max(...allP);
   const N = 20;
   const bw = Math.max((maxP - minP) / N, 1);
@@ -899,9 +924,10 @@ function renderHist(trades) {
     data: {
       labels: binLbls,
       datasets: [
-        { label: 'Hold to Expiry',    data: binData('s1'), backgroundColor: 'rgba(77,159,255,.45)',  borderColor: '#4d9fff', borderWidth: 1 },
-        { label: 'Close on Strike',   data: binData('s2'), backgroundColor: 'rgba(255,176,32,.45)',  borderColor: '#ffb020', borderWidth: 1 },
-        { label: 'Close on Breakeven',data: binData('s3'), backgroundColor: 'rgba(0,212,170,.45)',   borderColor: '#00d4aa', borderWidth: 1 },
+        { label: 'Hold to Expiry',    data: binData('s1'), backgroundColor: 'rgba(77,159,255,.45)',   borderColor: '#4d9fff', borderWidth: 1 },
+        { label: 'Close on Strike',   data: binData('s2'), backgroundColor: 'rgba(255,176,32,.45)',   borderColor: '#ffb020', borderWidth: 1 },
+        { label: 'Close on Breakeven',data: binData('s3'), backgroundColor: 'rgba(0,212,170,.45)',    borderColor: '#00d4aa', borderWidth: 1 },
+        { label: s4Label,             data: binData('s4'), backgroundColor: 'rgba(176,125,255,.45)', borderColor: '#b07dff', borderWidth: 1 },
       ]
     },
     options: {
@@ -920,7 +946,9 @@ function renderMonthly(trades) {
   const m1 = calcMonthly(trades, 's1');
   const m2 = calcMonthly(trades, 's2');
   const m3 = calcMonthly(trades, 's3');
-  const months = [...new Set([...Object.keys(m1), ...Object.keys(m2), ...Object.keys(m3)])].sort();
+  const m4 = calcMonthly(trades, 's4');
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+  const months = [...new Set([...Object.keys(m1), ...Object.keys(m2), ...Object.keys(m3), ...Object.keys(m4)])].sort();
 
   const tbl = document.getElementById('monthlyTbl');
   tbl.innerHTML = `
@@ -930,6 +958,7 @@ function renderMonthly(trades) {
         <th colspan="2" class="cs1">Hold to Expiry</th>
         <th colspan="2" class="cs2">Close on Strike</th>
         <th colspan="2" class="cs3">Close on Breakeven</th>
+        <th colspan="2" class="cs4">${s4Label}</th>
         <th>Trades</th>
       </tr>
       <tr>
@@ -937,6 +966,7 @@ function renderMonthly(trades) {
         <th class="cs1">P&L</th><th class="cs1">Win%</th>
         <th class="cs2">P&L</th><th class="cs2">Win%</th>
         <th class="cs3">P&L</th><th class="cs3">Win%</th>
+        <th class="cs4">P&L</th><th class="cs4">Win%</th>
         <th></th>
       </tr>
     </thead>
@@ -945,12 +975,14 @@ function renderMonthly(trades) {
         const r1 = m1[ym] || { pnl:0, wins:0, n:0 };
         const r2 = m2[ym] || { pnl:0, wins:0, n:0 };
         const r3 = m3[ym] || { pnl:0, wins:0, n:0 };
-        const n  = r1.n || r2.n || r3.n;
+        const r4 = m4[ym] || { pnl:0, wins:0, n:0 };
+        const n  = r1.n || r2.n || r3.n || r4.n;
         return `<tr>
           <td>${ym}</td>
           <td class="${pnlC(r1.pnl)}">${f$(r1.pnl)}</td><td>${n ? fPct(r1.wins/n*100) : '—'}</td>
           <td class="${pnlC(r2.pnl)}">${f$(r2.pnl)}</td><td>${n ? fPct(r2.wins/n*100) : '—'}</td>
           <td class="${pnlC(r3.pnl)}">${f$(r3.pnl)}</td><td>${n ? fPct(r3.wins/n*100) : '—'}</td>
+          <td class="${pnlC(r4.pnl)}">${f$(r4.pnl)}</td><td>${n ? fPct(r4.wins/n*100) : '—'}</td>
           <td>${n}</td>
         </tr>`;
       }).join('')}
@@ -970,6 +1002,7 @@ const LOG_COLS = [
   { key: 's1pnl',      label: 'S1 P&L (Hold)' },
   { key: 's2pnl',      label: 'S2 P&L (Strike)' },
   { key: 's3pnl',      label: 'S3 P&L (BE)' },
+  { key: 's4pnl',      label: 'S4 P&L (Stop)' },
 ];
 
 function renderTradeLog(trades) {
@@ -980,12 +1013,16 @@ function renderTradeLog(trades) {
     if      (st.sortKey === 's1pnl') { av = a.s1.pnl; bv = b.s1.pnl; }
     else if (st.sortKey === 's2pnl') { av = a.s2.pnl; bv = b.s2.pnl; }
     else if (st.sortKey === 's3pnl') { av = a.s3.pnl; bv = b.s3.pnl; }
+    else if (st.sortKey === 's4pnl') { av = a.s4.pnl; bv = b.s4.pnl; }
     else { av = a[st.sortKey]; bv = b[st.sortKey]; }
     return av < bv ? -st.sortDir : av > bv ? st.sortDir : 0;
   });
 
+  const s4Label = `S4 P&L (${st.stopMult.toFixed(1)}x)`;
+  const logColsRendered = LOG_COLS.map(c => c.key === 's4pnl' ? { ...c, label: s4Label } : c);
+
   const tbl = document.getElementById('logTbl');
-  const hdrs = LOG_COLS.map(c => {
+  const hdrs = logColsRendered.map(c => {
     const cls = st.sortKey === c.key ? (st.sortDir === 1 ? 'asc' : 'desc') : '';
     const align = c.left ? 'style="text-align:left"' : '';
     return `<th class="${cls}" ${align} onclick="sortLog('${c.key}')">${c.label}</th>`;
@@ -994,6 +1031,7 @@ function renderTradeLog(trades) {
   const rows = sorted.map(t => {
     const e2 = t.s2.early ? '<span class="badge-e">EARLY</span>' : '<span class="badge-h">HELD</span>';
     const e3 = t.s3.early ? '<span class="badge-e">EARLY</span>' : '<span class="badge-h">HELD</span>';
+    const e4 = t.s4.early ? '<span class="badge-e">STOP</span>'  : '<span class="badge-h">HELD</span>';
     return `<tr>
       <td>${t.date}</td>
       <td>${(+t.spxEntry).toFixed(2)}</td>
@@ -1004,6 +1042,7 @@ function renderTradeLog(trades) {
       <td class="${pnlC(t.s1.pnl)}">${f$(t.s1.pnl)}</td>
       <td class="${pnlC(t.s2.pnl)}">${f$(t.s2.pnl)}${e2}</td>
       <td class="${pnlC(t.s3.pnl)}">${f$(t.s3.pnl)}${e3}</td>
+      <td class="${pnlC(t.s4.pnl)}">${f$(t.s4.pnl)}${e4}</td>
     </tr>`;
   }).join('');
 
@@ -1169,8 +1208,10 @@ function runSim() {
     callWing:  +document.getElementById('callWing').value,
     contracts: +document.getElementById('contracts').value,
     r:         +document.getElementById('riskFree').value / 100,
-    fixedIV:    parseFloat(document.getElementById('fixedIVSlider').value)
+    fixedIV:   parseFloat(document.getElementById('fixedIVSlider').value),
+    stopMult:  parseFloat(document.getElementById('stopMult').value)
   };
+  st.stopMult = params.stopMult;
 
   const vixMap = st.ivMode === 'vix' ? st.vixMap : null;
 
