@@ -1159,7 +1159,7 @@ function runSim() {
   btn.disabled = true;
 
   const pw = document.getElementById('progWrap');
-  pw.style.display = '';
+  pw.style.display = 'block';
   setProgress(10, 'Reading parameters...');
 
   const params = {
@@ -1195,7 +1195,8 @@ function runSim() {
               }
 
               // Show results div FIRST so Chart.js can measure canvas dimensions
-              document.getElementById('results').style.display = '';
+              document.getElementById('results').style.display = 'block';
+              document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
               renderSummary(st.trades);
               renderMonthly(st.trades);
