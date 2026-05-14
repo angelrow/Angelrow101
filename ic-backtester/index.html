@@ -336,7 +336,7 @@ input[type=number]:focus { border-color: var(--accent); }
           <div class="param">
             <div class="param-label">Entry — mins before close</div>
             <div class="slider-row">
-              <input type="range" id="entryMins" min="5" max="120" step="5" value="30" oninput="syncVal('entryMins','entryMinsVal',0)">
+              <input type="range" id="entryMins" min="5" max="240" step="5" value="30" oninput="syncVal('entryMins','entryMinsVal',0)">
               <span class="param-val" id="entryMinsVal">30</span>
             </div>
           </div>
@@ -432,6 +432,12 @@ input[type=number]:focus { border-color: var(--accent); }
         <table class="monthly-tbl" id="monthlyTbl"></table>
       </div>
 
+      <!-- Yearly -->
+      <div class="sec-hdr"><div class="sec-title">Yearly Breakdown</div></div>
+      <div class="monthly-wrap" id="yearlyWrap">
+        <table class="monthly-tbl" id="yearlyTbl"></table>
+      </div>
+
       <!-- Trade log -->
       <div class="sec-hdr">
         <div class="sec-title">Daily Trade Log</div>
@@ -456,6 +462,7 @@ const st = {
   vixMap: {},
   ivMode: 'fixed',
   trades: [],
+  benchmarkPnL: [],
   sortKey: 'date',
   sortDir: 1,
   monthlyOpen: true,
@@ -869,17 +876,50 @@ function renderEquity(trades) {
   if (st.charts.equity) st.charts.equity.destroy();
   const labels = trades.map(t => t.date);
   const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+
+  // Inline plugin: dashed vertical lines at year boundaries
+  const yearLinesPlugin = {
+    id: 'yearLines',
+    afterDraw(chart) {
+      if (trades.length < 2) return;
+      const ctx = chart.ctx;
+      const { chartArea } = chart;
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data.length) return;
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = "9px 'JetBrains Mono',monospace";
+      ctx.textAlign = 'center';
+      for (let i = 1; i < trades.length; i++) {
+        if (trades[i].date.slice(0,4) !== trades[i-1].date.slice(0,4) && meta.data[i]) {
+          const x = meta.data[i].x;
+          ctx.beginPath();
+          ctx.moveTo(x, chartArea.top);
+          ctx.lineTo(x, chartArea.bottom);
+          ctx.stroke();
+          ctx.fillText(trades[i].date.slice(0,4), x, chartArea.top + 10);
+        }
+      }
+      ctx.restore();
+    }
+  };
+
+  const datasets = [
+    { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+    { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+    { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',    borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+    { label: s4Label,             data: cumPnL(trades,'s4'), borderColor: '#b07dff', backgroundColor: 'rgba(176,125,255,.06)', borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+  ];
+  if (st.benchmarkPnL.length === trades.length) {
+    datasets.push({ label: 'SPX Buy & Hold', data: st.benchmarkPnL, borderColor: 'rgba(255,255,255,0.65)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: .15, fill: false });
+  }
+
   const cfg = {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',    borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: s4Label,             data: cumPnL(trades,'s4'), borderColor: '#b07dff', backgroundColor: 'rgba(176,125,255,.06)', borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-      ]
-    },
+    data: { labels, datasets },
     options: {
       ...CHART_OPTS,
       interaction: { mode: 'index', intersect: false },
@@ -894,7 +934,8 @@ function renderEquity(trades) {
         x: CHART_OPTS.scales.x,
         y: { ...CHART_OPTS.scales.y, ticks: { ...CHART_OPTS.scales.y.ticks, callback: v => f$(v, 0) } }
       }
-    }
+    },
+    plugins: [yearLinesPlugin]
   };
   st.charts.equity = new Chart(document.getElementById('equityChart'), cfg);
 }
@@ -986,6 +1027,82 @@ function renderMonthly(trades) {
           <td>${n}</td>
         </tr>`;
       }).join('')}
+    </tbody>`;
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER: YEARLY TABLE
+// ══════════════════════════════════════════════════════
+function calcYearly(trades, key) {
+  const map = {};
+  for (const t of trades) {
+    const yr = t.date.slice(0, 4);
+    if (!map[yr]) map[yr] = { pnl: 0, wins: 0, n: 0 };
+    map[yr].pnl += t[key].pnl;
+    map[yr].n++;
+    if (t[key].pnl > 0) map[yr].wins++;
+  }
+  return map;
+}
+
+function renderYearly(trades) {
+  const y1 = calcYearly(trades, 's1');
+  const y2 = calcYearly(trades, 's2');
+  const y3 = calcYearly(trades, 's3');
+  const y4 = calcYearly(trades, 's4');
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+  const years = [...new Set([...Object.keys(y1), ...Object.keys(y2), ...Object.keys(y3), ...Object.keys(y4)])].sort();
+
+  const tot = { s1:{pnl:0,wins:0,n:0}, s2:{pnl:0,wins:0,n:0}, s3:{pnl:0,wins:0,n:0}, s4:{pnl:0,wins:0,n:0} };
+  for (const yr of years) {
+    for (const [k, map] of [['s1',y1],['s2',y2],['s3',y3],['s4',y4]]) {
+      const r = map[yr] || {pnl:0,wins:0,n:0};
+      tot[k].pnl += r.pnl; tot[k].wins += r.wins; tot[k].n += r.n;
+    }
+  }
+
+  const tbl = document.getElementById('yearlyTbl');
+  tbl.innerHTML = `
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th colspan="2" class="cs1">Hold to Expiry</th>
+        <th colspan="2" class="cs2">Close on Strike</th>
+        <th colspan="2" class="cs3">Close on Breakeven</th>
+        <th colspan="2" class="cs4">${s4Label}</th>
+        <th>Trades</th>
+      </tr>
+      <tr>
+        <th></th>
+        <th class="cs1">P&L</th><th class="cs1">Win%</th>
+        <th class="cs2">P&L</th><th class="cs2">Win%</th>
+        <th class="cs3">P&L</th><th class="cs3">Win%</th>
+        <th class="cs4">P&L</th><th class="cs4">Win%</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${years.map(yr => {
+        const r1 = y1[yr]||{pnl:0,wins:0,n:0}, r2 = y2[yr]||{pnl:0,wins:0,n:0};
+        const r3 = y3[yr]||{pnl:0,wins:0,n:0}, r4 = y4[yr]||{pnl:0,wins:0,n:0};
+        const n = r1.n || r2.n || r3.n || r4.n;
+        return `<tr>
+          <td>${yr}</td>
+          <td class="${pnlC(r1.pnl)}">${f$(r1.pnl)}</td><td>${n ? fPct(r1.wins/n*100) : '—'}</td>
+          <td class="${pnlC(r2.pnl)}">${f$(r2.pnl)}</td><td>${n ? fPct(r2.wins/n*100) : '—'}</td>
+          <td class="${pnlC(r3.pnl)}">${f$(r3.pnl)}</td><td>${n ? fPct(r3.wins/n*100) : '—'}</td>
+          <td class="${pnlC(r4.pnl)}">${f$(r4.pnl)}</td><td>${n ? fPct(r4.wins/n*100) : '—'}</td>
+          <td>${n}</td>
+        </tr>`;
+      }).join('')}
+      <tr style="border-top:1px solid var(--border-h)">
+        <td style="color:var(--text);font-weight:600">Total</td>
+        <td class="${pnlC(tot.s1.pnl)}" style="font-weight:600">${f$(tot.s1.pnl)}</td><td>${tot.s1.n ? fPct(tot.s1.wins/tot.s1.n*100) : '—'}</td>
+        <td class="${pnlC(tot.s2.pnl)}" style="font-weight:600">${f$(tot.s2.pnl)}</td><td>${tot.s2.n ? fPct(tot.s2.wins/tot.s2.n*100) : '—'}</td>
+        <td class="${pnlC(tot.s3.pnl)}" style="font-weight:600">${f$(tot.s3.pnl)}</td><td>${tot.s3.n ? fPct(tot.s3.wins/tot.s3.n*100) : '—'}</td>
+        <td class="${pnlC(tot.s4.pnl)}" style="font-weight:600">${f$(tot.s4.pnl)}</td><td>${tot.s4.n ? fPct(tot.s4.wins/tot.s4.n*100) : '—'}</td>
+        <td style="font-weight:600">${tot.s1.n}</td>
+      </tr>
     </tbody>`;
 }
 
@@ -1223,6 +1340,14 @@ function runSim() {
       setTimeout(() => {
         try {
           st.trades = simulate(st.bars, vixMap, params);
+
+          // Buy & hold benchmark: account size = contracts × max-wing × 100
+          const startPrice = st.bars[0].close;
+          const accountSize = params.contracts * Math.max(params.putWing, params.callWing) * 100;
+          st.benchmarkPnL = st.trades.map(t =>
+            +((t.settlement - startPrice) / startPrice * accountSize).toFixed(2)
+          );
+
           setProgress(75, 'Pricing options and computing metrics...');
 
           setTimeout(() => {
@@ -1241,6 +1366,7 @@ function runSim() {
 
               renderSummary(st.trades);
               renderMonthly(st.trades);
+              renderYearly(st.trades);
               renderTradeLog(st.trades);
 
               // Charts rendered after div is visible; isolate so a CDN failure
