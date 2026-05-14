@@ -1194,13 +1194,18 @@ function runSim() {
                 return;
               }
 
+              // Show results div FIRST so Chart.js can measure canvas dimensions
+              document.getElementById('results').style.display = '';
+
               renderSummary(st.trades);
-              renderEquity(st.trades);
-              renderHist(st.trades);
               renderMonthly(st.trades);
               renderTradeLog(st.trades);
 
-              document.getElementById('results').style.display = '';
+              // Charts rendered after div is visible; isolate so a CDN failure
+              // doesn't hide the tables
+              try { renderEquity(st.trades); } catch(ce) { console.error('Equity chart error:', ce); }
+              try { renderHist(st.trades);   } catch(ce) { console.error('Hist chart error:', ce); }
+
               setProgress(100, 'Done — ' + st.trades.length + ' trades simulated.');
               setTimeout(() => { pw.style.display = 'none'; btn.disabled = false; }, 600);
 
@@ -1338,7 +1343,12 @@ setupDrop('spxZone', 'spxInput', loadSPXFiles);
 setupDrop('vixZone', 'vixInput', loadVIXFiles);
 
 // Try manifest auto-load first; manual upload still works as an override
-autoLoadFromManifest();
+autoLoadFromManifest().catch(e => {
+  console.error('IC autoload fatal:', e);
+  const btn = document.getElementById('runBtn');
+  btn.disabled = false;
+  btn.innerHTML = '&#9654; &nbsp;Run Simulation';
+});
 </script>
 </body>
 </html>
