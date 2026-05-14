@@ -383,6 +383,12 @@ input[type=number]:focus { border-color: var(--accent); }
       <div class="prog-text" id="progText">Initialising...</div>
     </div>
 
+    <!-- ERROR BANNER -->
+    <div id="simError" style="display:none;background:var(--red-d);border:1px solid rgba(255,77,106,.3);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-family:var(--mono);font-size:12px;color:var(--red);line-height:1.6;">
+      <strong style="font-size:13px;">&#9888; Error</strong><br>
+      <span id="simErrorMsg"></span>
+    </div>
+
     <!-- ══════════════════════════════════════
          RESULTS
     ══════════════════════════════════════ -->
@@ -1051,6 +1057,17 @@ function setProgress(pct, text) {
   document.getElementById('progText').textContent = text;
 }
 
+function showError(msg) {
+  document.getElementById('simErrorMsg').textContent = msg;
+  const el = document.getElementById('simError');
+  el.style.display = '';
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideError() {
+  document.getElementById('simError').style.display = 'none';
+}
+
 // ══════════════════════════════════════════════════════
 // FILE LOADING
 // ══════════════════════════════════════════════════════
@@ -1131,8 +1148,10 @@ function setupDrop(zoneId, inputId, handler) {
 // RUN SIMULATION
 // ══════════════════════════════════════════════════════
 function runSim() {
+  hideError();
+
   if (!st.bars.length) {
-    alert('Please load SPX 1-minute data first.');
+    showError('No SPX data loaded. The page auto-loads from the Data/ folder — wait a moment for loading to finish, or use the manual upload above.');
     return;
   }
 
@@ -1170,7 +1189,8 @@ function runSim() {
               if (!st.trades.length) {
                 pw.style.display = 'none';
                 btn.disabled = false;
-                alert('No tradeable days found.\n\nCheck that your entry time (' + params.entryMins + ' mins before close = ' + Math.floor((960 - params.entryMins)/60) + ':' + String((960 - params.entryMins) % 60).padStart(2,'0') + ') falls within your data range.');
+                const entryTime = Math.floor((960 - params.entryMins)/60) + ':' + String((960 - params.entryMins) % 60).padStart(2,'0');
+                showError('No tradeable days found. Entry is set to ' + params.entryMins + ' mins before close (' + entryTime + ' ET) — check this falls within your data range, and that the data was parsed correctly (check SPX status pills above).');
                 return;
               }
 
@@ -1187,7 +1207,7 @@ function runSim() {
             } catch (e) {
               pw.style.display = 'none';
               btn.disabled = false;
-              alert('Render error: ' + e.message + '\n\nCheck browser console for details.');
+              showError('Render error: ' + e.message + ' — check browser console (F12) for full stack trace.');
               console.error('IC render error:', e);
             }
           }, 50);
@@ -1195,7 +1215,7 @@ function runSim() {
         } catch (e) {
           pw.style.display = 'none';
           btn.disabled = false;
-          alert('Simulation error: ' + e.message + '\n\nCheck browser console for details.');
+          showError('Simulation error: ' + e.message + ' — check browser console (F12) for full stack trace.');
           console.error('IC simulate error:', e);
         }
       }, 50);
@@ -1203,7 +1223,7 @@ function runSim() {
     } catch (e) {
       pw.style.display = 'none';
       btn.disabled = false;
-      alert('Error: ' + e.message);
+      showError('Error: ' + e.message);
       console.error('IC runSim error:', e);
     }
   }, 50);
@@ -1223,6 +1243,11 @@ function mergeNewBars(newBars) {
 async function autoLoadFromManifest() {
   const statusWrap = document.getElementById('autoLoadStatus');
   const pill       = document.getElementById('autoLoadPill');
+  const runBtn     = document.getElementById('runBtn');
+
+  // Disable run button while loading so user can't click before data is ready
+  runBtn.disabled = true;
+  runBtn.textContent = 'Loading data…';
 
   // Show scanning state
   statusWrap.style.display = '';
@@ -1236,15 +1261,18 @@ async function autoLoadFromManifest() {
     manifest = await resp.json();
   } catch {
     statusWrap.style.display = 'none'; // silent — fall back to manual upload
+    runBtn.disabled = false;
+    runBtn.innerHTML = '&#9654; &nbsp;Run Simulation';
     return;
   }
 
   const spxFiles = Array.isArray(manifest.spx) ? manifest.spx : [];
-  // vix can be a single string or an array
   const vixFiles = Array.isArray(manifest.vix) ? manifest.vix : (manifest.vix ? [manifest.vix] : []);
 
   if (!spxFiles.length && !vixFiles.length) {
     statusWrap.style.display = 'none';
+    runBtn.disabled = false;
+    runBtn.innerHTML = '&#9654; &nbsp;Run Simulation';
     return;
   }
 
@@ -1290,6 +1318,16 @@ async function autoLoadFromManifest() {
     } catch (e) {
       console.error('IC VIX auto-load error:', e);
     }
+  }
+
+  // Re-enable button and signal readiness
+  const dayCount = [...new Set(st.bars.map(b => b.date))].length;
+  if (dayCount > 0) {
+    runBtn.disabled = false;
+    runBtn.innerHTML = '&#9654; &nbsp;Run Simulation &nbsp;<span style="font-size:10px;opacity:.7;font-weight:400">(' + dayCount + ' days ready)</span>';
+  } else {
+    runBtn.disabled = false;
+    runBtn.innerHTML = '&#9654; &nbsp;Run Simulation';
   }
 }
 
