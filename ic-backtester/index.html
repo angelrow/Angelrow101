@@ -23,6 +23,8 @@
   --amber: #ffb020;
   --blue: #4d9fff;
   --blue-d: rgba(77,159,255,0.10);
+  --purple: #b07dff;
+  --purple-d: rgba(176,125,255,0.10);
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Outfit', sans-serif;
 }
@@ -187,6 +189,7 @@ input[type=number]:focus { border-color: var(--accent); }
 .cs1 { color: var(--blue) !important; }
 .cs2 { color: var(--amber) !important; }
 .cs3 { color: var(--accent) !important; }
+.cs4 { color: var(--purple) !important; }
 .pos { color: var(--accent) !important; }
 .neg { color: var(--red) !important; }
 
@@ -272,9 +275,9 @@ input[type=number]:focus { border-color: var(--accent); }
       <div class="page-sub">Mechanical 0DTE SPX iron condor — synthetic options pricing via Black-Scholes on 1-minute Barchart data</div>
     </div>
 
-    <!-- ══════════════════════
+    <!-- ══════════════════════════════════════
          TOP GRID: DATA | PARAMETERS
-    ══════════════════════ -->
+    ══════════════════════════════════════ -->
     <div class="top-grid">
 
       <!-- DATA PANEL -->
@@ -372,6 +375,14 @@ input[type=number]:focus { border-color: var(--accent); }
             <input type="number" id="riskFree" value="5.0" min="0" max="20" step="0.25">
           </div>
 
+          <div class="param" style="grid-column:span 2">
+            <div class="param-label">Stop multiplier &nbsp;<span style="color:var(--text-m);font-size:9px;font-family:var(--mono)">(close if IC cost &gt; credit × N)</span></div>
+            <div class="slider-row">
+              <input type="range" id="stopMult" min="1.0" max="5.0" step="0.5" value="2.0" oninput="syncVal('stopMult','stopMultVal',1)">
+              <span class="param-val" id="stopMultVal">2.0</span>
+            </div>
+          </div>
+
         </div>
         <button class="run-btn" id="runBtn" onclick="runSim()">▶ &nbsp;Run Simulation</button>
       </div>
@@ -389,9 +400,9 @@ input[type=number]:focus { border-color: var(--accent); }
       <span id="simErrorMsg"></span>
     </div>
 
-    <!-- ══════════════════════
+    <!-- ══════════════════════════════════════
          RESULTS
-    ══════════════════════ -->
+    ══════════════════════════════════════ -->
     <div class="results" id="results">
 
       <!-- Summary -->
@@ -415,7 +426,7 @@ input[type=number]:focus { border-color: var(--accent); }
       <!-- Monthly -->
       <div class="sec-hdr">
         <div class="sec-title">Monthly Breakdown</div>
-        <button class="tog-btn" id="monthlyTogBtn" onclick="toggleMonthly()">&#9660; Collapse</button>
+        <button class="tog-btn" id="monthlyTogBtn" onclick="toggleMonthly()">▼ Collapse</button>
       </div>
       <div class="monthly-wrap" id="monthlyWrap">
         <table class="monthly-tbl" id="monthlyTbl"></table>
@@ -448,6 +459,7 @@ const st = {
   sortKey: 'date',
   sortDir: 1,
   monthlyOpen: true,
+  stopMult: 2.0,
   charts: { equity: null, hist: null }
 };
 
@@ -472,9 +484,12 @@ function bsCall(S, K, T, r, sig) {
 }
 
 function bsPut(S, K, T, r, sig) {
+  // Put-call parity
   return bsCall(S, K, T, r, sig) - S + K * Math.exp(-r * T);
 }
 
+// Full IC mark: cost to buy back what we sold
+// lp < sp < S ≈ sc < lc
 function icMark(S, sc, lc, sp, lp, T, r, sig) {
   const callSprd = Math.max(0, bsCall(S,sc,T,r,sig) - bsCall(S,lc,T,r,sig));
   const putSprd  = Math.max(0, bsPut(S,sp,T,r,sig)  - bsPut(S,lp,T,r,sig));
@@ -501,11 +516,13 @@ function parseSPXCSV(text) {
   const lines = text.replace(/\r/g, '').split('\n');
   if (lines.length < 2) return [];
 
+  // Map headers robustly
   const hdr = parseRow(lines[0]).map(h => h.trim().toLowerCase().replace(/[^a-z]/g, ''));
   const ti = hdr.findIndex(h => h === 'time');
   const oi = hdr.findIndex(h => h === 'open');
   const hi = hdr.findIndex(h => h === 'high');
   const li = hdr.findIndex(h => h === 'low');
+  // Barchart uses "Latest" for close; also handle "Close"
   const ci = hdr.findIndex(h => h === 'latest' || h === 'close');
 
   if (ti < 0 || ci < 0) { console.warn('CSV: missing Time or price column', hdr); return []; }
@@ -514,12 +531,13 @@ function parseSPXCSV(text) {
   for (let i = 1; i < lines.length; i++) {
     const raw = lines[i].trim();
     if (!raw) continue;
+    // Skip Barchart footer
     if (raw.startsWith('Downloaded') || raw.startsWith('"Downloaded')) continue;
 
     const f = parseRow(raw);
     if (f.length < ci + 1) continue;
 
-    const timeRaw = f[ti].trim();
+    const timeRaw = f[ti].trim(); // "YYYY-MM-DD HH:MM"
     const sp = timeRaw.lastIndexOf(' ');
     if (sp < 0) continue;
     const datePart = timeRaw.slice(0, sp);
@@ -529,6 +547,7 @@ function parseSPXCSV(text) {
     if (isNaN(hh) || isNaN(mm)) continue;
 
     const minsFromMid = hh * 60 + mm;
+    // Filter to regular market hours 9:30 – 16:00
     if (minsFromMid < 570 || minsFromMid > 960) continue;
 
     const close = parseFloat(f[ci]);
@@ -549,12 +568,14 @@ function parseSPXCSV(text) {
     });
   }
 
+  // Sort chronologically (Barchart exports newest-first)
   return bars.sort((a, b) =>
     a.date !== b.date ? a.date.localeCompare(b.date) : a.minsFromMid - b.minsFromMid
   );
 }
 
 function parseVIXCSV(text) {
+  // Daily VIX CSV (Date column + Close/Latest column)
   const lines = text.replace(/\r/g, '').split('\n');
   const map = {};
   if (lines.length < 2) return map;
@@ -574,6 +595,7 @@ function parseVIXCSV(text) {
     if (isNaN(val) || val <= 0) continue;
 
     let dateRaw = f[di].trim();
+    // Normalise MM/DD/YYYY → YYYY-MM-DD
     const m = dateRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (m) dateRaw = `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
     map[dateRaw] = val;
@@ -582,10 +604,13 @@ function parseVIXCSV(text) {
 }
 
 function parseVIXIntraday(text) {
+  // 1-min Barchart VIX data — same format as SPX intraday.
+  // Take the last bar (closest to 16:00) per day as the daily VIX close.
   const bars = parseSPXCSV(text);
   if (!bars.length) return {};
   const dayMap = {};
   for (const b of bars) {
+    // Keep the bar with the highest minsFromMid (latest in the day)
     if (!dayMap[b.date] || b.minsFromMid >= dayMap[b.date].minsFromMid) {
       dayMap[b.date] = b;
     }
@@ -598,21 +623,23 @@ function parseVIXIntraday(text) {
 }
 
 function mergeVIXMaps(...maps) {
+  // Later maps overwrite earlier ones for the same date
   return Object.assign({}, ...maps);
 }
 
 // ══════════════════════════════════════════════════════
 // SIMULATION ENGINE
 // ══════════════════════════════════════════════════════
-const CLOSE_MINS = 960;
-const YEAR_MINS  = 365 * 24 * 60;
+const CLOSE_MINS = 960;           // 16:00 in minutes from midnight
+const YEAR_MINS  = 365 * 24 * 60; // minutes per year
 const r5 = x => Math.round(x / 5) * 5;
 const minsToT = m => m / YEAR_MINS;
 
 function simulate(bars, vixMap, params) {
-  const { entryMins, offset, putWing, callWing, contracts, r, fixedIV } = params;
+  const { entryMins, offset, putWing, callWing, contracts, r, fixedIV, stopMult } = params;
   const entryTarget = CLOSE_MINS - entryMins;
 
+  // Group bars by date (already sorted within each day from parseSPXCSV)
   const days = {};
   for (const b of bars) {
     if (!days[b.date]) days[b.date] = [];
@@ -622,8 +649,9 @@ function simulate(bars, vixMap, params) {
   const trades = [];
 
   for (const date of Object.keys(days).sort()) {
-    const dayBars = days[date];
+    const dayBars = days[date]; // ascending time
 
+    // Find entry bar: latest bar at or within 2 mins of entryTarget
     let entryBar = null;
     for (const b of dayBars) {
       if (b.minsFromMid <= entryTarget) entryBar = b;
@@ -637,23 +665,31 @@ function simulate(bars, vixMap, params) {
     const sigma = (vixMap && vixMap[date] != null) ? vixMap[date] / 100 : fixedIV;
     if (sigma <= 0) continue;
 
+    // Strikes (nearest 5-point increment)
     const sc = r5(Sentry + offset);
     const lc = sc + callWing;
     const sp = r5(Sentry - offset);
     const lp = sp - putWing;
 
+    // IC credit at entry
     const T_entry = minsToT(entryMins);
     const credit = icMark(Sentry, sc, lc, sp, lp, T_entry, r, sigma);
-    if (credit < 0.005) continue;
+    if (credit < 0.005) continue; // skip days with negligible credit
 
+    // Breakevens for strategy 3
     const upperBE = sc + credit;
     const lowerBE = sp - credit;
 
+    // Forward bars (bars after entry)
     const entryIdx = dayBars.indexOf(entryBar);
     const fwdBars  = dayBars.slice(entryIdx + 1);
 
+    // Strategy 2: close on short-strike touch
+    // Strategy 3: close on breakeven breach
+    // Strategy 4: close when IC mark exceeds credit × stopMult
     let s2 = { pnl: null, time: null, early: false };
     let s3 = { pnl: null, time: null, early: false };
+    let s4 = { pnl: null, time: null, early: false };
 
     for (const bar of fwdBars) {
       const minsLeft = Math.max(0, CLOSE_MINS - bar.minsFromMid);
@@ -661,25 +697,33 @@ function simulate(bars, vixMap, params) {
       const mark = icMark(bar.close, sc, lc, sp, lp, T, r, sigma);
       const pnl  = (credit - mark) * 100 * contracts;
 
+      // Use intrabar high/low to detect if strike was touched
       if (!s2.early && (bar.high >= sc || bar.low <= sp)) {
         s2 = { pnl, time: bar.time, early: true };
       }
       if (!s3.early && (bar.high >= upperBE || bar.low <= lowerBE)) {
         s3 = { pnl, time: bar.time, early: true };
       }
+      if (!s4.early && mark > credit * stopMult) {
+        s4 = { pnl, time: bar.time, early: true };
+      }
     }
 
+    // Settlement: last bar of the day (closest to 16:00)
     const settlBar = fwdBars.length > 0 ? fwdBars[fwdBars.length - 1] : entryBar;
     const settlMinsLeft = Math.max(0, CLOSE_MINS - settlBar.minsFromMid);
     const settlMark = icMark(settlBar.close, sc, lc, sp, lp, minsToT(settlMinsLeft), r, sigma);
     const expiryPnL = (credit - settlMark) * 100 * contracts;
 
+    // Strategy 1: always hold to expiry
     const s1 = { pnl: expiryPnL, time: settlBar.time, early: false };
 
+    // Strategies 2, 3 & 4: if never triggered, use expiry result
     if (!s2.early) s2 = { pnl: expiryPnL, time: settlBar.time, early: false };
     if (!s3.early) s3 = { pnl: expiryPnL, time: settlBar.time, early: false };
+    if (!s4.early) s4 = { pnl: expiryPnL, time: settlBar.time, early: false };
 
-    trades.push({ date, spxEntry: Sentry, sc, lc, sp, lp, credit, sigma, settlement: settlBar.close, s1, s2, s3 });
+    trades.push({ date, spxEntry: Sentry, sc, lc, sp, lp, credit, sigma, settlement: settlBar.close, s1, s2, s3, s4 });
   }
 
   return trades;
@@ -753,6 +797,8 @@ function renderSummary(trades) {
   const m1 = calcMetrics(trades, 's1');
   const m2 = calcMetrics(trades, 's2');
   const m3 = calcMetrics(trades, 's3');
+  const m4 = calcMetrics(trades, 's4');
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
 
   const rows = [
     ['Total Trades',      m => m.n,       v => v],
@@ -775,6 +821,7 @@ function renderSummary(trades) {
       <th class="cs1">Hold to Expiry</th>
       <th class="cs2">Close on Strike</th>
       <th class="cs3">Close on Breakeven</th>
+      <th class="cs4">${s4Label}</th>
     </tr></thead>
     <tbody>
       ${rows.map(([label, getter, fmt]) => `
@@ -783,6 +830,7 @@ function renderSummary(trades) {
           <td>${fmt(getter(m1))}</td>
           <td>${fmt(getter(m2))}</td>
           <td>${fmt(getter(m3))}</td>
+          <td>${fmt(getter(m4))}</td>
         </tr>`).join('')}
     </tbody>`;
 }
@@ -820,14 +868,16 @@ const CHART_OPTS = {
 function renderEquity(trades) {
   if (st.charts.equity) st.charts.equity.destroy();
   const labels = trades.map(t => t.date);
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
   const cfg = {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',  borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',  borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
-        { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Hold to Expiry',    data: cumPnL(trades,'s1'), borderColor: '#4d9fff', backgroundColor: 'rgba(77,159,255,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Close on Strike',   data: cumPnL(trades,'s2'), borderColor: '#ffb020', backgroundColor: 'rgba(255,176,32,.06)',   borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: 'Close on Breakeven',data: cumPnL(trades,'s3'), borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.06)',    borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
+        { label: s4Label,             data: cumPnL(trades,'s4'), borderColor: '#b07dff', backgroundColor: 'rgba(176,125,255,.06)', borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
       ]
     },
     options: {
@@ -852,7 +902,8 @@ function renderEquity(trades) {
 function renderHist(trades) {
   if (st.charts.hist) st.charts.hist.destroy();
 
-  const allP = [...trades.map(t => t.s1.pnl), ...trades.map(t => t.s2.pnl), ...trades.map(t => t.s3.pnl)];
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+  const allP = [...trades.map(t => t.s1.pnl), ...trades.map(t => t.s2.pnl), ...trades.map(t => t.s3.pnl), ...trades.map(t => t.s4.pnl)];
   const minP = Math.min(...allP), maxP = Math.max(...allP);
   const N = 20;
   const bw = Math.max((maxP - minP) / N, 1);
@@ -873,9 +924,10 @@ function renderHist(trades) {
     data: {
       labels: binLbls,
       datasets: [
-        { label: 'Hold to Expiry',    data: binData('s1'), backgroundColor: 'rgba(77,159,255,.45)',  borderColor: '#4d9fff', borderWidth: 1 },
-        { label: 'Close on Strike',   data: binData('s2'), backgroundColor: 'rgba(255,176,32,.45)',  borderColor: '#ffb020', borderWidth: 1 },
-        { label: 'Close on Breakeven',data: binData('s3'), backgroundColor: 'rgba(0,212,170,.45)',   borderColor: '#00d4aa', borderWidth: 1 },
+        { label: 'Hold to Expiry',    data: binData('s1'), backgroundColor: 'rgba(77,159,255,.45)',   borderColor: '#4d9fff', borderWidth: 1 },
+        { label: 'Close on Strike',   data: binData('s2'), backgroundColor: 'rgba(255,176,32,.45)',   borderColor: '#ffb020', borderWidth: 1 },
+        { label: 'Close on Breakeven',data: binData('s3'), backgroundColor: 'rgba(0,212,170,.45)',    borderColor: '#00d4aa', borderWidth: 1 },
+        { label: s4Label,             data: binData('s4'), backgroundColor: 'rgba(176,125,255,.45)', borderColor: '#b07dff', borderWidth: 1 },
       ]
     },
     options: {
@@ -894,7 +946,9 @@ function renderMonthly(trades) {
   const m1 = calcMonthly(trades, 's1');
   const m2 = calcMonthly(trades, 's2');
   const m3 = calcMonthly(trades, 's3');
-  const months = [...new Set([...Object.keys(m1), ...Object.keys(m2), ...Object.keys(m3)])].sort();
+  const m4 = calcMonthly(trades, 's4');
+  const s4Label = `Stop at ${st.stopMult.toFixed(1)}x`;
+  const months = [...new Set([...Object.keys(m1), ...Object.keys(m2), ...Object.keys(m3), ...Object.keys(m4)])].sort();
 
   const tbl = document.getElementById('monthlyTbl');
   tbl.innerHTML = `
@@ -904,6 +958,7 @@ function renderMonthly(trades) {
         <th colspan="2" class="cs1">Hold to Expiry</th>
         <th colspan="2" class="cs2">Close on Strike</th>
         <th colspan="2" class="cs3">Close on Breakeven</th>
+        <th colspan="2" class="cs4">${s4Label}</th>
         <th>Trades</th>
       </tr>
       <tr>
@@ -911,6 +966,7 @@ function renderMonthly(trades) {
         <th class="cs1">P&L</th><th class="cs1">Win%</th>
         <th class="cs2">P&L</th><th class="cs2">Win%</th>
         <th class="cs3">P&L</th><th class="cs3">Win%</th>
+        <th class="cs4">P&L</th><th class="cs4">Win%</th>
         <th></th>
       </tr>
     </thead>
@@ -919,12 +975,14 @@ function renderMonthly(trades) {
         const r1 = m1[ym] || { pnl:0, wins:0, n:0 };
         const r2 = m2[ym] || { pnl:0, wins:0, n:0 };
         const r3 = m3[ym] || { pnl:0, wins:0, n:0 };
-        const n  = r1.n || r2.n || r3.n;
+        const r4 = m4[ym] || { pnl:0, wins:0, n:0 };
+        const n  = r1.n || r2.n || r3.n || r4.n;
         return `<tr>
           <td>${ym}</td>
           <td class="${pnlC(r1.pnl)}">${f$(r1.pnl)}</td><td>${n ? fPct(r1.wins/n*100) : '—'}</td>
           <td class="${pnlC(r2.pnl)}">${f$(r2.pnl)}</td><td>${n ? fPct(r2.wins/n*100) : '—'}</td>
           <td class="${pnlC(r3.pnl)}">${f$(r3.pnl)}</td><td>${n ? fPct(r3.wins/n*100) : '—'}</td>
+          <td class="${pnlC(r4.pnl)}">${f$(r4.pnl)}</td><td>${n ? fPct(r4.wins/n*100) : '—'}</td>
           <td>${n}</td>
         </tr>`;
       }).join('')}
@@ -944,6 +1002,7 @@ const LOG_COLS = [
   { key: 's1pnl',      label: 'S1 P&L (Hold)' },
   { key: 's2pnl',      label: 'S2 P&L (Strike)' },
   { key: 's3pnl',      label: 'S3 P&L (BE)' },
+  { key: 's4pnl',      label: 'S4 P&L (Stop)' },
 ];
 
 function renderTradeLog(trades) {
@@ -954,12 +1013,16 @@ function renderTradeLog(trades) {
     if      (st.sortKey === 's1pnl') { av = a.s1.pnl; bv = b.s1.pnl; }
     else if (st.sortKey === 's2pnl') { av = a.s2.pnl; bv = b.s2.pnl; }
     else if (st.sortKey === 's3pnl') { av = a.s3.pnl; bv = b.s3.pnl; }
+    else if (st.sortKey === 's4pnl') { av = a.s4.pnl; bv = b.s4.pnl; }
     else { av = a[st.sortKey]; bv = b[st.sortKey]; }
     return av < bv ? -st.sortDir : av > bv ? st.sortDir : 0;
   });
 
+  const s4Label = `S4 P&L (${st.stopMult.toFixed(1)}x)`;
+  const logColsRendered = LOG_COLS.map(c => c.key === 's4pnl' ? { ...c, label: s4Label } : c);
+
   const tbl = document.getElementById('logTbl');
-  const hdrs = LOG_COLS.map(c => {
+  const hdrs = logColsRendered.map(c => {
     const cls = st.sortKey === c.key ? (st.sortDir === 1 ? 'asc' : 'desc') : '';
     const align = c.left ? 'style="text-align:left"' : '';
     return `<th class="${cls}" ${align} onclick="sortLog('${c.key}')">${c.label}</th>`;
@@ -968,6 +1031,7 @@ function renderTradeLog(trades) {
   const rows = sorted.map(t => {
     const e2 = t.s2.early ? '<span class="badge-e">EARLY</span>' : '<span class="badge-h">HELD</span>';
     const e3 = t.s3.early ? '<span class="badge-e">EARLY</span>' : '<span class="badge-h">HELD</span>';
+    const e4 = t.s4.early ? '<span class="badge-e">STOP</span>'  : '<span class="badge-h">HELD</span>';
     return `<tr>
       <td>${t.date}</td>
       <td>${(+t.spxEntry).toFixed(2)}</td>
@@ -978,6 +1042,7 @@ function renderTradeLog(trades) {
       <td class="${pnlC(t.s1.pnl)}">${f$(t.s1.pnl)}</td>
       <td class="${pnlC(t.s2.pnl)}">${f$(t.s2.pnl)}${e2}</td>
       <td class="${pnlC(t.s3.pnl)}">${f$(t.s3.pnl)}${e3}</td>
+      <td class="${pnlC(t.s4.pnl)}">${f$(t.s4.pnl)}${e4}</td>
     </tr>`;
   }).join('');
 
@@ -1034,7 +1099,7 @@ function setProgress(pct, text) {
 function showError(msg) {
   document.getElementById('simErrorMsg').textContent = msg;
   const el = document.getElementById('simError');
-  el.style.display = 'block';
+  el.style.display = '';
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -1057,6 +1122,7 @@ function loadSPXFiles(files) {
       results.push(...parseSPXCSV(e.target.result));
       loaded++;
       if (loaded === pending.length) {
+        // Merge: dedupe by date+time
         const existing = new Map(st.bars.map(b => [b.date + 'T' + b.time, b]));
         for (const b of results) existing.set(b.date + 'T' + b.time, b);
         st.bars = [...existing.values()].sort((a, b) =>
@@ -1070,6 +1136,7 @@ function loadSPXFiles(files) {
 }
 
 function isIntradayText(text) {
+  // Intraday Barchart files have "HH:MM" in the second line (time component)
   const second = text.split('\n')[1] || '';
   return /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(second);
 }
@@ -1100,6 +1167,7 @@ function loadVIXFiles(files) {
   });
 }
 
+// Drag-and-drop setup
 function setupDrop(zoneId, inputId, handler) {
   const zone  = document.getElementById(zoneId);
   const input = document.getElementById(inputId);
@@ -1140,8 +1208,10 @@ function runSim() {
     callWing:  +document.getElementById('callWing').value,
     contracts: +document.getElementById('contracts').value,
     r:         +document.getElementById('riskFree').value / 100,
-    fixedIV:    parseFloat(document.getElementById('fixedIVSlider').value)
+    fixedIV:   parseFloat(document.getElementById('fixedIVSlider').value),
+    stopMult:  parseFloat(document.getElementById('stopMult').value)
   };
+  st.stopMult = params.stopMult;
 
   const vixMap = st.ivMode === 'vix' ? st.vixMap : null;
 
@@ -1173,7 +1243,8 @@ function runSim() {
               renderMonthly(st.trades);
               renderTradeLog(st.trades);
 
-              // Charts isolated so a CDN failure doesn't hide the tables
+              // Charts rendered after div is visible; isolate so a CDN failure
+              // doesn't hide the tables
               try { renderEquity(st.trades); } catch(ce) { console.error('Equity chart error:', ce); }
               try { renderHist(st.trades);   } catch(ce) { console.error('Hist chart error:', ce); }
 
@@ -1221,9 +1292,11 @@ async function autoLoadFromManifest() {
   const pill       = document.getElementById('autoLoadPill');
   const runBtn     = document.getElementById('runBtn');
 
+  // Disable run button while loading so user can't click before data is ready
   runBtn.disabled = true;
   runBtn.textContent = 'Loading data…';
 
+  // Show scanning state
   statusWrap.style.display = '';
   pill.textContent = 'Scanning data folder...';
   pill.className = 'pill';
@@ -1234,7 +1307,7 @@ async function autoLoadFromManifest() {
     if (!resp.ok) throw new Error('no manifest');
     manifest = await resp.json();
   } catch {
-    statusWrap.style.display = 'none';
+    statusWrap.style.display = 'none'; // silent — fall back to manual upload
     runBtn.disabled = false;
     runBtn.innerHTML = '&#9654; &nbsp;Run Simulation';
     return;
@@ -1250,6 +1323,7 @@ async function autoLoadFromManifest() {
     return;
   }
 
+  // ── Load SPX files ──
   if (spxFiles.length) {
     pill.textContent = `Loading ${spxFiles.length} SPX file${spxFiles.length !== 1 ? 's' : ''}...`;
 
@@ -1271,6 +1345,7 @@ async function autoLoadFromManifest() {
     }
   }
 
+  // ── Load VIX files and switch to VIX mode ──
   if (vixFiles.length) {
     try {
       const vixMaps = await Promise.all(vixFiles.map(async f => {
@@ -1292,6 +1367,7 @@ async function autoLoadFromManifest() {
     }
   }
 
+  // Re-enable button and signal readiness
   const dayCount = [...new Set(st.bars.map(b => b.date))].length;
   if (dayCount > 0) {
     runBtn.disabled = false;
@@ -1308,6 +1384,7 @@ async function autoLoadFromManifest() {
 setupDrop('spxZone', 'spxInput', loadSPXFiles);
 setupDrop('vixZone', 'vixInput', loadVIXFiles);
 
+// Try manifest auto-load first; manual upload still works as an override
 autoLoadFromManifest().catch(e => {
   console.error('IC autoload fatal:', e);
   const btn = document.getElementById('runBtn');
