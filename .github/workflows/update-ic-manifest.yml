@@ -3,8 +3,8 @@ name: IC Backtester — Update Data Manifest
 on:
   push:
     paths:
-      - 'ic-backtester/data/*.csv'
-      - 'ic-backtester/data/*.CSV'
+      - 'ic-backtester/Data/*.csv'
+      - 'ic-backtester/Data/*.CSV'
   workflow_dispatch:
 
 permissions:
@@ -19,41 +19,30 @@ jobs:
 
       - name: Find CSV files and write manifest
         run: |
-          # Find all SPX 1-min files (case-insensitive match via find)
-          SPX_FILES=$(find ic-backtester/data -maxdepth 1 -iname "spx*.csv" | sort | xargs -I{} basename {})
-          VIX_FILE=$(find ic-backtester/data -maxdepth 1 -iname "vix*.csv" | sort | tail -1 | xargs -I{} basename {})
-
-          if [ -z "$SPX_FILES" ]; then
-            echo "No SPX CSV files found in ic-backtester/data/"
-            find ic-backtester/data -maxdepth 1
-          fi
+          # Case-insensitive search for SPX and VIX files
+          SPX_FILES=$(find ic-backtester/Data -maxdepth 1 -iname "spx*.csv" | sort | xargs -I{} basename {})
+          VIX_FILES=$(find ic-backtester/Data -maxdepth 1 -iname "vix*.csv" | sort | xargs -I{} basename {})
 
           echo "SPX files found:"
           echo "$SPX_FILES"
-          echo "VIX file: $VIX_FILE"
+          echo "VIX files found:"
+          echo "$VIX_FILES"
 
-          # Build JSON array of SPX file names
-          SPX_JSON="["
-          FIRST=true
-          while IFS= read -r f; do
-            [ -z "$f" ] && continue
-            if [ "$FIRST" = true ]; then
-              SPX_JSON="${SPX_JSON}\"${f}\""
-              FIRST=false
-            else
-              SPX_JSON="${SPX_JSON},\"${f}\""
-            fi
-          done <<< "$SPX_FILES"
-          SPX_JSON="${SPX_JSON}]"
+          build_json_array() {
+            local arr="["
+            local first=true
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              if [ "$first" = true ]; then arr="${arr}\"${f}\""; first=false;
+              else arr="${arr},\"${f}\""; fi
+            done <<< "$1"
+            echo "${arr}]"
+          }
 
-          # VIX entry (null if not found)
-          if [ -n "$VIX_FILE" ]; then
-            VIX_JSON="\"${VIX_FILE}\""
-          else
-            VIX_JSON="null"
-          fi
+          SPX_JSON=$(build_json_array "$SPX_FILES")
+          VIX_JSON=$(build_json_array "$VIX_FILES")
 
-          cat > ic-backtester/data/manifest.json << EOF
+          cat > ic-backtester/Data/manifest.json << EOF
           {
             "spx": ${SPX_JSON},
             "vix": ${VIX_JSON},
@@ -62,13 +51,13 @@ jobs:
           EOF
 
           echo "Manifest written:"
-          cat ic-backtester/data/manifest.json
+          cat ic-backtester/Data/manifest.json
 
       - name: Commit and push manifest
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add ic-backtester/data/manifest.json
+          git add ic-backtester/Data/manifest.json
           if git diff --cached --quiet; then
             echo "Manifest unchanged — skipping commit"
           else

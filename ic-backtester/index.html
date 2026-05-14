@@ -315,8 +315,8 @@ input[type=number]:focus { border-color: var(--accent); }
 
           <div id="vixWrap" style="display:none">
             <div class="dropzone" id="vixZone" style="padding:12px;">
-              <input type="file" id="vixInput" accept=".csv">
-              <div class="dz-text">VIX daily CSV — <strong>Date</strong> + <strong>Close</strong> columns</div>
+              <input type="file" id="vixInput" accept=".csv" multiple>
+              <div class="dz-text">VIX CSV files — <strong>Barchart 1-min or daily format</strong></div>
             </div>
             <div class="status-row" id="vixStatus">
               <span class="pill">No VIX data</span>
@@ -557,6 +557,7 @@ function parseSPXCSV(text) {
 }
 
 function parseVIXCSV(text) {
+  // Daily VIX CSV (Date column + Close/Latest column)
   const lines = text.replace(/\r/g, '').split('\n');
   const map = {};
   if (lines.length < 2) return map;
@@ -582,6 +583,30 @@ function parseVIXCSV(text) {
     map[dateRaw] = val;
   }
   return map;
+}
+
+function parseVIXIntraday(text) {
+  // 1-min Barchart VIX data — same format as SPX intraday.
+  // Take the last bar (closest to 16:00) per day as the daily VIX close.
+  const bars = parseSPXCSV(text);
+  if (!bars.length) return {};
+  const dayMap = {};
+  for (const b of bars) {
+    // Keep the bar with the highest minsFromMid (latest in the day)
+    if (!dayMap[b.date] || b.minsFromMid >= dayMap[b.date].minsFromMid) {
+      dayMap[b.date] = b;
+    }
+  }
+  const result = {};
+  for (const [date, bar] of Object.entries(dayMap)) {
+    if (bar.close > 0) result[date] = bar.close;
+  }
+  return result;
+}
+
+function mergeVIXMaps(...maps) {
+  // Later maps overwrite earlier ones for the same date
+  return Object.assign({}, ...maps);
 }
 
 // ══════════════════════════════════════════════════════
@@ -1054,18 +1079,36 @@ function loadSPXFiles(files) {
   });
 }
 
-function loadVIXFile(file) {
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    st.vixMap = parseVIXCSV(e.target.result);
-    const n = Object.keys(st.vixMap).length;
-    const el = document.getElementById('vixStatus');
-    el.innerHTML = n > 0
-      ? `<span class="pill ok">${n} VIX dates loaded</span>`
-      : `<span class="pill err">Could not parse — check column headers</span>`;
-  };
-  reader.readAsText(file);
+function isIntradayText(text) {
+  // Intraday Barchart files have "HH:MM" in the second line (time component)
+  const second = text.split('\n')[1] || '';
+  return /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(second);
+}
+
+function loadVIXFiles(files) {
+  if (!files || !files.length) return;
+  const pending = Array.from(files);
+  const maps = [];
+  let done = 0;
+
+  pending.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result;
+      const parsed = isIntradayText(text) ? parseVIXIntraday(text) : parseVIXCSV(text);
+      maps.push(parsed);
+      done++;
+      if (done === pending.length) {
+        st.vixMap = mergeVIXMaps(...maps);
+        const n = Object.keys(st.vixMap).length;
+        const el = document.getElementById('vixStatus');
+        el.innerHTML = n > 0
+          ? `<span class="pill ok">${n} VIX dates loaded (${pending.length} file${pending.length !== 1 ? 's' : ''})</span>`
+          : `<span class="pill err">Could not parse — check file format</span>`;
+      }
+    };
+    reader.readAsText(file);
+  });
 }
 
 // Drag-and-drop setup
@@ -1113,37 +1156,61 @@ function runSim() {
   const vixMap = st.ivMode === 'vix' ? st.vixMap : null;
 
   setTimeout(() => {
-    setProgress(35, `Simulating ${[...new Set(st.bars.map(b => b.date))].length} trading days...`);
-
-    setTimeout(() => {
-      st.trades = simulate(st.bars, vixMap, params);
-      setProgress(75, 'Pricing options and computing metrics...');
+    try {
+      const dayCount = [...new Set(st.bars.map(b => b.date))].length;
+      setProgress(35, `Simulating ${dayCount} trading days...`);
 
       setTimeout(() => {
-        if (!st.trades.length) {
+        try {
+          st.trades = simulate(st.bars, vixMap, params);
+          setProgress(75, 'Pricing options and computing metrics...');
+
+          setTimeout(() => {
+            try {
+              if (!st.trades.length) {
+                pw.style.display = 'none';
+                btn.disabled = false;
+                alert('No tradeable days found.\n\nCheck that your entry time (' + params.entryMins + ' mins before close = ' + Math.floor((960 - params.entryMins)/60) + ':' + String((960 - params.entryMins) % 60).padStart(2,'0') + ') falls within your data range.');
+                return;
+              }
+
+              renderSummary(st.trades);
+              renderEquity(st.trades);
+              renderHist(st.trades);
+              renderMonthly(st.trades);
+              renderTradeLog(st.trades);
+
+              document.getElementById('results').style.display = '';
+              setProgress(100, 'Done — ' + st.trades.length + ' trades simulated.');
+              setTimeout(() => { pw.style.display = 'none'; btn.disabled = false; }, 600);
+
+            } catch (e) {
+              pw.style.display = 'none';
+              btn.disabled = false;
+              alert('Render error: ' + e.message + '\n\nCheck browser console for details.');
+              console.error('IC render error:', e);
+            }
+          }, 50);
+
+        } catch (e) {
           pw.style.display = 'none';
           btn.disabled = false;
-          alert('No tradeable days found. Verify that your data covers the chosen entry time window.');
-          return;
+          alert('Simulation error: ' + e.message + '\n\nCheck browser console for details.');
+          console.error('IC simulate error:', e);
         }
-
-        renderSummary(st.trades);
-        renderEquity(st.trades);
-        renderHist(st.trades);
-        renderMonthly(st.trades);
-        renderTradeLog(st.trades);
-
-        document.getElementById('results').style.display = '';
-        setProgress(100, 'Done — ' + st.trades.length + ' trades simulated.');
-
-        setTimeout(() => { pw.style.display = 'none'; btn.disabled = false; }, 600);
       }, 50);
-    }, 50);
+
+    } catch (e) {
+      pw.style.display = 'none';
+      btn.disabled = false;
+      alert('Error: ' + e.message);
+      console.error('IC runSim error:', e);
+    }
   }, 50);
 }
 
 // ══════════════════════════════════════════════════════
-// AUTO-LOAD FROM data/manifest.json
+// AUTO-LOAD FROM Data/manifest.json
 // ══════════════════════════════════════════════════════
 function mergeNewBars(newBars) {
   const existing = new Map(st.bars.map(b => [b.date + 'T' + b.time, b]));
@@ -1164,7 +1231,7 @@ async function autoLoadFromManifest() {
 
   let manifest;
   try {
-    const resp = await fetch('data/manifest.json');
+    const resp = await fetch('Data/manifest.json');
     if (!resp.ok) throw new Error('no manifest');
     manifest = await resp.json();
   } catch {
@@ -1173,9 +1240,10 @@ async function autoLoadFromManifest() {
   }
 
   const spxFiles = Array.isArray(manifest.spx) ? manifest.spx : [];
-  const vixFile  = manifest.vix || null;
+  // vix can be a single string or an array
+  const vixFiles = Array.isArray(manifest.vix) ? manifest.vix : (manifest.vix ? [manifest.vix] : []);
 
-  if (!spxFiles.length && !vixFile) {
+  if (!spxFiles.length && !vixFiles.length) {
     statusWrap.style.display = 'none';
     return;
   }
@@ -1186,35 +1254,42 @@ async function autoLoadFromManifest() {
 
     try {
       const fetches = spxFiles.map(async f => {
-        const r = await fetch('data/' + f);
+        const r = await fetch('Data/' + f);
         if (!r.ok) { console.warn('IC manifest: could not fetch', f); return []; }
         return parseSPXCSV(await r.text());
       });
       const results = await Promise.all(fetches);
       mergeNewBars(results.flat());
       updateSPXStatus();
-      pill.textContent = `Auto-loaded from data/ — ${spxFiles.length} file${spxFiles.length !== 1 ? 's' : ''}`;
+      pill.textContent = `Auto-loaded from Data/ — ${spxFiles.length} file${spxFiles.length !== 1 ? 's' : ''}`;
       pill.className = 'pill ok';
     } catch (e) {
       pill.textContent = 'Auto-load failed — use manual upload below';
       pill.className = 'pill err';
+      console.error('IC SPX auto-load error:', e);
     }
   }
 
-  // ── Load VIX file and switch to VIX mode ──
-  if (vixFile) {
+  // ── Load VIX files and switch to VIX mode ──
+  if (vixFiles.length) {
     try {
-      const vResp = await fetch('data/' + vixFile);
-      if (vResp.ok) {
-        st.vixMap = parseVIXCSV(await vResp.text());
-        const n = Object.keys(st.vixMap).length;
-        if (n > 0) {
-          setIVMode('vix');
-          document.getElementById('vixStatus').innerHTML =
-            `<span class="pill ok">${n} VIX dates — auto-loaded</span>`;
-        }
+      const vixMaps = await Promise.all(vixFiles.map(async f => {
+        const r = await fetch('Data/' + f);
+        if (!r.ok) return {};
+        const text = await r.text();
+        return isIntradayText(text) ? parseVIXIntraday(text) : parseVIXCSV(text);
+      }));
+      const merged = mergeVIXMaps(...vixMaps);
+      const n = Object.keys(merged).length;
+      if (n > 0) {
+        st.vixMap = merged;
+        setIVMode('vix');
+        document.getElementById('vixStatus').innerHTML =
+          `<span class="pill ok">${n} VIX dates — auto-loaded (${vixFiles.length} file${vixFiles.length !== 1 ? 's' : ''})</span>`;
       }
-    } catch { /* VIX load failure is non-fatal */ }
+    } catch (e) {
+      console.error('IC VIX auto-load error:', e);
+    }
   }
 }
 
@@ -1222,7 +1297,7 @@ async function autoLoadFromManifest() {
 // INIT
 // ══════════════════════════════════════════════════════
 setupDrop('spxZone', 'spxInput', loadSPXFiles);
-setupDrop('vixZone', 'vixInput', f => loadVIXFile(f[0]));
+setupDrop('vixZone', 'vixInput', loadVIXFiles);
 
 // Try manifest auto-load first; manual upload still works as an override
 autoLoadFromManifest();
