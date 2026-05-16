@@ -914,7 +914,7 @@ function renderEquity(trades) {
     { label: s4Label,             data: cumPnL(trades,'s4'), borderColor: '#b07dff', backgroundColor: 'rgba(176,125,255,.06)', borderWidth: 1.5, pointRadius: 0, tension: .15, fill: false },
   ];
   if (st.benchmarkPnL.length === trades.length) {
-    datasets.push({ label: 'SPX Buy & Hold', data: st.benchmarkPnL, borderColor: 'rgba(255,255,255,0.65)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: .15, fill: false });
+    datasets.push({ label: 'SPX Buy & Hold', data: st.benchmarkPnL, borderColor: 'rgba(255,255,255,0.65)', backgroundColor: 'transparent', borderWidth: 1.5, borderDash: [6,3], pointRadius: 0, tension: .15, fill: false, yAxisID: 'yBH' });
   }
 
   const cfg = {
@@ -927,12 +927,17 @@ function renderEquity(trades) {
         ...CHART_OPTS.plugins,
         tooltip: {
           ...CHART_OPTS.plugins.tooltip,
-          callbacks: { label: ctx => `  ${ctx.dataset.label}: ${f$(ctx.parsed.y)}` }
+          callbacks: {
+            label: ctx => ctx.dataset.yAxisID === 'yBH'
+              ? `  ${ctx.dataset.label}: ${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toFixed(2)}%`
+              : `  ${ctx.dataset.label}: ${f$(ctx.parsed.y)}`
+          }
         }
       },
       scales: {
         x: CHART_OPTS.scales.x,
-        y: { ...CHART_OPTS.scales.y, ticks: { ...CHART_OPTS.scales.y.ticks, callback: v => f$(v, 0) } }
+        y:   { ...CHART_OPTS.scales.y, ticks: { ...CHART_OPTS.scales.y.ticks, callback: v => f$(v, 0) } },
+        yBH: { type: 'linear', position: 'right', ticks: { color: '#5a6577', font: { size: 9, family: "'JetBrains Mono',monospace" }, callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%' }, grid: { drawOnChartArea: false }, border: { dash: [2,2] } }
       }
     },
     plugins: [yearLinesPlugin]
@@ -1341,11 +1346,10 @@ function runSim() {
         try {
           st.trades = simulate(st.bars, vixMap, params);
 
-          // Buy & hold benchmark: account size = contracts × max-wing × 100
-          const startPrice = st.bars[0].close;
-          const accountSize = params.contracts * Math.max(params.putWing, params.callWing) * 100;
+          // Buy & hold benchmark: % return from first trade entry, on secondary axis
+          const refPrice = st.trades[0].spxEntry;
           st.benchmarkPnL = st.trades.map(t =>
-            +((t.settlement - startPrice) / startPrice * accountSize).toFixed(2)
+            +((t.settlement - refPrice) / refPrice * 100).toFixed(3)
           );
 
           setProgress(75, 'Pricing options and computing metrics...');
