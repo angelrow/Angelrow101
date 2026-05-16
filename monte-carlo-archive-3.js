@@ -6,7 +6,7 @@ const MC = (() => {
 
   const SIMS = 10000;
   const RISK = 0.02;
-  const LS   = 'mc_filter_v1';  // localStorage key
+  const LS   = 'mc_archive3_filter';  // localStorage key
 
   let mcCharts        = {};
   let mcDataAll       = null;   // all trades from CSV (every strategy)
@@ -94,13 +94,14 @@ const MC = (() => {
     return isNaN(n) ? null : Math.abs(n);
   }
 
+  // Try new underscore filename first, fall back to legacy space name
   async function fetchCSV() {
-    const names = ['Live Trade Log-Table 1.csv'];
+    const names = ['Trade Log-Archive-3.csv'];
     for (const name of names) {
-      const res = await fetch(encodeURI(name), {cache: 'no-store'});
+      const res = await fetch(encodeURI(name));
       if (res.ok) return res.text();
     }
-    throw new Error('CSV not found (tried Live Trade Log-Table 1.csv)');
+    throw new Error('CSV not found (tried Trade Log-Archive-3.csv)');
   }
 
   // Loads ALL trades from CSV; strategy filtering happens in activeTrades()
