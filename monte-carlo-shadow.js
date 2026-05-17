@@ -113,11 +113,14 @@ const MC = (() => {
     const headers = parseCSVLine(lines[0]).map(h =>
       h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
     );
+    const rawHdrs = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
 
     const fi = (...names) => headers.findIndex(h => names.some(n => h === n || h.includes(n)));
 
     const cStrategy  = fi('strategy')                        >= 0 ? fi('strategy')                        : 3;
-    const cPnlPct    = fi('p_l_', 'pnl_pct', 'p_l_%')       >= 0 ? fi('p_l_', 'pnl_pct', 'p_l_%')       : 13;
+    let cPnlPct = rawHdrs.findIndex(h => h === 'p&l %' || h === 'p&l%' || h === 'pnl %' || h === 'pnl%');
+    if (cPnlPct < 0) { const fp = headers.indexOf('p_l'); cPnlPct = fp >= 0 ? headers.indexOf('p_l', fp + 1) : -1; }
+    if (cPnlPct < 0) cPnlPct = 13;
     const cWinLoss   = fi('win_loss', 'win')                 >= 0 ? fi('win_loss', 'win')                 : 16;
     const cPremium   = fi('entry_cost', 'premium', 'credit') >= 0 ? fi('entry_cost', 'premium', 'credit') : 10;
     const cMistakes  = fi('mistakes')                        >= 0 ? fi('mistakes')                        : 28;
