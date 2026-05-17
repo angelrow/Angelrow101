@@ -13,7 +13,7 @@ const MC = (() => {
   let mcResults       = null;
   let mcStats         = null;
   let _primaryFilter  = 'premium';  // 'all' | 'premium' | 'custom'
-  let _premiumChecks  = { csp: true, bullput: true, ironcondor: true };
+  let _premiumChecks  = { csp: true, bullput: true, bearcall: true, ironcondor: true };
   let _customStrategy = '';
   let _includeErrors  = false;
 
@@ -22,6 +22,7 @@ const MC = (() => {
   const PREMIUM_GROUP = {
     csp:        s => s.includes('cash secured put') || s.includes('csp'),
     bullput:    s => s.includes('bull put spread'),
+    bearcall:   s => s.includes('bear call spread'),
     ironcondor: s => s.includes('iron condor'),
   };
 
@@ -168,6 +169,7 @@ const MC = (() => {
         return (
           (_premiumChecks.csp        && PREMIUM_GROUP.csp(s))        ||
           (_premiumChecks.bullput    && PREMIUM_GROUP.bullput(s))    ||
+          (_premiumChecks.bearcall   && PREMIUM_GROUP.bearcall(s))   ||
           (_premiumChecks.ironcondor && PREMIUM_GROUP.ironcondor(s))
         );
       });
@@ -187,7 +189,7 @@ const MC = (() => {
     if (_primaryFilter === 'all')    return 'All Strategies';
     if (_primaryFilter === 'custom') return _customStrategy || 'Custom Strategy';
     // premium
-    const names   = { csp: 'CSPs', bullput: 'Bull Put Spreads', ironcondor: 'Iron Condors' };
+    const names   = { csp: 'CSPs', bullput: 'Bull Put Spreads', bearcall: 'Bear Call Spreads', ironcondor: 'Iron Condors' };
     const checked = Object.entries(_premiumChecks).filter(([, v]) => v).map(([k]) => names[k]);
     if (checked.length === Object.keys(names).length) return 'Premium Selling';
     return checked.join(' + ') || 'Premium Selling';
