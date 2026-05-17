@@ -418,6 +418,38 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-
 <div class="page-title">Trading Journal</div>
 <div class="page-subtitle" id="journal-subtitle">Every position opened and closed — 34 trades across all strategies.</div>
 
+<div class="summary-row">
+<div class="summary-card"><div class="sc-label">Total Trades</div><div class="sc-value" id="j-stat-total">—</div></div>
+<div class="summary-card"><div class="sc-label">Cumulative P&L</div><div class="sc-value" id="j-stat-pnl">—</div></div>
+<div class="summary-card"><div class="sc-label">Win Rate (Closed)</div><div class="sc-value" id="j-stat-wr">—</div></div>
+<div class="summary-card"><div class="sc-label">Best Trade</div><div class="sc-value" id="j-stat-best">—</div></div>
+</div>
+<div class="gauge-row">
+<div class="gauge-card">
+<div class="gauge-title">Total Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Total win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="j-gauge-total-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="j-gauge-total-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="j-gauge-total-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
+<div class="gauge-card">
+<div class="gauge-title">Last 7 Days Win Rate</div>
+<svg viewBox="0 0 200 136" class="gauge-svg" aria-label="Last week win rate gauge">
+<text x="16" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">0%</text>
+<text x="100" y="18" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">50%</text>
+<text x="184" y="130" text-anchor="middle" font-family="Outfit,sans-serif" font-size="9" fill="rgba(255,255,255,0.18)">100%</text>
+<path d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="16" stroke-linecap="round"/>
+<path id="j-gauge-week-arc" class="gauge-fill" d="M 20,110 A 80,80 0 0 1 180,110" fill="none" stroke="#00d4aa" stroke-width="16" stroke-linecap="round" stroke-dasharray="0 252"/>
+<text id="j-gauge-week-pct" x="100" y="99" text-anchor="middle" font-family="Outfit,sans-serif" font-size="30" font-weight="700" fill="#eaf0f6">—</text>
+<text id="j-gauge-week-sub" x="100" y="127" text-anchor="middle" font-family="Outfit,sans-serif" font-size="10" fill="#5a6577" letter-spacing="0.04em">CALCULATING</text>
+</svg>
+</div>
+</div>
 <!-- ── Monte Carlo Analysis ──────────────────────────────────────────────── -->
 <div class="mc-wrapper">
   <div class="mc-toggle-bar" onclick="MC.toggle()">
@@ -686,6 +718,8 @@ function updateGauges(){
   const totalRate=closed.length?Math.round(wins.length/closed.length*100):0;
   setGauge('gauge-total-arc','gauge-total-pct','gauge-total-sub',totalRate,
     `${wins.length} wins / ${closed.length} closed`);
+  setGauge('j-gauge-total-arc','j-gauge-total-pct','j-gauge-total-sub',totalRate,
+    `${wins.length} wins / ${closed.length} closed`);
 
   // Last 7 days from most recent trade date
   if(!trades.length)return;
@@ -702,11 +736,17 @@ function updateGauges(){
     const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
     setGauge('gauge-week-arc','gauge-week-pct','gauge-week-sub',weekRate,
       `${fmt(cutoff)} – ${fmt(latest)} · ${weekTrades.length} trades`);
+    setGauge('j-gauge-week-arc','j-gauge-week-pct','j-gauge-week-sub',weekRate,
+      `${fmt(cutoff)} – ${fmt(latest)} · ${weekTrades.length} trades`);
   }else{
     const p=document.getElementById('gauge-week-pct');
     const s=document.getElementById('gauge-week-sub');
     if(p){p.textContent='N/A';p.setAttribute('fill','#5a6577');}
     if(s)s.textContent='No closed trades in period';
+    const jp=document.getElementById('j-gauge-week-pct');
+    const js=document.getElementById('j-gauge-week-sub');
+    if(jp){jp.textContent='N/A';jp.setAttribute('fill','#5a6577');}
+    if(js)js.textContent='No closed trades in period';
   }
 }
 
@@ -717,10 +757,19 @@ function updateDashboardStats(){
   const bestTrade=closed.length?Math.max(...closed.map(t=>t.pnl)):0;
   const winRate=closed.length?Math.round(wins.length/closed.length*100):0;
   const el=id=>document.getElementById(id);
+  const pnlStr=totalPnL>=0?`+$${totalPnL.toLocaleString()}`:`-$${Math.abs(totalPnL).toLocaleString()}`;
+  const pnlCls='sc-value '+(totalPnL>=0?'pnl-pos':'pnl-neg');
+  const bestStr=bestTrade>0?`+$${bestTrade.toLocaleString()}`:'$0';
+  // Update home dashboard
   if(el('stat-total'))el('stat-total').textContent=trades.length;
-  if(el('stat-pnl')){el('stat-pnl').textContent=totalPnL>=0?`+$${totalPnL.toLocaleString()}`:`-$${Math.abs(totalPnL).toLocaleString()}`;el('stat-pnl').className='sc-value '+(totalPnL>=0?'pnl-pos':'pnl-neg');}
+  if(el('stat-pnl')){el('stat-pnl').textContent=pnlStr;el('stat-pnl').className=pnlCls;}
   if(el('stat-wr'))el('stat-wr').textContent=`${winRate}%`;
-  if(el('stat-best'))el('stat-best').textContent=bestTrade>0?`+$${bestTrade.toLocaleString()}`:'$0';
+  if(el('stat-best'))el('stat-best').textContent=bestStr;
+  // Update journal section dashboard
+  if(el('j-stat-total'))el('j-stat-total').textContent=trades.length;
+  if(el('j-stat-pnl')){el('j-stat-pnl').textContent=pnlStr;el('j-stat-pnl').className=pnlCls;}
+  if(el('j-stat-wr'))el('j-stat-wr').textContent=`${winRate}%`;
+  if(el('j-stat-best'))el('j-stat-best').textContent=bestStr;
   const strats=[...new Set(trades.map(t=>t.strategy))];
   if(el('journal-subtitle'))el('journal-subtitle').textContent=`Every position opened and closed — ${trades.length} trades across ${strats.length} strategies.`;
 }
