@@ -1,5 +1,5 @@
 {
   "spx": [],
-  "vix": ["vix_intraday-1min_historical-data-download-JULY-2021.csv","vix_intraday-1min_historical-data-download-NOVEMBER-2021.csv","vix_intraday-1min_historical-data-download-OCTOBER-2021.csv","vix_intraday-1min_historical-data-download-SEPTEMBER-2021.csv","vix_intraday-1min_historical-data-download-april_2021.csv","vix_intraday-1min_historical-data-download-june_2021.csv","vix_intraday-1min_historical-data-download-march_2021.csv"],
-  "updatedAt": "2026-05-30T11:28:24Z"
+  "vix": ["vix_intraday-1min_historical-data-download-SEPTEMBER-2021.csv","vix_intraday-1min_historical-data-download-april_2021.csv","vix_intraday-1min_historical-data-download-june_2021.csv","vix_intraday-1min_historical-data-download-march_2021.csv"],
+  "updatedAt": "2026-05-30T11:28:50Z"
 }
