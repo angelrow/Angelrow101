@@ -1433,7 +1433,7 @@ async function autoLoadFromManifest() {
 
   let manifest;
   try {
-    const resp = await fetch('Data/manifest.json');
+    const resp = await fetch('../trading_data/manifest.json');
     if (!resp.ok) throw new Error('no manifest');
     manifest = await resp.json();
   } catch {
@@ -1459,14 +1459,14 @@ async function autoLoadFromManifest() {
 
     try {
       const fetches = spxFiles.map(async f => {
-        const r = await fetch('Data/' + f);
+        const r = await fetch('../trading_data/' + f.split('/').map(encodeURIComponent).join('/'));
         if (!r.ok) { console.warn('IC manifest: could not fetch', f); return []; }
         return parseSPXCSV(await r.text());
       });
       const results = await Promise.all(fetches);
       mergeNewBars(results.flat());
       updateSPXStatus();
-      pill.textContent = `Auto-loaded from Data/ — ${spxFiles.length} file${spxFiles.length !== 1 ? 's' : ''}`;
+      pill.textContent = `Auto-loaded from trading_data/ — ${spxFiles.length} file${spxFiles.length !== 1 ? 's' : ''}`;
       pill.className = 'pill ok';
     } catch (e) {
       pill.textContent = 'Auto-load failed — use manual upload below';
@@ -1479,7 +1479,7 @@ async function autoLoadFromManifest() {
   if (vixFiles.length) {
     try {
       const vixMaps = await Promise.all(vixFiles.map(async f => {
-        const r = await fetch('Data/' + f);
+        const r = await fetch('../trading_data/' + f.split('/').map(encodeURIComponent).join('/'));
         if (!r.ok) return {};
         const text = await r.text();
         return isIntradayText(text) ? parseVIXIntraday(text) : parseVIXCSV(text);
