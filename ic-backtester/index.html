@@ -704,15 +704,15 @@ function simulate(bars, vixMap, params) {
       const mark = icMark(bar.close, sc, lc, sp, lp, T, r, sigma);
       const pnl  = (credit - mark) * 100 * contracts;
 
+      if (!s4.early && mark > credit * stopMult) {
+        s4 = { pnl, time: bar.time, early: true };
+      }
       // Use intrabar high/low to detect if strike was touched
       if (!s2.early && (bar.high >= sc || bar.low <= sp)) {
         s2 = { pnl, time: bar.time, early: true };
       }
       if (!s3.early && (bar.high >= upperBE || bar.low <= lowerBE)) {
         s3 = { pnl, time: bar.time, early: true };
-      }
-      if (!s4.early && mark > credit * stopMult) {
-        s4 = { pnl, time: bar.time, early: true };
       }
     }
 
