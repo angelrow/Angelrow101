@@ -669,29 +669,56 @@ function filterMonth(m,btn){
 }
 
 const reportsState={_loaded:false};
+const REPORT_MONTHS={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+const REPORT_MON_FULL=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function parseFileMeta(name){
+  const base=name.replace('.pdf','');
+  const wm=base.match(/^WEEKLY_TRADING_REPORT_([A-Z]+)(\d+)-(?:([A-Z]+)(\d+)|(\d+))_(\d{4})$/);
+  if(wm){
+    const sm=wm[1],sd=wm[2],em=wm[3]||wm[1],ed=wm[4]||wm[5],yr=wm[6];
+    const date=new Date(parseInt(yr),REPORT_MONTHS[em],parseInt(ed));
+    const title=(wm[3]&&wm[3]!==sm)
+      ?`Weekly Trading Report — ${REPORT_MON_FULL[REPORT_MONTHS[sm]]} ${+sd} – ${REPORT_MON_FULL[REPORT_MONTHS[em]]} ${+ed}, ${yr}`
+      :`Weekly Trading Report — ${REPORT_MON_FULL[REPORT_MONTHS[sm]]} ${+sd}-${+ed}, ${yr}`;
+    return{title,type:'weekly',stats:'Open PDF for full details',date};
+  }
+  const title=base.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
+  return{title,type:'analysis',stats:'Open PDF for full details',date:new Date(0)};
+}
 
 function loadReports(){
-  fetch('reports/summaries.json?cb='+Date.now())
-    .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-    .then(data=>{
-      window._reportData=data;
-      const list=document.getElementById('report-list');
-      if(!data.length){list.innerHTML='<p style="color:var(--text-muted);padding:16px 0">No reports available yet.</p>';return;}
-      list.innerHTML=data.map((r,i)=>{
-        const iconMap={csp:'📊',analysis:'📈'};
-        const clsMap={csp:'csp',analysis:'analysis'};
-        const icon=iconMap[r.type]||'📋';
-        const cls=clsMap[r.type]||'weekly';
-        const btn=r.file
-          ?`<button class="report-btn report-btn-open" onclick="event.stopPropagation();openPDF('reports/${r.file}')">Open ↗</button>`
-          :`<button class="report-btn" onclick="event.stopPropagation();showReportSummary(${i})">View</button>`;
-        return `<div class="report-item" onclick="showReportSummary(${i})"><div class="report-info"><div class="report-icon ${cls}">${icon}</div><div><div class="report-title">${r.title}</div><div class="report-date">${r.stats}</div></div></div>${btn}</div>`;
-      }).join('');
-    })
-    .catch(()=>{
-      const list=document.getElementById('report-list');
-      if(list)list.innerHTML='<p style="color:var(--text-muted);padding:16px 0">Unable to load reports.</p>';
-    });
+  const list=document.getElementById('report-list');
+  Promise.all([
+    fetch('https://api.github.com/repos/angelrow/Angelrow101/contents/reports')
+      .then(r=>r.ok?r.json():[]).catch(()=>[]),
+    fetch('reports/summaries.json').then(r=>r.ok?r.json():[]).catch(()=>[])
+  ]).then(([files,summaries])=>{
+    const summaryMap={};
+    (Array.isArray(summaries)?summaries:[]).forEach(s=>{if(s.file)summaryMap[s.file]=s;});
+    const pdfs=(Array.isArray(files)?files:[])
+      .filter(f=>f.name.endsWith('.pdf'))
+      .map(f=>{
+        const auto=parseFileMeta(f.name);
+        const custom=summaryMap[f.name]||{};
+        return{file:f.name,title:custom.title||auto.title,type:custom.type||auto.type,stats:custom.stats||auto.stats,summary:custom.summary||null,date:auto.date};
+      });
+    pdfs.sort((a,b)=>b.date-a.date);
+    const textOnly=(Array.isArray(summaries)?summaries:[]).filter(s=>!s.file);
+    const all=[...pdfs,...textOnly];
+    window._reportData=all;
+    if(!all.length){list.innerHTML='<p style="color:var(--text-muted);padding:16px 0">No reports available yet.</p>';return;}
+    list.innerHTML=all.map((r,i)=>{
+      const iconMap={csp:'📊',analysis:'📈'};
+      const clsMap={csp:'csp',analysis:'analysis'};
+      const icon=iconMap[r.type]||'📋';
+      const cls=clsMap[r.type]||'weekly';
+      const btn=r.file
+        ?`<button class="report-btn report-btn-open" onclick="event.stopPropagation();openPDF('reports/${r.file}')">Open ↗</button>`
+        :`<button class="report-btn" onclick="event.stopPropagation();showReportSummary(${i})">View</button>`;
+      return`<div class="report-item" onclick="showReportSummary(${i})"><div class="report-info"><div class="report-icon ${cls}">${icon}</div><div><div class="report-title">${r.title}</div><div class="report-date">${r.stats}</div></div></div>${btn}</div>`;
+    }).join('');
+  }).catch(()=>{list.innerHTML='<p style="color:var(--text-muted);padding:16px 0">Unable to load reports.</p>';});
 }
 
 function showReportSummary(i){
