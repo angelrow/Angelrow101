@@ -12,8 +12,7 @@ params, model_form, report = run_calibration(spx, vix)
 p = report["params"]
 gate = report["gate_median_abs_pct_err"]
 print(f"\n{'='*60}")
-print(f"Model:   IV = σ_base × max(a0 + b·m + c·m², 0.05)")
-print(f"Form:    {model_form}")
+print(f"Model:   IV = σ_base × max(a0 + b·m + c·|m|, 0.05)")
 print(f"Params:  a0={p['a0']:.4f}   b={p['b']:.4f}   c={p['c']:.4f}")
 print(f"{'='*60}")
 print(f"Overall  MAE=${report['overall_mae']:.4f}   "
@@ -21,8 +20,6 @@ print(f"Overall  MAE=${report['overall_mae']:.4f}   "
 print(f"Gate     n={report['n_gate_prints']}  "
       f"median|%err| (px≥$0.50) = {gate*100:.2f}%  "
       f"{'PASS ✓' if gate <= 0.35 else 'FAIL ✗'}")
-print(f"\nSystematic curvature: {report['systematic_curvature_detected']}   "
-      f"MAE m²={report['mae_m2']:.4f}   MAE |m|={report['mae_abs_m']}")
 
 print(f"\n{'─'*60}")
 print(f"{'Expiry':<14} {'n':>5} {'n≥0.50':>7} {'MAE':>7} "
@@ -38,19 +35,17 @@ for exp, d in report["per_expiry"].items():
           f"${d['signed_median_err']:>9.3f}{flag}")
 
 print(f"\n{'─'*60}")
-print(f"{'Band':<14} {'n':>5} {'n≥0.50':>7} {'MAE':>7} "
+print(f"{'Band':<14} {'n':>5} {'MAE':>7} "
       f"{'med|%|':>8} {'med|%|≥.50':>11} {'signed_med':>11}")
 print(f"{'─'*60}")
 for band, d in report["per_m_band"].items():
     g = d["median_abs_pct_err_gate"]
-    gn = sum(1 for _ in range(1))   # placeholder — not stored per band
-    print(f"{band:<14} {d['n']:>5} {'—':>7} "
+    print(f"{band:<14} {d['n']:>5} "
           f"${d['mae']:>6.2f} "
           f"{(d['median_abs_pct_err']*100 if d['median_abs_pct_err'] else float('nan')):>7.1f}% "
           f"{(g*100 if g else float('nan')):>10.1f}% "
           f"${d['signed_median_err']:>9.3f}")
 
-print(f"\nPer-band signed bias (m² fit): {report['per_band_bias_m2']}")
 if report["biased_days"]:
     print(f"\n*** BIASED DAYS (|signed median| > $1): {report['biased_days']} ***")
 else:

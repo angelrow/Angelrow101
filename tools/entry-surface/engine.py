@@ -166,9 +166,10 @@ def settlement_time(day_spx: pd.DataFrame) -> pd.Timestamp | None:
 
 def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
     """
-    3-parameter model: IV = (VIX/100) × max(a0 + b·m + c·m², 0.05),  c ≥ 0.
+    3-parameter model: IV = (VIX/100) × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0.
+    Skew term is always c·|m| (no c·m² option).
     VIX enters only through sigma_base = VIX/100; no separate VIX-level term.
-    Returns (params, model_form, report).  params = (a0, b, c).
+    Returns (params, model_form, report).  params = (a0, b, c).  model_form = "abs_m".
     """
     if not CALIB_CSV.exists():
         raise RuntimeError(f"HARD ERROR: Calibration file missing: {CALIB_CSV}")
@@ -286,87 +287,34 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         except Exception:
             pass
 
-    # ── Step 2: WLS initial guess (3-param: a0, b, c) ─────────────────────────
+    # ── Fit: IV = σ_base × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0 ─────────────
     # Bounds: a0 ∈ [-5,5], b ∈ [-10,10], c ∈ [0,5]
     BOUNDS_LO = np.array([-5., -10., 0.])
     BOUNDS_HI = np.array([ 5.,  10., 5.])
+
+    abs_m_f = np.abs(m_arr)
 
     valid_iv = np.isfinite(iv_market) & (sigma_arr > 0)
     if valid_iv.sum() >= 3:
         Y  = iv_market[valid_iv] / sigma_arr[valid_iv]
         Xm = m_arr[valid_iv]
         Wv = w_arr[valid_iv]
-        # Quadratic basis: [1, m, m²]
-        Xq = np.column_stack([np.ones(valid_iv.sum()), Xm, Xm**2])
-        # |m| basis:        [1, m, |m|]
         Xa = np.column_stack([np.ones(valid_iv.sum()), Xm, np.abs(Xm)])
-        x0_quad, _, _, _ = np.linalg.lstsq(Xq * Wv[:,None], Y * Wv, rcond=None)
-        x0_abs,  _, _, _ = np.linalg.lstsq(Xa * Wv[:,None], Y * Wv, rcond=None)
-        x0_quad = np.clip(x0_quad, BOUNDS_LO, BOUNDS_HI)
-        x0_abs  = np.clip(x0_abs,  BOUNDS_LO, BOUNDS_HI)
+        x0, _, _, _ = np.linalg.lstsq(Xa * Wv[:,None], Y * Wv, rcond=None)
+        x0 = np.clip(x0, BOUNDS_LO, BOUNDS_HI)
     else:
-        x0_quad = x0_abs = np.array([1.0, -0.3, 0.1])
+        x0 = np.array([1.0, -0.3, 0.1])
 
-    # ── Step 3a: fit c·m² (c ≥ 0) ────────────────────────────────────────────
-    def residuals_quad(p):
-        iv = sigma_arr * np.maximum(p[0] + p[1]*m_arr + p[2]*m_arr**2, 0.05)
+    def residuals_abs(p):
+        iv = sigma_arr * np.maximum(p[0] + p[1]*m_arr + p[2]*np.abs(m_arr), 0.05)
         return w_arr * (_bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv) - px_arr)
 
-    res_quad = least_squares(residuals_quad, x0_quad, method="trf",
-                             bounds=(BOUNDS_LO.tolist(), BOUNDS_HI.tolist()),
-                             max_nfev=20000)
-    pq   = res_quad.x
-    iv_q = sigma_arr * np.maximum(pq[0] + pq[1]*m_arr + pq[2]*m_arr**2, 0.05)
-    px_q = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv_q)
-    sr_q = px_q - px_arr
-    mae_q = float(np.mean(np.abs(sr_q)))
-
-    abs_m_f    = np.abs(m_arr)
-    band_edges = [(0, 1), (1, 2), (2, 3)]
-    bias_q = [
-        float(np.mean(sr_q[(abs_m_f >= lo) & (abs_m_f < hi)]))
-        if ((abs_m_f >= lo) & (abs_m_f < hi)).sum() > 0 else np.nan
-        for lo, hi in band_edges
-    ]
-
-    # Systematic curvature: all-same-sign or strictly monotone across bands
-    vb = [b for b in bias_q if not np.isnan(b)]
-    systematic = (
-        len(vb) >= 2 and (
-            all(b > 0 for b in vb) or
-            all(b < 0 for b in vb) or
-            all(vb[i] < vb[i+1] for i in range(len(vb)-1)) or
-            all(vb[i] > vb[i+1] for i in range(len(vb)-1))
-        )
-    )
-
-    # ── Step 3b: try c·|m| if systematic curvature ────────────────────────────
-    mae_abs_m = None
-    bias_abs  = [np.nan, np.nan, np.nan]
-
-    if systematic:
-        def residuals_abs(p):
-            iv = sigma_arr * np.maximum(p[0] + p[1]*m_arr + p[2]*np.abs(m_arr), 0.05)
-            return w_arr * (_bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv) - px_arr)
-
-        res_abs = least_squares(residuals_abs, x0_abs, method="trf",
-                                bounds=(BOUNDS_LO.tolist(), BOUNDS_HI.tolist()),
-                                max_nfev=20000)
-        pa   = res_abs.x
-        iv_a = sigma_arr * np.maximum(pa[0] + pa[1]*m_arr + pa[2]*np.abs(m_arr), 0.05)
-        px_a = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv_a)
-        sr_a = px_a - px_arr
-        mae_abs_m = float(np.mean(np.abs(sr_a)))
-        bias_abs = [
-            float(np.mean(sr_a[(abs_m_f >= lo) & (abs_m_f < hi)]))
-            if ((abs_m_f >= lo) & (abs_m_f < hi)).sum() > 0 else np.nan
-            for lo, hi in band_edges
-        ]
-
-    use_abs_m  = systematic and (mae_abs_m is not None) and (mae_abs_m < mae_q)
-    model_form = "abs_m" if use_abs_m else "m2"
-    p_chosen   = res_abs.x if use_abs_m else pq   # type: ignore[possibly-undefined]
-    params     = tuple(p_chosen)
+    res    = least_squares(residuals_abs, x0, method="trf",
+                           bounds=(BOUNDS_LO.tolist(), BOUNDS_HI.tolist()),
+                           max_nfev=20000)
+    params     = tuple(res.x)
+    model_form = "abs_m"
+    use_abs_m  = True
 
     # ── Report arrays ─────────────────────────────────────────────────────────
     iv_fit  = _iv_arr(sigma_arr, m_arr, params, use_abs_m=use_abs_m)
@@ -423,11 +371,6 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         "overall_mae": overall_mae,
         "overall_median_abs_pct_err": overall_med_pct,
         "gate_median_abs_pct_err": gate_med_pct,
-        "systematic_curvature_detected": systematic,
-        "per_band_bias_m2":    {f"|m| [{lo},{hi})": b for (lo,hi),b in zip(band_edges, bias_q)},
-        "per_band_bias_abs_m": {f"|m| [{lo},{hi})": b for (lo,hi),b in zip(band_edges, bias_abs)},
-        "mae_m2":    mae_q,
-        "mae_abs_m": mae_abs_m,
         "per_expiry": per_expiry,
         "per_m_band": per_band,
         "biased_days": biased_days,
@@ -902,7 +845,7 @@ def main():
                 "calib_params": calib_report["params"],
                 "calib_model_form": model_form,
                 "calib_mae": calib_report["overall_mae"],
-                "calib_median_abs_pct_err": med_pct,
+                "calib_median_abs_pct_err": calib_report["overall_median_abs_pct_err"],
             },
             "records": is_recs,
         }, f, indent=2, default=str)
@@ -927,7 +870,7 @@ def main():
     print("SUMMARY")
     print("="*70)
     print(f"Calibration  MAE=${calib_report['overall_mae']:.4f}  "
-          f"median|%err|={med_pct*100:.2f}%")
+          f"median|%err|={calib_report['overall_median_abs_pct_err']*100:.2f}%")
     if calib_report["warning_unreliable"]:
         print("  *** WARNING: median |% err| > 35% — outputs may be unreliable ***")
     print(f"In-sample:  {n_is_f:,} filled,  {n_is_s:,} skipped")
