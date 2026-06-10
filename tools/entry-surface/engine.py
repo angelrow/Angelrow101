@@ -89,10 +89,14 @@ def _bsm_put_scalar(S, K, T, r, q, sigma):
     return K*math.exp(-r*T)*norm.cdf(-d2) - S*math.exp(-q*T)*norm.cdf(-d1)
 
 
-def _iv_arr(sigma_base, vix_scalar, m, params):
-    """Vectorised IV surface. Returns sigma_base × max(a0+a1*vs+b*m+c*m², 0.05)."""
+def _iv_arr(sigma_base, vix_scalar, m, params, use_abs_m=False):
+    """Vectorised IV surface.
+    model_form 'm2':    sigma_base × max(a0+a1*vs+b*m+c*m²,  0.05)
+    model_form 'abs_m': sigma_base × max(a0+a1*vs+b*m+c*|m|, 0.05)
+    """
     a0, a1, b, c = params
-    raw = a0 + a1*vix_scalar + b*m + c*m**2
+    tail = c * np.abs(m) if use_abs_m else c * m**2
+    raw  = a0 + a1*vix_scalar + b*m + tail
     return sigma_base * np.maximum(raw, 0.05)
 
 
@@ -185,31 +189,26 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
             )
 
     # Pre-build numpy lookup arrays (all in MICROSECONDS via .asi8)
-    spx_us   = spx.index.asi8          # μs
-    spx_cl   = spx["Close"].values
-    vix_us   = vix.index.asi8          # μs
-    vix_cl   = vix["Close"].values
-
-    # Calibration timestamps in μs — consistent with .asi8
-    ts_us = pd.DatetimeIndex(calib["ts"]).asi8   # μs
+    spx_us = spx.index.asi8
+    spx_cl = spx["Close"].values
+    vix_us = vix.index.asi8
+    vix_cl = vix["Close"].values
+    ts_us  = pd.DatetimeIndex(calib["ts"]).asi8
 
     spx_idx = np.searchsorted(spx_us, ts_us, side="right") - 1
-    # LOOK-AHEAD GUARD LINE: VIX lookup uses ts_us (calib timestamp), never a later time
     vix_idx = np.searchsorted(vix_us, ts_us, side="right") - 1
-
-    valid = (spx_idx >= 0) & (vix_idx >= 0)
-    calib = calib[valid].copy().reset_index(drop=True)
+    valid   = (spx_idx >= 0) & (vix_idx >= 0)
+    calib   = calib[valid].copy().reset_index(drop=True)
     spx_idx = spx_idx[valid]; vix_idx = vix_idx[valid]; ts_us = ts_us[valid]
 
     S_arr      = spx_cl[spx_idx]
     vix_arr    = vix_cl[vix_idx]
     sigma_arr  = vix_arr / 100.0
-    vix_scalar = vix_arr / 20.0
+    vix_sc_arr = vix_arr / 20.0
     K_arr      = calib["strike"].values.astype(float)
     px_arr     = calib["price_last"].values.astype(float)
     vol_arr    = pd.to_numeric(calib["volume"], errors="coerce").fillna(0).values
 
-    # expiry settlement at 16:00 ET — convert to μs
     expiry_us = np.array([
         _ts_to_us(
             pd.Timestamp(str(row["expiry_date"])).tz_localize("America/New_York")
@@ -218,23 +217,56 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         for _, row in calib.iterrows()
     ], dtype=np.int64)
 
-    mins_rem  = (expiry_us - ts_us) / US_PER_MIN   # μs / (μs/min) = minutes
+    mins_rem  = (expiry_us - ts_us) / US_PER_MIN
     T_rem_arr = np.maximum(mins_rem, 0.0) / (252 * 390)
 
-    valid2 = mins_rem > 0
-    S_arr     = S_arr[valid2];    vix_arr   = vix_arr[valid2]
-    sigma_arr = sigma_arr[valid2]; vix_scalar = vix_scalar[valid2]
-    K_arr     = K_arr[valid2];    px_arr    = px_arr[valid2]
-    vol_arr   = vol_arr[valid2];  T_rem_arr = T_rem_arr[valid2]
-    calib     = calib[valid2].reset_index(drop=True)
+    valid2    = mins_rem > 0
+    S_arr     = S_arr[valid2];     vix_arr    = vix_arr[valid2]
+    sigma_arr = sigma_arr[valid2]; vix_sc_arr = vix_sc_arr[valid2]
+    K_arr     = K_arr[valid2];     px_arr     = px_arr[valid2]
+    vol_arr   = vol_arr[valid2];   T_rem_arr  = T_rem_arr[valid2]
+    mins_rem  = mins_rem[valid2];  calib      = calib[valid2].reset_index(drop=True)
 
     denom = sigma_arr * np.sqrt(np.maximum(T_rem_arr, 1e-12))
     m_arr = np.log(K_arr / S_arr) / np.maximum(denom, 1e-12)
 
-    w_arr = np.sqrt(np.minimum(vol_arr, 20.0))
-    w_arr = np.where(px_arr < 0.10, w_arr * 0.25, w_arr)
+    # ── Filter: extrinsic ≥ 0.15, |m| ≤ 3, T_rem ≥ 30 min ───────────────────
+    right_vals = calib["right"].str.upper().values if "right" in calib.columns \
+                 else np.full(len(calib), "P")
+    intrinsic  = np.where(right_vals == "P",
+                          np.maximum(0.0, K_arr - S_arr),
+                          np.maximum(0.0, S_arr - K_arr))
+    extrinsic  = px_arr - intrinsic
+    filt = (extrinsic >= 0.15) & (np.abs(m_arr) <= 3.0) & (mins_rem >= 30.0)
 
-    # ── Step 1: invert prices to market IV, linear WLS for starting params ──
+    print("      Filter: extrinsic≥$0.15, |m|≤3, T_rem≥30min")
+    for exp in sorted(calib["expiry_date"].unique()):
+        exp_mask = calib["expiry_date"].values == exp
+        n_tot  = int(exp_mask.sum())
+        n_surv = int((exp_mask & filt).sum())
+        tag = "  *** HARD WARNING: <50 prints ***" if n_surv < 50 else ""
+        print(f"        expiry {exp}: {n_surv}/{n_tot} survive{tag}")
+    abs_m_pre = np.abs(m_arr)
+    for lo, hi in [(0, 1), (1, 2), (2, 3)]:
+        n_b = int(((abs_m_pre >= lo) & (abs_m_pre < hi) & filt).sum())
+        print(f"        |m| [{lo},{hi}): {n_b} prints survive")
+    print(f"        Total: {int(filt.sum())}/{len(calib)} prints survive filter")
+
+    # Apply filter
+    calib     = calib[filt].copy().reset_index(drop=True)
+    S_arr     = S_arr[filt];     vix_arr    = vix_arr[filt]
+    sigma_arr = sigma_arr[filt]; vix_sc_arr = vix_sc_arr[filt]
+    K_arr     = K_arr[filt];     px_arr     = px_arr[filt]
+    vol_arr   = vol_arr[filt];   T_rem_arr  = T_rem_arr[filt]
+    m_arr     = m_arr[filt];     mins_rem   = mins_rem[filt]
+
+    if len(px_arr) < 10:
+        raise RuntimeError("HARD ERROR: Fewer than 10 calibration prints survive filter.")
+
+    # ── Weights: sqrt(min(vol,20)), no price-based down-weight ───────────────
+    w_arr = np.sqrt(np.minimum(vol_arr, 20.0))
+
+    # ── Step 1: brentq IV inversion ──────────────────────────────────────────
     iv_market = np.full(len(px_arr), np.nan)
     for i in range(len(px_arr)):
         S, K, T, px = S_arr[i], K_arr[i], T_rem_arr[i], px_arr[i]
@@ -253,35 +285,91 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         except Exception:
             pass
 
+    # ── Step 2: WLS initial guess for both model forms ────────────────────────
+    BOUNDS_LO = np.array([-5., -10., -10., 0.])   # c ≥ 0
+    BOUNDS_HI = np.array([ 5.,  10.,  10., 5.])
+
     valid_iv = np.isfinite(iv_market) & (sigma_arr > 0)
     if valid_iv.sum() >= 4:
-        Y  = (iv_market[valid_iv] / sigma_arr[valid_iv])
+        Y  = iv_market[valid_iv] / sigma_arr[valid_iv]
         Xm = m_arr[valid_iv]
-        X  = np.column_stack([
-            np.ones(valid_iv.sum()), vix_scalar[valid_iv], Xm, Xm**2,
-        ])
         Wv = w_arr[valid_iv]
-        x0_iv, _, _, _ = np.linalg.lstsq(X * Wv[:,None], Y * Wv, rcond=None)
-        # Clamp to physically reasonable range before passing to TRF
-        x0_iv = np.clip(x0_iv, [-5, -10, -10, -5], [5, 10, 10, 5])
+        Xq = np.column_stack([np.ones(valid_iv.sum()), vix_sc_arr[valid_iv], Xm, Xm**2])
+        Xa = np.column_stack([np.ones(valid_iv.sum()), vix_sc_arr[valid_iv], Xm, np.abs(Xm)])
+        x0_quad, _, _, _ = np.linalg.lstsq(Xq * Wv[:,None], Y * Wv, rcond=None)
+        x0_abs,  _, _, _ = np.linalg.lstsq(Xa * Wv[:,None], Y * Wv, rcond=None)
+        x0_quad = np.clip(x0_quad, BOUNDS_LO, BOUNDS_HI)
+        x0_abs  = np.clip(x0_abs,  BOUNDS_LO, BOUNDS_HI)
     else:
-        x0_iv = np.array([0.5, 0.0, -0.1, 0.05])
+        x0_quad = x0_abs = np.array([0.5, 0.0, -0.1, 0.05])
 
-    # ── Step 2: refine on price error ──
-    def residuals_vec(params):
-        iv = _iv_arr(sigma_arr, vix_scalar, m_arr, params)
-        px_model = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv)
-        return w_arr * (px_model - px_arr)
+    # ── Step 3a: fit quadratic (c·m², c ≥ 0) ─────────────────────────────────
+    def residuals_quad(p):
+        iv = sigma_arr * np.maximum(
+            p[0] + p[1]*vix_sc_arr + p[2]*m_arr + p[3]*m_arr**2, 0.05)
+        return w_arr * (_bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv) - px_arr)
 
-    result = least_squares(
-        residuals_vec, x0_iv, method="trf",
-        bounds=([-5,-10,-10,-5], [5,10,10,5]),
-        max_nfev=20000,
+    res_quad = least_squares(residuals_quad, x0_quad, method="trf",
+                             bounds=(BOUNDS_LO.tolist(), BOUNDS_HI.tolist()),
+                             max_nfev=20000)
+    pq   = res_quad.x
+    iv_q = sigma_arr * np.maximum(pq[0]+pq[1]*vix_sc_arr+pq[2]*m_arr+pq[3]*m_arr**2, 0.05)
+    px_q = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv_q)
+    sr_q = px_q - px_arr
+    mae_q = float(np.mean(np.abs(sr_q)))
+
+    # Per-band signed residuals (bias check)
+    abs_m_f      = np.abs(m_arr)
+    band_edges   = [(0, 1), (1, 2), (2, 3)]
+    bias_q = [
+        float(np.mean(sr_q[(abs_m_f >= lo) & (abs_m_f < hi)]))
+        if ((abs_m_f >= lo) & (abs_m_f < hi)).sum() > 0 else np.nan
+        for lo, hi in band_edges
+    ]
+
+    # Systematic curvature: all-same-sign or monotone across bands
+    vb = [b for b in bias_q if not np.isnan(b)]
+    systematic = (
+        len(vb) >= 2 and (
+            all(b > 0 for b in vb) or
+            all(b < 0 for b in vb) or
+            all(vb[i] < vb[i+1] for i in range(len(vb)-1)) or
+            all(vb[i] > vb[i+1] for i in range(len(vb)-1))
+        )
     )
-    params = tuple(result.x)
 
-    # ── Report ──
-    iv_fit  = _iv_arr(sigma_arr, vix_scalar, m_arr, params)
+    # ── Step 3b: try |m| model if systematic curvature ────────────────────────
+    mae_abs_m = None
+    bias_abs  = [np.nan, np.nan, np.nan]
+    res_abs   = None
+
+    if systematic:
+        def residuals_abs(p):
+            iv = sigma_arr * np.maximum(
+                p[0] + p[1]*vix_sc_arr + p[2]*m_arr + p[3]*np.abs(m_arr), 0.05)
+            return w_arr * (_bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv) - px_arr)
+
+        res_abs = least_squares(residuals_abs, x0_abs, method="trf",
+                                bounds=(BOUNDS_LO.tolist(), BOUNDS_HI.tolist()),
+                                max_nfev=20000)
+        pa   = res_abs.x
+        iv_a = sigma_arr * np.maximum(pa[0]+pa[1]*vix_sc_arr+pa[2]*m_arr+pa[3]*np.abs(m_arr), 0.05)
+        px_a = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv_a)
+        sr_a = px_a - px_arr
+        mae_abs_m = float(np.mean(np.abs(sr_a)))
+        bias_abs = [
+            float(np.mean(sr_a[(abs_m_f >= lo) & (abs_m_f < hi)]))
+            if ((abs_m_f >= lo) & (abs_m_f < hi)).sum() > 0 else np.nan
+            for lo, hi in band_edges
+        ]
+
+    # Choose better model: |m| only if it was tried AND beats quadratic
+    use_abs_m = systematic and (mae_abs_m is not None) and (mae_abs_m < mae_q)
+    model_form = "abs_m" if use_abs_m else "m2"
+    params     = tuple(res_abs.x if use_abs_m else pq)
+
+    # ── Final report arrays ───────────────────────────────────────────────────
+    iv_fit  = _iv_arr(sigma_arr, vix_sc_arr, m_arr, params, use_abs_m=use_abs_m)
     px_fit  = _bsm_put_arr(S_arr, K_arr, T_rem_arr, RISK_FREE, DIV_YIELD, iv_fit)
     abs_err = np.abs(px_fit - px_arr)
     pct_err = np.where(px_arr > 0, abs_err / px_arr, np.nan)
@@ -295,16 +383,15 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
             "median_abs_pct_err": float(np.nanmedian(pct_err[mask])),
         }
 
-    abs_m = np.abs(m_arr)
-    bands = [(0,0.5),(0.5,1),(1,2),(2,99)]
     per_band: dict = {}
-    for lo, hi in bands:
-        mask = (abs_m >= lo) & (abs_m < hi)
-        key  = f"|m| {lo:.1f}-{'inf' if hi>=10 else hi}"
+    for lo, hi in [(0, 0.5), (0.5, 1), (1, 2), (2, 3)]:
+        mask = (abs_m_f >= lo) & (abs_m_f < hi)
+        key  = f"|m| {lo:.1f}-{hi:.1f}"
         per_band[key] = {
             "n": int(mask.sum()),
             "mae": float(np.mean(abs_err[mask])) if mask.any() else None,
             "median_abs_pct_err": float(np.nanmedian(pct_err[mask])) if mask.any() else None,
+            "mean_signed_residual": float(np.mean((px_fit - px_arr)[mask])) if mask.any() else None,
         }
 
     overall_mae     = float(np.mean(abs_err))
@@ -312,14 +399,20 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
 
     report = {
         "params": {"a0": params[0], "a1": params[1], "b": params[2], "c": params[3]},
+        "model_form": model_form,
         "n_calibration_prints": int(len(px_arr)),
         "overall_mae": overall_mae,
         "overall_median_abs_pct_err": overall_med_pct,
+        "systematic_curvature_detected": systematic,
+        "per_band_bias_m2":    {f"|m| [{lo},{hi})": b for (lo,hi),b in zip(band_edges, bias_q)},
+        "per_band_bias_abs_m": {f"|m| [{lo},{hi})": b for (lo,hi),b in zip(band_edges, bias_abs)},
+        "mae_m2":    mae_q,
+        "mae_abs_m": mae_abs_m,
         "per_expiry": per_expiry,
         "per_m_band": per_band,
         "warning_unreliable": overall_med_pct > 0.35,
     }
-    return params, report
+    return params, model_form, report
 
 
 # ── Vectorised day simulation ─────────────────────────────────────────────────
@@ -331,6 +424,7 @@ def simulate_day(
     vix_close: np.ndarray,
     params: tuple,
     skipped_rows: list,
+    use_abs_m: bool = False,
 ) -> list:
     """
     Simulate all (T, k) cells for one trading day.
@@ -393,8 +487,8 @@ def simulate_day(
         denom_e = sigma_b * math.sqrt(T_rem) if T_rem > 0 else 1e-9
         m_s_e   = np.log(K_short / S) / denom_e
         m_l_e   = np.log(K_long  / S) / denom_e
-        iv_s_e  = _iv_arr(sigma_b, vix_sc_e, m_s_e, params)
-        iv_l_e  = _iv_arr(sigma_b, vix_sc_e, m_l_e, params)
+        iv_s_e  = _iv_arr(sigma_b, vix_sc_e, m_s_e, params, use_abs_m)
+        iv_l_e  = _iv_arr(sigma_b, vix_sc_e, m_l_e, params, use_abs_m)
         p_s_e   = _bsm_put_arr(S, K_short, T_rem, RISK_FREE, DIV_YIELD, iv_s_e)
         p_l_e   = _bsm_put_arr(S, K_long,  T_rem, RISK_FREE, DIV_YIELD, iv_l_e)
         credit  = (p_s_e - p_l_e) - SLIPPAGE     # (N_K,)
@@ -487,8 +581,8 @@ def simulate_day(
 
         m_s = np.log(Ks / S_cl) / np.maximum(denom_t, 1e-12)
         m_l = np.log(Kl / S_cl) / np.maximum(denom_t, 1e-12)
-        iv_s = _iv_arr(sig_t, vsc_t, m_s, params)
-        iv_l = _iv_arr(sig_t, vsc_t, m_l, params)
+        iv_s = _iv_arr(sig_t, vsc_t, m_s, params, use_abs_m)
+        iv_l = _iv_arr(sig_t, vsc_t, m_l, params, use_abs_m)
 
         sq_s   = iv_s * sqT;   sq_l   = iv_l * sqT
         er_t   = np.exp(-RISK_FREE * T_t)
@@ -507,8 +601,8 @@ def simulate_day(
         # Low-price sensitivity (LOOK-AHEAD GUARD: same vix/T, different spot)
         m_sl = np.log(Ks / S_lo) / np.maximum(denom_t, 1e-12)
         m_ll = np.log(Kl / S_lo) / np.maximum(denom_t, 1e-12)
-        iv_sl = _iv_arr(sig_t, vsc_t, m_sl, params)
-        iv_ll = _iv_arr(sig_t, vsc_t, m_ll, params)
+        iv_sl = _iv_arr(sig_t, vsc_t, m_sl, params, use_abs_m)
+        iv_ll = _iv_arr(sig_t, vsc_t, m_ll, params, use_abs_m)
         sq_sl = iv_sl*sqT; sq_ll = iv_ll*sqT
         d1_sl = np.where(T_t>0,(np.log(S_lo/Ks)+(drift+0.5*iv_sl**2)*T_t)/np.maximum(sq_sl,1e-12),0.)
         d2_sl = d1_sl - sq_sl
@@ -702,10 +796,11 @@ def main():
 
     print("\n[2/5] Running calibration …")
     t1 = time.time()
-    params, calib_report = run_calibration(spx, vix)
+    params, model_form, calib_report = run_calibration(spx, vix)
+    use_abs_m = (model_form == "abs_m")
     p = calib_report["params"]
     med_pct = calib_report["overall_median_abs_pct_err"]
-    print(f"      a0={p['a0']:.4f}  a1={p['a1']:.4f}  b={p['b']:.4f}  c={p['c']:.4f}")
+    print(f"      model={model_form}  a0={p['a0']:.4f}  a1={p['a1']:.4f}  b={p['b']:.4f}  c={p['c']:.4f}")
     print(f"      MAE=${calib_report['overall_mae']:.4f}   median|%err|={med_pct*100:.2f}%  ({time.time()-t1:.1f}s)")
     if calib_report["warning_unreliable"]:
         print("\n  *** WARNING: median absolute % error > 35% — "
@@ -749,7 +844,7 @@ def main():
                     day_spx = day_spx.to_frame().T
             except KeyError:
                 continue
-            day_trades = simulate_day(date, day_spx, vix_ts_us, vix_close, params, skipped_rows)
+            day_trades = simulate_day(date, day_spx, vix_ts_us, vix_close, params, skipped_rows, use_abs_m)
             trades.extend(day_trades)
             stale_cnt += sum(1 for r in day_trades if r.get("stale_entry"))
 
@@ -779,6 +874,7 @@ def main():
                 "n_filled": n_is_f, "n_skipped": n_is_s,
                 "stale_entry_bars": stale_cnt,
                 "calib_params": calib_report["params"],
+                "calib_model_form": model_form,
                 "calib_mae": calib_report["overall_mae"],
                 "calib_median_abs_pct_err": med_pct,
             },
