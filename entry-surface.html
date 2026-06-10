@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0DTE Vertical Spread Backtest — Angelrow Trading Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0b0f14;
+  --bg-card: #111620;
+  --bg-card2: #141920;
+  --border: rgba(255,255,255,0.07);
+  --border-h: rgba(255,255,255,0.14);
+  --text: #eaf0f6;
+  --text-s: #8a95a5;
+  --text-m: #5a6577;
+  --accent: #00d4aa;
+  --accent-d: rgba(0,212,170,0.10);
+  --red: #ff4d6a;
+  --red-d: rgba(255,77,106,0.10);
+  --amber: #ffb020;
+  --blue: #4d9fff;
+  --blue-d: rgba(77,159,255,0.10);
+  --purple: #b07dff;
+  --purple-d: rgba(176,125,255,0.10);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Outfit', sans-serif;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+.container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+.site-header {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  background: rgba(11,15,20,0.96);
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(10px);
+}
+.hdr-inner { display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), #009e7e);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 500; color: #0b0f14; letter-spacing: -.5px;
+}
+.brand-name { font-size: 14px; font-weight: 700; }
+.brand-sub { font-size: 11px; color: var(--text-m); font-family: var(--mono); }
+.back-link { font-size: 12px; color: var(--text-m); transition: color .15s; padding: 6px 0; }
+.back-link:hover { color: var(--accent); }
+
+.main { padding: 26px 0 80px; }
+.page-hdr { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.page-title { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+.page-sub { font-size: 12px; color: var(--text-m); margin-top: 2px; }
+
+/* ── Controls bar ── */
+.controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.ctl-label { font-size: 11px; color: var(--text-m); margin-right: 2px; }
+.ctl-group { display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; }
+.toggle-btn {
+  font-size: 11px; font-family: var(--mono); padding: 3px 9px; border-radius: 5px; cursor: pointer;
+  border: none; background: transparent; color: var(--text-s); transition: all .15s;
+}
+.toggle-btn.active { background: var(--accent-d); color: var(--accent); }
+.toggle-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.holdout-btn {
+  font-size: 12px; padding: 7px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-card); color: var(--text-s);
+  transition: all .2s; font-family: var(--sans);
+}
+.holdout-btn:hover { border-color: var(--accent); color: var(--accent); }
+.holdout-btn.loaded { border-color: var(--purple); color: var(--purple); background: var(--purple-d); }
+
+/* ── Metric tiles ── */
+.meta-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.meta-tile { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.meta-tile .label { font-size: 10px; color: var(--text-m); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.meta-tile .value { font-size: 18px; font-weight: 600; font-family: var(--mono); }
+.meta-tile .sub { font-size: 10px; color: var(--text-m); margin-top: 2px; }
+
+/* ── Heatmap ── */
+.heatmap-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; overflow-x: auto; }
+.heatmap-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.heatmap-table { border-collapse: collapse; }
+.heatmap-table th { font-size: 10px; font-family: var(--mono); color: var(--text-m); font-weight: 400; padding: 2px 4px; text-align: center; white-space: nowrap; }
+.heatmap-table td { width: 42px; height: 32px; text-align: center; cursor: pointer; transition: outline .1s; border-radius: 3px; position: relative; }
+.heatmap-table td:hover { outline: 2px solid var(--accent); z-index: 2; }
+.heatmap-table td.selected { outline: 2px solid #fff; z-index: 3; }
+.cell-val { font-size: 9px; font-family: var(--mono); font-weight: 500; pointer-events: none; }
+.heatmap-table td.hatched {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px,
+    transparent 2px, transparent 6px
+  ) !important;
+}
+
+/* Legend */
+.legend { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 10px; color: var(--text-m); }
+.legend-bar { height: 8px; width: 120px; border-radius: 3px; background: linear-gradient(to right, #ff4d6a, #141920, #00d4aa); }
+
+/* ── Detail panel ── */
+.detail-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
+.detail-panel.visible { display: block; }
+.detail-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.detail-hdr h3 { font-size: 15px; font-weight: 600; }
+.close-btn { font-size: 18px; color: var(--text-m); cursor: pointer; line-height: 1; padding: 0 4px; }
+.close-btn:hover { color: var(--text); }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.metric-card { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.metric-card .mlabel { font-size: 10px; color: var(--text-m); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+.metric-card .mval { font-size: 16px; font-weight: 600; font-family: var(--mono); }
+.metric-card .mval.pos { color: var(--accent); }
+.metric-card .mval.neg { color: var(--red); }
+.metric-card .mval.neu { color: var(--amber); }
+.verdict-badge { display: inline-block; padding: 2px 9px; border-radius: 5px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.verdict-badge.confirmed { background: var(--accent-d); color: var(--accent); }
+.verdict-badge.rejected { background: var(--red-d); color: var(--red); }
+.verdict-badge.inconclusive { background: rgba(255,176,32,0.10); color: var(--amber); }
+
+.splits-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.split-chip { font-size: 11px; font-family: var(--mono); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card2); cursor: pointer; transition: all .15s; }
+.split-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-d); }
+
+.chart-wrap { height: 220px; }
+
+/* ── No data ── */
+.no-data { color: var(--text-m); font-size: 13px; padding: 40px; text-align: center; }
+.error-msg { color: var(--red); font-size: 13px; padding: 40px; text-align: center; background: var(--red-d); border-radius: 8px; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="container">
+    <div class="hdr-inner">
+      <div class="brand">
+        <div class="brand-mark">AR</div>
+        <div>
+          <div class="brand-name">Angelrow Trading Systems</div>
+          <div class="brand-sub">0DTE Vertical Spread Backtest</div>
+        </div>
+      </div>
+      <a href="index.html" class="back-link">← Back</a>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div class="container">
+
+    <div class="page-hdr">
+      <div>
+        <div class="page-title">0DTE Vertical Spread Backtest</div>
+        <div class="page-sub">SPX 20-wide bull put spread · short strike = k × EM-remaining below spot · 13 entry times × 26 k values · expectancy as % of max risk</div>
+      </div>
+      <button class="holdout-btn" id="holdoutBtn" onclick="toggleHoldout()">Load holdout overlay</button>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" id="splitControls">
+      <div class="ctl-group">
+        <span class="ctl-label">Split:</span>
+        <button class="toggle-btn active" data-split="all" onclick="setSplit(this,'all')">All</button>
+        <button class="toggle-btn" data-split="era:pre" onclick="setSplit(this,'era:pre')">Pre-2022</button>
+        <button class="toggle-btn" data-split="era:post" onclick="setSplit(this,'era:post')">Post-2022</button>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">VIX:</span>
+        <button class="toggle-btn active" data-vix="all" onclick="setVix(this,'all')">All</button>
+        <button class="toggle-btn" data-vix="vix:<20" onclick="setVix(this,'vix:<20')">&lt;20</button>
+        <button class="toggle-btn" data-vix="vix:20-30" onclick="setVix(this,'vix:20-30')">20-30</button>
+        <button class="toggle-btn" data-vix="vix:>30" onclick="setVix(this,'vix:>30')">&gt;30</button>
+      </div>
+    </div>
+
+    <!-- Meta strip -->
+    <div class="meta-strip" id="metaStrip">
+      <div class="meta-tile"><div class="label">Period</div><div class="value" id="metaPeriod" style="font-size:13px">—</div></div>
+      <div class="meta-tile"><div class="label">Trading days</div><div class="value" id="metaDays">—</div></div>
+      <div class="meta-tile"><div class="label">Trades filled</div><div class="value" id="metaFilled">—</div></div>
+      <div class="meta-tile"><div class="label">Cells skipped</div><div class="value" id="metaSkipped">—</div></div>
+      <div class="meta-tile"><div class="label">Calib MAE</div><div class="value" id="metaMAE">—</div><div class="sub" id="metaMedPct">—</div></div>
+    </div>
+
+    <div id="loadingMsg" class="no-data">Loading results.json …</div>
+    <div id="errorMsg" class="error-msg" style="display:none"></div>
+
+    <!-- Heatmap -->
+    <div class="heatmap-wrap" id="heatmapWrap" style="display:none">
+      <div class="heatmap-title">
+        Expectancy (% of max risk)
+        <span style="font-size:11px;color:var(--text-m);font-weight:400">Grey hatch = &gt;50% skip share · Click cell for details</span>
+      </div>
+      <table class="heatmap-table" id="heatmapTable"></table>
+      <div class="legend">
+        <span>Negative</span>
+        <div class="legend-bar"></div>
+        <span>Positive</span>
+        <span style="margin-left:16px;color:var(--text-m)">Darker = larger magnitude</span>
+      </div>
+    </div>
+
+    <!-- Detail panel -->
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-hdr">
+        <h3 id="detailTitle">Cell Detail</h3>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="detailVerdictBadge"></div>
+          <span class="close-btn" onclick="closeDetail()">×</span>
+        </div>
+      </div>
+      <div class="splits-row" id="detailSplitsRow"></div>
+      <div class="metric-grid" id="metricGrid"></div>
+      <div class="chart-wrap"><canvas id="retChart"></canvas></div>
+      <div id="holdoutDetail" style="display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--purple);font-weight:600;margin-bottom:10px">HOLDOUT OVERLAY</div>
+        <div class="metric-grid" id="holdoutMetricGrid"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ── Data store ──────────────────────────────────────────────────────────────
+let IS_DATA = null;    // parsed results.json
+let HO_DATA = null;    // parsed holdout_results.json (null until loaded)
+let holdoutLoaded = false;
+let retChart = null;
+
+// Active split filter: one ERA toggle and one VIX toggle
+let activeSplit = "all";    // "all" | "era:pre" | "era:post"
+let activeVix = "all";      // "all" | "vix:<20" | "vix:20-30" | "vix:>30"
+
+// Active detail cell
+let activeCell = null;      // {entry_time, k}
+let activeDetailSplit = "all";
+
+// Grid axes
+const ENTRY_TIMES = ["09:30","10:00","10:30","11:00","11:30","12:00",
+                     "12:30","13:00","13:30","14:00","14:30","15:00","15:30"];
+const K_VALUES = Array.from({length:26}, (_,i) => +(0.5 + 0.1*i).toFixed(1));
+
+// ── Record lookup helpers ────────────────────────────────────────────────────
+function lookupRecord(records, entry_time, k, split) {
+  if (!records) return null;
+  return records.find(r => r.entry_time === entry_time &&
+                           Math.abs(r.k - k) < 0.001 &&
+                           r.split === split) || null;
+}
+
+function effectiveSplit() {
+  // Combine era and vix toggles into a single split key
+  if (activeSplit === "all" && activeVix === "all") return "all";
+  if (activeSplit !== "all" && activeVix === "all") return activeSplit;
+  if (activeSplit === "all" && activeVix !== "all") return activeVix;
+  // Both set — fall back to "all" (combined not stored)
+  return "all";
+}
+
+// ── Fetch & initialise ──────────────────────────────────────────────────────
+async function loadResults() {
+  try {
+    const resp = await fetch("tools/entry-surface/results.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.url}`);
+    IS_DATA = await resp.json();
+    document.getElementById("loadingMsg").style.display = "none";
+    populateMeta(IS_DATA.metadata);
+    renderHeatmap();
+  } catch(e) {
+    document.getElementById("loadingMsg").style.display = "none";
+    const el = document.getElementById("errorMsg");
+    el.style.display = "";
+    el.textContent = "Failed to load results.json — run engine.py first. (" + e.message + ")";
+  }
+}
+
+async function toggleHoldout() {
+  const btn = document.getElementById("holdoutBtn");
+  if (holdoutLoaded) {
+    // toggle off
+    holdoutLoaded = false;
+    HO_DATA = null;
+    btn.classList.remove("loaded");
+    btn.textContent = "Load holdout overlay";
+    if (activeCell) renderDetailPanel(activeCell.entry_time, activeCell.k);
+    renderHeatmap();
+    return;
+  }
+  try {
+    btn.textContent = "Loading…";
+    const resp = await fetch("tools/entry-surface/holdout_results.json");
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    HO_DATA = await resp.json();
+    holdoutLoaded = true;
+    btn.classList.add("loaded");
+    btn.textContent = "Holdout overlay ON";
+    if (activeCell) renderDetailPanel(activeCell.entry_time, activeCell.k);
+    renderHeatmap();
+  } catch(e) {
+    btn.textContent = "Load holdout overlay";
+    alert("Could not load holdout_results.json: " + e.message);
+  }
+}
+
+function populateMeta(meta) {
+  if (!meta) return;
+  document.getElementById("metaPeriod").textContent =
+    (meta.start || "—") + " → " + (meta.end || "—");
+  document.getElementById("metaDays").textContent =
+    (meta.n_trading_days ?? "—").toLocaleString();
+  document.getElementById("metaFilled").textContent =
+    (meta.n_filled ?? "—").toLocaleString();
+  document.getElementById("metaSkipped").textContent =
+    (meta.n_skipped ?? "—").toLocaleString();
+  if (meta.calib_params) {
+    const mae = meta.calib_mae != null ? "$" + meta.calib_mae.toFixed(4) : "—";
+    document.getElementById("metaMAE").textContent = mae;
+    const pct = meta.calib_median_abs_pct_err != null
+      ? (meta.calib_median_abs_pct_err * 100).toFixed(1) + "% median|%err|"
+      : "";
+    document.getElementById("metaMedPct").textContent = pct;
+  }
+}
+
+// ── Colour scale ─────────────────────────────────────────────────────────────
+function expectancyColour(val, maxAbs) {
+  if (val == null) return "rgba(255,255,255,0.03)";
+  const t = Math.min(Math.abs(val) / Math.max(maxAbs, 1), 1);
+  if (val > 0) {
+    // green channel
+    const g = Math.round(100 + 112 * t);
+    const a = 0.15 + 0.65 * t;
+    return `rgba(0,${g},${Math.round(170 * (1-t*0.5))},${a.toFixed(2)})`;
+  } else {
+    // red channel
+    const r = Math.round(180 + 75 * t);
+    const a = 0.15 + 0.65 * t;
+    return `rgba(${r},${Math.round(77*(1-t))},${Math.round(106*(1-t))},${a.toFixed(2)})`;
+  }
+}
+
+// ── Heatmap render ────────────────────────────────────────────────────────────
+function renderHeatmap() {
+  if (!IS_DATA) return;
+  const split = effectiveSplit();
+  const records = IS_DATA.records;
+
+  // Compute max absolute expectancy for colour scale
+  let maxAbs = 1;
+  for (const t of ENTRY_TIMES) {
+    for (const k of K_VALUES) {
+      const rec = lookupRecord(records, t, k, split);
+      if (rec && rec.expectancy_pct != null) {
+        maxAbs = Math.max(maxAbs, Math.abs(rec.expectancy_pct));
+      }
+    }
+  }
+
+  const table = document.getElementById("heatmapTable");
+  table.innerHTML = "";
+
+  // Header row: k values
+  const thead = table.createTHead();
+  const hrow = thead.insertRow();
+  const thEmpty = document.createElement("th");
+  thEmpty.textContent = "T \\ k";
+  thEmpty.style.textAlign = "left";
+  thEmpty.style.paddingRight = "8px";
+  hrow.appendChild(thEmpty);
+  for (const k of K_VALUES) {
+    const th = document.createElement("th");
+    th.textContent = k.toFixed(1);
+    hrow.appendChild(th);
+  }
+
+  // Body rows: one per entry time
+  const tbody = table.createTBody();
+  for (const t of ENTRY_TIMES) {
+    const row = tbody.insertRow();
+    const labelTd = document.createElement("td");
+    labelTd.style.cssText = "font-size:10px;font-family:var(--mono);color:var(--text-m);padding-right:8px;white-space:nowrap;";
+    labelTd.textContent = t;
+    row.appendChild(labelTd);
+
+    for (const k of K_VALUES) {
+      const rec = lookupRecord(records, t, k, split);
+      const td = document.createElement("td");
+      const exp = rec ? rec.expectancy_pct : null;
+      const skipShare = rec ? rec.skip_share : null;
+
+      td.style.background = expectancyColour(exp, maxAbs);
+      if (skipShare != null && skipShare > 0.5) td.classList.add("hatched");
+
+      // Holdout overlay tint
+      if (holdoutLoaded && HO_DATA) {
+        const ho = lookupRecord(HO_DATA.records, t, k, split);
+        if (ho && ho.expectancy_pct != null) {
+          td.style.outline = ho.expectancy_pct > 0
+            ? "1px solid rgba(176,125,255,0.6)"
+            : "1px solid rgba(255,77,106,0.4)";
+        }
+      }
+
+      const span = document.createElement("span");
+      span.className = "cell-val";
+      span.textContent = exp != null ? (exp > 0 ? "+" : "") + exp.toFixed(1) : "—";
+      span.style.color = exp == null ? "var(--text-m)"
+        : exp > 0 ? "rgba(200,255,240,0.9)" : "rgba(255,200,200,0.9)";
+      td.appendChild(span);
+
+      td.dataset.t = t;
+      td.dataset.k = k;
+      td.onclick = () => onCellClick(t, k, td);
+
+      // Mark if currently selected
+      if (activeCell && activeCell.entry_time === t && Math.abs(activeCell.k - k) < 0.001) {
+        td.classList.add("selected");
+      }
+
+      row.appendChild(td);
+    }
+  }
+
+  document.getElementById("heatmapWrap").style.display = "";
+}
+
+// ── Cell click ────────────────────────────────────────────────────────────────
+function onCellClick(t, k, td) {
+  // Deselect previous
+  document.querySelectorAll(".heatmap-table td.selected").forEach(el => el.classList.remove("selected"));
+  td.classList.add("selected");
+  activeCell = {entry_time: t, k: parseFloat(k)};
+  activeDetailSplit = "all";
+  renderDetailPanel(t, parseFloat(k));
+}
+
+function closeDetail() {
+  document.getElementById("detailPanel").classList.remove("visible");
+  document.querySelectorAll(".heatmap-table td.selected").forEach(el => el.classList.remove("selected"));
+  activeCell = null;
+  if (retChart) { retChart.destroy(); retChart = null; }
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────────
+function renderDetailPanel(t, k) {
+  if (!IS_DATA) return;
+  const panel = document.getElementById("detailPanel");
+  panel.classList.add("visible");
+
+  document.getElementById("detailTitle").textContent =
+    `T = ${t}  ·  k = ${k.toFixed(1)}`;
+
+  // Build splits row
+  const splits = ["all","era:pre","era:post","vix:<20","vix:20-30","vix:>30"];
+  const splitsRow = document.getElementById("detailSplitsRow");
+  splitsRow.innerHTML = "";
+  for (const sp of splits) {
+    const chip = document.createElement("div");
+    chip.className = "split-chip" + (sp === activeDetailSplit ? " active" : "");
+    chip.textContent = sp;
+    chip.onclick = () => {
+      activeDetailSplit = sp;
+      renderDetailPanel(t, k);
+    };
+    splitsRow.appendChild(chip);
+  }
+
+  const rec = lookupRecord(IS_DATA.records, t, k, activeDetailSplit);
+  renderMetricGrid("metricGrid", rec);
+
+  // Verdict badge
+  const badge = document.getElementById("detailVerdictBadge");
+  if (rec) {
+    badge.innerHTML = `<span class="verdict-badge ${rec.verdict || 'inconclusive'}">${rec.verdict || "inconclusive"}</span>`;
+  } else {
+    badge.innerHTML = "";
+  }
+
+  // Return distribution chart (all split, using IS data)
+  const allRec = lookupRecord(IS_DATA.records, t, k, "all");
+  renderReturnChart(allRec);
+
+  // Holdout
+  const hoDiv = document.getElementById("holdoutDetail");
+  if (holdoutLoaded && HO_DATA) {
+    const hoRec = lookupRecord(HO_DATA.records, t, k, activeDetailSplit);
+    renderMetricGrid("holdoutMetricGrid", hoRec);
+    hoDiv.style.display = "";
+  } else {
+    hoDiv.style.display = "none";
+  }
+
+  // Scroll into view
+  panel.scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+
+function fmt(v, decimals=2, prefix="") {
+  if (v == null) return "—";
+  return prefix + (typeof v === "number" ? v.toFixed(decimals) : v);
+}
+
+function renderMetricGrid(containerId, rec) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = "";
+  if (!rec) {
+    grid.innerHTML = '<div style="color:var(--text-m);font-size:12px;padding:8px">No data for this split.</div>';
+    return;
+  }
+
+  const metrics = [
+    ["n_attempted",       "Attempted",          v => v?.toLocaleString(),       ""],
+    ["n_filled",          "Filled",              v => v?.toLocaleString(),       ""],
+    ["n_skipped_floor",   "Skipped (floor)",     v => v?.toLocaleString(),       ""],
+    ["skip_share",        "Skip share",          v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
+    ["expectancy_pct",    "Expectancy",          v => v != null ? (v>0?"+":"")+v.toFixed(2)+"%" : "—",
+                                                 rec?.expectancy_pct > 0 ? "pos" : rec?.expectancy_pct < 0 ? "neg" : ""],
+    ["expectancy_tstat",  "t-stat",              v => v != null ? v.toFixed(2) : "—",
+                                                 rec?.expectancy_tstat >= 2 ? "pos" : rec?.expectancy_tstat <= -2 ? "neg" : "neu"],
+    ["expectancy_se",     "SE",                  v => v != null ? v.toFixed(2)+"%" : "—", ""],
+    ["win_rate",          "Win rate",            v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
+    ["stop_rate",         "Stop rate",           v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
+    ["stop_rate_low",     "Stop rate (low)",     v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
+    ["touch_rate",        "Touch rate",          v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
+    ["median_credit_filled","Median credit",     v => v != null ? "$"+v.toFixed(2) : "—", ""],
+    ["worst_return",      "Worst return",        v => v != null ? v.toFixed(2)+"%" : "—", "neg"],
+    ["p05_return",        "5th pct return",      v => v != null ? v.toFixed(2)+"%" : "—", "neg"],
+  ];
+
+  for (const [key, label, fmt_fn, cls] of metrics) {
+    const card = document.createElement("div");
+    card.className = "metric-card";
+    const formatted = fmt_fn(rec[key]);
+    card.innerHTML = `
+      <div class="mlabel">${label}</div>
+      <div class="mval ${cls}">${formatted}</div>`;
+    grid.appendChild(card);
+  }
+}
+
+function renderReturnChart(rec) {
+  const canvas = document.getElementById("retChart");
+  if (retChart) { retChart.destroy(); retChart = null; }
+  if (!rec || rec.n_filled === 0 || rec.expectancy_pct == null) return;
+
+  // We don't have individual returns in the JSON — plot key quantile markers
+  const exp = rec.expectancy_pct;
+  const p05 = rec.p05_return;
+  const worst = rec.worst_return;
+  const win_rate = rec.win_rate != null ? rec.win_rate * 100 : null;
+
+  // Bar chart: summary stats
+  retChart = new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: ["Worst", "5th Pct", "Expectancy", "Win Rate (scaled)"],
+      datasets: [{
+        data: [worst, p05, exp, win_rate != null ? win_rate - 50 : null],
+        backgroundColor: [
+          "#ff4d6a88", "#ff4d6a44",
+          exp > 0 ? "#00d4aa88" : "#ff4d6a88",
+          "#4d9fff44",
+        ],
+        borderColor: [
+          "#ff4d6a", "#ff4d6a",
+          exp > 0 ? "#00d4aa" : "#ff4d6a",
+          "#4d9fff",
+        ],
+        borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataIndex === 3) return ` Win rate: ${win_rate?.toFixed(1)}%`;
+              return ` ${ctx.parsed.y?.toFixed(2)}% of max risk`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#5a6577", font: {size:10} } },
+        y: {
+          grid: { color: "rgba(255,255,255,0.04)" },
+          ticks: { color: "#5a6577", font: {size:10}, callback: v => v.toFixed(0)+"%" },
+          title: { display: true, text: "% of max risk", color: "#5a6577", font:{size:10} }
+        }
+      }
+    }
+  });
+}
+
+// ── Toggle controls ───────────────────────────────────────────────────────────
+function setSplit(btn, val) {
+  document.querySelectorAll("[data-split]").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeSplit = val;
+  renderHeatmap();
+}
+
+function setVix(btn, val) {
+  document.querySelectorAll("[data-vix]").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  activeVix = val;
+  renderHeatmap();
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadResults();
+</script>
+</body>
+</html>
