@@ -24,6 +24,7 @@ REPO      = Path(__file__).resolve().parents[2]
 DATA      = REPO / "trading_data"
 TOOLS     = Path(__file__).resolve().parent
 CALIB_CSV = TOOLS / "calibration" / "calib_dataset.csv"
+VIXD_DIR  = TOOLS / "calibration" / "vixd"
 
 # ── Parameterised constants ───────────────────────────────────────────────────
 ENTRY_TIMES = [
@@ -166,9 +167,9 @@ def settlement_time(day_spx: pd.DataFrame) -> pd.Timestamp | None:
 
 def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
     """
-    3-parameter model: IV = (VIX/100) × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0.
-    Skew term is always c·|m| (no c·m² option).
-    VIX enters only through sigma_base = VIX/100; no separate VIX-level term.
+    3-parameter model: IV = (VIXD/100) × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0.
+    σ_base = VIXD/100 — most recent 1-min VIXD bar at or before each print.
+    VIXD files must exist at VIXD_DIR/{expiry_date}.csv; hard error if any missing.
     Returns (params, model_form, report).  params = (a0, b, c).  model_form = "abs_m".
     """
     if not CALIB_CSV.exists():
@@ -207,12 +208,35 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
     calib   = calib[valid].copy().reset_index(drop=True)
     spx_idx = spx_idx[valid]; vix_idx = vix_idx[valid]; ts_us = ts_us[valid]
 
-    S_arr     = spx_cl[spx_idx]
-    vix_arr   = vix_cl[vix_idx]
-    sigma_arr = vix_arr / 100.0
-    K_arr     = calib["strike"].values.astype(float)
-    px_arr    = calib["price_last"].values.astype(float)
-    vol_arr   = pd.to_numeric(calib["volume"], errors="coerce").fillna(0).values
+    S_arr   = spx_cl[spx_idx]
+    K_arr   = calib["strike"].values.astype(float)
+    px_arr  = calib["price_last"].values.astype(float)
+    vol_arr = pd.to_numeric(calib["volume"], errors="coerce").fillna(0).values
+
+    # Load VIXD files (one per calibration day) and compute per-print σ_base
+    if not VIXD_DIR.exists():
+        raise RuntimeError(f"HARD ERROR: VIXD directory missing: {VIXD_DIR}")
+    sigma_arr = np.zeros(len(calib), dtype=float)
+    for exp in sorted(calib["expiry_date"].unique()):
+        path = VIXD_DIR / f"{exp}.csv"
+        if not path.exists():
+            raise RuntimeError(
+                f"HARD ERROR: VIXD file missing for calibration day {exp}: {path}"
+            )
+        vixd_df  = _parse_barchart_csv(path)
+        vixd_us  = vixd_df.index.asi8
+        vixd_cl  = vixd_df["Close"].values
+        day_mask = (calib["expiry_date"].astype(str) == str(exp)).values
+        day_ts   = ts_us[day_mask]
+        vi = np.searchsorted(vixd_us, day_ts, side="right") - 1
+        if (vi < 0).any():
+            raise RuntimeError(
+                f"HARD ERROR: No VIXD bar at or before earliest print on {exp}"
+            )
+        sigma_arr[day_mask] = vixd_cl[vi] / 100.0
+        print(f"      VIXD {exp}: {len(vixd_df)} bars  "
+              f"range {vixd_cl.min():.2f}–{vixd_cl.max():.2f}  "
+              f"({day_mask.sum()} prints mapped)")
 
     expiry_us = np.array([
         _ts_to_us(
@@ -230,6 +254,7 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
     K_arr     = K_arr[valid2];    px_arr    = px_arr[valid2]
     vol_arr   = vol_arr[valid2];  T_rem_arr = T_rem_arr[valid2]
     mins_rem  = mins_rem[valid2]; calib     = calib[valid2].reset_index(drop=True)
+    ts_us     = ts_us[valid2]
 
     denom = sigma_arr * np.sqrt(np.maximum(T_rem_arr, 1e-12))
     m_arr = np.log(K_arr / S_arr) / np.maximum(denom, 1e-12)

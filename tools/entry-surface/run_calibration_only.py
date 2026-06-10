@@ -12,7 +12,7 @@ params, model_form, report = run_calibration(spx, vix)
 p = report["params"]
 gate = report["gate_median_abs_pct_err"]
 print(f"\n{'='*60}")
-print(f"Model:   IV = σ_base × max(a0 + b·m + c·|m|, 0.05)")
+print(f"Model:   IV = (VIXD/100) × max(a0 + b·m + c·|m|, 0.05)  [σ_base = VIXD per print]")
 print(f"Params:  a0={p['a0']:.4f}   b={p['b']:.4f}   c={p['c']:.4f}")
 print(f"{'='*60}")
 print(f"Overall  MAE=${report['overall_mae']:.4f}   "
