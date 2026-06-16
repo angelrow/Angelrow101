@@ -100,10 +100,24 @@ a { color: inherit; text-decoration: none; }
     transparent 2px, transparent 6px
   ) !important;
 }
+/* FOGGED cells — calibration bias exceeds signal; desaturated diagonal stripe */
+.heatmap-table td.fogged {
+  background: repeating-linear-gradient(
+    135deg,
+    rgba(90,101,119,0.18) 0px, rgba(90,101,119,0.18) 2px,
+    rgba(20,25,32,0.85)   2px, rgba(20,25,32,0.85)   7px
+  ) !important;
+  color: var(--text-m) !important;
+}
+.heatmap-table td.fogged .cell-val { opacity: 0.45; }
+/* All-skipped cells (credit floor) */
+.heatmap-table td.all-skipped { background: rgba(20,25,32,0.6) !important; }
 
 /* Legend */
-.legend { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 10px; color: var(--text-m); }
-.legend-bar { height: 8px; width: 120px; border-radius: 3px; background: linear-gradient(to right, #ff4d6a, #141920, #00d4aa); }
+.legend { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 10px; color: var(--text-m); flex-wrap: wrap; }
+.legend-bar { height: 8px; width: 100px; border-radius: 3px; background: linear-gradient(to right, #ff4d6a, #141920, #00d4aa); }
+.legend-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+.legend-item { display: flex; align-items: center; gap: 5px; }
 
 /* ── Detail panel ── */
 .detail-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
@@ -165,12 +179,6 @@ a { color: inherit; text-decoration: none; }
     <!-- Controls -->
     <div class="controls" id="splitControls">
       <div class="ctl-group">
-        <span class="ctl-label">Split:</span>
-        <button class="toggle-btn active" data-split="all" onclick="setSplit(this,'all')">All</button>
-        <button class="toggle-btn" data-split="era:pre" onclick="setSplit(this,'era:pre')">Pre-2022</button>
-        <button class="toggle-btn" data-split="era:post" onclick="setSplit(this,'era:post')">Post-2022</button>
-      </div>
-      <div class="ctl-group">
         <span class="ctl-label">VIX:</span>
         <button class="toggle-btn active" data-vix="all" onclick="setVix(this,'all')">All</button>
         <button class="toggle-btn" data-vix="vix:<20" onclick="setVix(this,'vix:<20')">&lt;20</button>
@@ -195,14 +203,15 @@ a { color: inherit; text-decoration: none; }
     <div class="heatmap-wrap" id="heatmapWrap" style="display:none">
       <div class="heatmap-title">
         Expectancy (% of max risk)
-        <span style="font-size:11px;color:var(--text-m);font-weight:400">Grey hatch = &gt;50% skip share · Click cell for details</span>
+        <span style="font-size:11px;color:var(--text-m);font-weight:400">Row labels show fog width · Click cell for details</span>
       </div>
       <table class="heatmap-table" id="heatmapTable"></table>
       <div class="legend">
-        <span>Negative</span>
-        <div class="legend-bar"></div>
-        <span>Positive</span>
-        <span style="margin-left:16px;color:var(--text-m)">Darker = larger magnitude</span>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgba(0,180,140,0.7)"></div><span>Readable +</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgba(255,77,106,0.7)"></div><span>Readable −</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:repeating-linear-gradient(135deg,rgba(90,101,119,0.18) 0px,rgba(90,101,119,0.18) 2px,rgba(20,25,32,0.85) 2px,rgba(20,25,32,0.85) 7px)"></div><span>Fogged</span></div>
+        <div class="legend-item"><div class="legend-swatch" style="background:rgba(20,25,32,0.6);border:1px solid rgba(255,255,255,0.08)"></div><span>All skipped</span></div>
+        <span style="margin-left:8px;color:var(--text-m);font-size:11px">Darker = larger magnitude</span>
       </div>
     </div>
 
@@ -234,8 +243,7 @@ let HO_DATA = null;    // parsed holdout_results.json (null until loaded)
 let holdoutLoaded = false;
 let retChart = null;
 
-// Active split filter: one ERA toggle and one VIX toggle
-let activeSplit = "all";    // "all" | "era:pre" | "era:post"
+// Active split filter: VIX band toggle only
 let activeVix = "all";      // "all" | "vix:<20" | "vix:20-30" | "vix:>30"
 
 // Active detail cell
@@ -256,12 +264,7 @@ function lookupRecord(records, entry_time, k, split) {
 }
 
 function effectiveSplit() {
-  // Combine era and vix toggles into a single split key
-  if (activeSplit === "all" && activeVix === "all") return "all";
-  if (activeSplit !== "all" && activeVix === "all") return activeSplit;
-  if (activeSplit === "all" && activeVix !== "all") return activeVix;
-  // Both set — fall back to "all" (combined not stored)
-  return "all";
+  return activeVix;
 }
 
 // ── Fetch & initialise ──────────────────────────────────────────────────────
@@ -380,23 +383,40 @@ function renderHeatmap() {
     hrow.appendChild(th);
   }
 
+  // Fog widths from metadata (only present after backtest run)
+  const fogWidths = IS_DATA.metadata && IS_DATA.metadata.fog_widths
+    ? IS_DATA.metadata.fog_widths : null;
+
   // Body rows: one per entry time
   const tbody = table.createTBody();
   for (const t of ENTRY_TIMES) {
     const row = tbody.insertRow();
     const labelTd = document.createElement("td");
     labelTd.style.cssText = "font-size:10px;font-family:var(--mono);color:var(--text-m);padding-right:8px;white-space:nowrap;";
-    labelTd.textContent = t;
+    if (fogWidths && fogWidths[t] != null) {
+      const fw = fogWidths[t].fog_width_pct != null ? fogWidths[t].fog_width_pct.toFixed(1) : "?";
+      labelTd.innerHTML = `${t}<br><span style="font-size:9px;opacity:0.6">fog±${fw}%</span>`;
+    } else {
+      labelTd.textContent = t;
+    }
     row.appendChild(labelTd);
 
     for (const k of K_VALUES) {
       const rec = lookupRecord(records, t, k, split);
       const td = document.createElement("td");
       const exp = rec ? rec.expectancy_pct : null;
-      const skipShare = rec ? rec.skip_share : null;
+      const nFilled = rec ? rec.n_filled : null;
 
-      td.style.background = expectancyColour(exp, maxAbs);
-      if (skipShare != null && skipShare > 0.5) td.classList.add("hatched");
+      if (nFilled === 0) {
+        // All skipped — dark blank
+        td.classList.add("all-skipped");
+      } else if (split === "all" && rec && rec.readable === false) {
+        // Signal below fog threshold
+        td.classList.add("fogged");
+        td.style.background = "";
+      } else {
+        td.style.background = expectancyColour(exp, maxAbs);
+      }
 
       // Holdout overlay tint
       if (holdoutLoaded && HO_DATA) {
@@ -458,7 +478,7 @@ function renderDetailPanel(t, k) {
     `T = ${t}  ·  k = ${k.toFixed(1)}`;
 
   // Build splits row
-  const splits = ["all","era:pre","era:post","vix:<20","vix:20-30","vix:>30"];
+  const splits = ["all","vix:<20","vix:20-30","vix:>30"];
   const splitsRow = document.getElementById("detailSplitsRow");
   splitsRow.innerHTML = "";
   for (const sp of splits) {
@@ -524,6 +544,10 @@ function renderMetricGrid(containerId, rec) {
     ["expectancy_tstat",  "t-stat",              v => v != null ? v.toFixed(2) : "—",
                                                  rec?.expectancy_tstat >= 2 ? "pos" : rec?.expectancy_tstat <= -2 ? "neg" : "neu"],
     ["expectancy_se",     "SE",                  v => v != null ? v.toFixed(2)+"%" : "—", ""],
+    ["fog_width_pct",     "Fog width",           v => v != null ? "±"+v.toFixed(2)+"%" : "—",
+                                                 rec?.fog_width_pct != null ? "neu" : ""],
+    ["readable",          "Readable",            v => v == null ? "—" : v ? "YES" : "FOGGED",
+                                                 rec?.readable === true ? "pos" : rec?.readable === false ? "neg" : ""],
     ["win_rate",          "Win rate",            v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
     ["stop_rate",         "Stop rate",           v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
     ["stop_rate_low",     "Stop rate (low)",     v => v != null ? (v*100).toFixed(1)+"%" : "—", ""],
@@ -601,13 +625,6 @@ function renderReturnChart(rec) {
 }
 
 // ── Toggle controls ───────────────────────────────────────────────────────────
-function setSplit(btn, val) {
-  document.querySelectorAll("[data-split]").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  activeSplit = val;
-  renderHeatmap();
-}
-
 function setVix(btn, val) {
   document.querySelectorAll("[data-vix]").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");

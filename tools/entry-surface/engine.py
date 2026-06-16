@@ -44,10 +44,24 @@ SLIPPAGE         = 0.05
 MULTIPLIER       = 100
 RISK_FREE        = 0.045
 DIV_YIELD        = 0.013
-ERA_SPLIT_DATE   = pd.Timestamp("2022-05-16", tz="America/New_York")
-IN_SAMPLE_END    = pd.Timestamp("2024-05-31", tz="America/New_York")
-HOLDOUT_START    = pd.Timestamp("2024-06-01", tz="America/New_York")
+# Road A window — VIXD history available from Apr 2023
+IS_START         = pd.Timestamp("2023-04-03", tz="America/New_York")
+IN_SAMPLE_END    = pd.Timestamp("2025-05-31", tz="America/New_York")
+HOLDOUT_START    = pd.Timestamp("2025-06-01", tz="America/New_York")
+HOLDOUT_END      = pd.Timestamp("2026-05-29", tz="America/New_York")
 STALE_ENTRY_WINDOW = 5   # minutes
+
+# Road A fog bands — signed median bias ($ per option) from VIXD calibration report.
+# Net spread credit bias = FOG_NET_SCALE × band_bias (short − long, conservative approx.)
+_FOG_BAND_BIAS = {
+    "09:30": 0.38,  "10:00": 0.38,
+    "10:30": 1.70,  "11:00": 1.70,  "11:30": 1.70,
+    "12:00": 1.70,  "12:30": 1.70,
+    "13:00": 1.01,  "13:30": 1.01,  "14:00": 1.01,
+    "14:30": 1.01,
+    "15:00": 0.51,  "15:30": 0.51,
+}
+FOG_NET_SCALE = 0.45  # net spread bias ≈ 0.45 × single-leg band bias (stated approx.)
 
 # ── Unit helpers ──────────────────────────────────────────────────────────────
 US_PER_MIN = 60_000_000   # microseconds per minute
@@ -432,27 +446,28 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
 def simulate_day(
     date: pd.Timestamp,
     day_spx: pd.DataFrame,
-    vix_ts_us: np.ndarray,   # full VIX index in μs (from vix.index.asi8)
+    vix_ts_us: np.ndarray,    # VIX index in μs — for vix_band classification only
     vix_close: np.ndarray,
+    vixd_ts_us: np.ndarray,   # VIXD index in μs — for σ_base = VIXD/100
+    vixd_close: np.ndarray,
     params: tuple,
     skipped_rows: list,
     use_abs_m: bool = False,
 ) -> list:
     """
     Simulate all (T, k) cells for one trading day.
-    LOOK-AHEAD GUARD: all VIX lookups use at-or-before the SPX bar timestamp.
+    σ_base = VIXD/100 at each bar. VIX retained only for vix_band split.
+    LOOK-AHEAD GUARD: all vol lookups use at-or-before the SPX bar timestamp.
     """
     settle_ts = settlement_time(day_spx)
     if settle_ts is None:
         return []
 
-    settle_us  = _ts_to_us(settle_ts)   # μs — consistent with .asi8
+    settle_us  = _ts_to_us(settle_ts)
     tz         = settle_ts.tzinfo
-    spx_us     = day_spx.index.asi8      # μs
+    spx_us     = day_spx.index.asi8
     spx_close  = day_spx["Close"].values
     spx_low    = day_spx["Low"].values
-
-    era_val  = "post" if date >= ERA_SPLIT_DATE else "pre"
     results: list = []
 
     for t_str in ENTRY_TIMES:
@@ -464,7 +479,6 @@ def simulate_day(
         if entry_us >= settle_us:
             continue
 
-        # SPX entry bar at-or-before entry_us, within stale window
         idx_e = int(np.searchsorted(spx_us, entry_us, side="right")) - 1
         if idx_e < 0:
             continue
@@ -476,14 +490,18 @@ def simulate_day(
 
         S = float(spx_close[idx_e])
 
-        # VIX at entry (LOOK-AHEAD GUARD: use actual_us, never a later timestamp)
-        # LOOK-AHEAD GUARD LINE: vix lookup uses actual_us (SPX bar timestamp), not entry_us
-        vi_e = int(np.searchsorted(vix_ts_us, actual_us, side="right")) - 1
-        if vi_e < 0:
+        # VIX at entry — for vix_band only (LOOK-AHEAD GUARD: at-or-before actual_us)
+        vi_vix_e = int(np.searchsorted(vix_ts_us, actual_us, side="right")) - 1
+        if vi_vix_e < 0:
             continue
-        vix_val  = float(vix_close[vi_e])
-        sigma_b  = vix_val / 100.0
-        vix_sc_e = vix_val / 20.0
+        vix_val = float(vix_close[vi_vix_e])
+        vix_band = "<20" if vix_val < 20 else ("20-30" if vix_val <= 30 else ">30")
+
+        # VIXD at entry — σ_base = VIXD/100 (LOOK-AHEAD GUARD: at-or-before actual_us)
+        vi_vixd_e = int(np.searchsorted(vixd_ts_us, actual_us, side="right")) - 1
+        if vi_vixd_e < 0:
+            vi_vixd_e = 0   # clamp: VIXD may start at 09:31
+        sigma_b = float(vixd_close[vi_vixd_e]) / 100.0
 
         mins_rem = (settle_us - actual_us) / US_PER_MIN
         if mins_rem <= 0:
@@ -506,7 +524,6 @@ def simulate_day(
         credit  = (p_s_e - p_l_e) - SLIPPAGE     # (N_K,)
 
         filled_mask = credit >= CREDIT_FLOOR
-        vix_band    = "<20" if vix_val < 20 else ("20-30" if vix_val <= 30 else ">30")
 
         # Record skipped cells
         for j in range(N_K):
@@ -524,7 +541,7 @@ def simulate_day(
                     "date": date.date(), "entry_time": t_str, "k": float(K_VALUES[j]),
                     "status": "skipped", "credit": float(credit[j]),
                     "vix_entry": vix_val, "stale_entry": is_stale,
-                    "era": era_val, "vix_band": vix_band,
+                    "vix_band": vix_band,
                 })
             continue
 
@@ -571,20 +588,20 @@ def simulate_day(
                     })
             continue
 
-        # VIX for each post-entry bar (vectorised searchsorted)
-        # LOOK-AHEAD GUARD LINE: vix lookup uses post_us (SPX bar timestamps), never later
-        vi = np.searchsorted(vix_ts_us, post_us, side="right") - 1
-        vi = np.maximum(vi, 0)
-        pv   = vix_close[vi]                                # (n_bars,)
-        psig = pv / 100.0
-        pvsc = pv / 20.0
-        pT   = np.maximum((settle_us - post_us) / US_PER_MIN, 0.0) / (252*390)
+        # VIXD for each post-entry bar — σ_base = VIXD/100
+        # LOOK-AHEAD GUARD LINE: vixd lookup uses post_us (SPX bar timestamps), never later
+        vi_vix  = np.searchsorted(vix_ts_us,  post_us, side="right") - 1
+        vi_vixd = np.searchsorted(vixd_ts_us, post_us, side="right") - 1
+        vi_vix  = np.maximum(vi_vix,  0)
+        vi_vixd = np.maximum(vi_vixd, 0)   # clamp for 09:31 VIXD start
+        pv_vixd = vixd_close[vi_vixd]      # (n_bars,)
+        psig    = pv_vixd / 100.0
+        pT      = np.maximum((settle_us - post_us) / US_PER_MIN, 0.0) / (252*390)
 
         # Broadcast: (n_bars,1) × (1,N_K) → (n_bars,N_K)
         S_cl   = post_cl[:,None]
         S_lo   = post_lo[:,None]
         sig_t  = psig[:,None]
-        vsc_t  = pvsc[:,None]
         T_t    = pT[:,None]
         sqT    = np.sqrt(np.maximum(T_t, 1e-12))
         denom_t = sig_t * sqT
@@ -649,7 +666,7 @@ def simulate_day(
                     "date": date.date(), "entry_time": t_str, "k": float(K_VALUES[j]),
                     "status": "skipped", "credit": float(credit[j]),
                     "vix_entry": vix_val, "stale_entry": is_stale,
-                    "era": era_val, "vix_band": vix_band,
+                    "vix_band": vix_band,
                 })
             else:
                 results.append({
@@ -734,11 +751,9 @@ def aggregate_results(trades: list, label: str) -> list:
             base = df[(df["entry_time"]==t_str) & (np.abs(df["k"]-k)<0.001)]
             if len(base) == 0:
                 continue
-            for split in ["all","era:pre","era:post","vix:<20","vix:20-30","vix:>30"]:
+            for split in ["all", "vix:<20", "vix:20-30", "vix:>30"]:
                 if split == "all":
                     sub = base
-                elif split.startswith("era:"):
-                    sub = base[base["era"]==split[4:]]
                 else:
                     sub = base[base["vix_band"]==split[4:]]
                 rec = {"window": label, "entry_time": t_str, "k": float(k), "split": split}
@@ -747,18 +762,50 @@ def aggregate_results(trades: list, label: str) -> list:
     return records
 
 
-def find_positive_regions(records: list) -> list:
+def compute_fog_widths(trades: list) -> dict:
+    """
+    Per-column fog width (% of max risk).
+    net_bias = FOG_NET_SCALE × band_bias  (conservative short−long approx.)
+    fog_width_pct = (net_bias × 100) / median_max_risk_of_filled_in_column
+    """
+    df = pd.DataFrame(trades)
+    result = {}
+    fallback_risk = (SPREAD_WIDTH - CREDIT_FLOOR) * MULTIPLIER
+    for t_str in ENTRY_TIMES:
+        band_bias = _FOG_BAND_BIAS.get(t_str, 1.70)
+        net_bias  = FOG_NET_SCALE * band_bias
+        filled = df[(df["entry_time"] == t_str) & (df["status"] == "filled")]
+        med_risk = float(filled["max_risk"].median()) if len(filled) > 0 else fallback_risk
+        fog_pct  = (net_bias * 100.0) / med_risk if med_risk > 0 else float("inf")
+        result[t_str] = {
+            "band_bias_usd":   round(band_bias, 4),
+            "net_bias_usd":    round(net_bias,  4),
+            "median_max_risk": round(med_risk,  2),
+            "fog_width_pct":   round(fog_pct,   4),
+        }
+    return result
+
+
+def find_positive_regions(records: list, fog_widths: dict | None = None) -> list:
     t_idx = {t: i for i, t in enumerate(ENTRY_TIMES)}
     k_idx = {float(k): j for j, k in enumerate(K_VALUES)}
-    grid  = np.full((len(ENTRY_TIMES), N_K), np.nan)
+    grid     = np.full((len(ENTRY_TIMES), N_K), np.nan)
+    fog_grid = np.ones((len(ENTRY_TIMES), N_K), dtype=bool)   # True = fogged
     for r in records:
-        if r["split"]=="all" and r.get("expectancy_tstat") is not None:
+        if r["split"] == "all" and r.get("expectancy_tstat") is not None:
             i = t_idx.get(r["entry_time"])
-            j = k_idx.get(round(float(r["k"]),1))
+            j = k_idx.get(round(float(r["k"]), 1))
             if i is not None and j is not None:
                 grid[i, j] = r["expectancy_tstat"]
+                if fog_widths:
+                    fw  = fog_widths.get(r["entry_time"], {}).get("fog_width_pct", float("inf"))
+                    exp = r.get("expectancy_pct") or 0.0
+                    fog_grid[i, j] = abs(exp) <= fw
+                else:
+                    fog_grid[i, j] = False
 
-    mask = (grid >= 2.0).astype(int)
+    # Only READABLE cells (|exp| > fog_width) with t ≥ 2 count as positive
+    mask = ((grid >= 2.0) & ~fog_grid).astype(int)
     seen = []
     hist = np.zeros(N_K, dtype=int)
     for r in range(len(ENTRY_TIMES)):
@@ -793,41 +840,59 @@ def find_positive_regions(records: list) -> list:
 
 def main():
     print("="*70)
-    print("0DTE Entry-Surface Backtest Engine")
+    print("0DTE Entry-Surface Backtest  —  Road A (VIXD model, fog bands)")
     print("="*70)
 
-    import time
+    import time, calendar
     t_start = time.time()
 
-    print("\n[1/5] Loading SPX and VIX bars …")
+    # ── [1/6] Load SPX, VIX, VIXD ────────────────────────────────────────────
+    print("\n[1/6] Loading SPX, VIX, VIXD bars …")
     spx = load_all_bars("spx")
     vix = load_all_bars("vix")
-    vix_ts_us = vix.index.asi8    # μs — pre-extracted for fast searchsorted
+    vix_ts_us = vix.index.asi8
     vix_close = vix["Close"].values
-    print(f"      SPX {len(spx):,}  VIX {len(vix):,}  ({time.time()-t_start:.1f}s)")
 
-    print("\n[2/5] Running calibration …")
-    t1 = time.time()
-    params, model_form, calib_report = run_calibration(spx, vix)
-    use_abs_m = (model_form == "abs_m")
-    p = calib_report["params"]
-    gate_pct = calib_report["gate_median_abs_pct_err"]
-    print(f"      model={model_form}  a0={p['a0']:.4f}  b={p['b']:.4f}  c={p['c']:.4f}")
-    print(f"      MAE=${calib_report['overall_mae']:.4f}   "
-          f"gate median|%err|={gate_pct*100:.2f}%  ({time.time()-t1:.1f}s)")
-    if calib_report["warning_unreliable"]:
-        print(f"\n  *** WARNING: gate median |%err| {gate_pct*100:.1f}% > 35% — "
-              "expectancy outputs may be unreliable ***\n")
-    if calib_report.get("biased_days"):
-        for bd in calib_report["biased_days"]:
-            d = calib_report["per_expiry"][bd]
-            print(f"  *** BIAS FLAG: {bd}  signed_median=${d['signed_median_err']:.2f} ***\n")
+    with open(DATA / "manifest.json") as mf:
+        _manifest = json.load(mf)
+    if "vixd" not in _manifest:
+        months = []
+        y, mo = 2023, 4
+        while (y, mo) <= (2026, 5):
+            months.append(f"{calendar.month_name[mo].upper()} {y}")
+            mo += 1
+            if mo > 12:
+                mo = 1; y += 1
+        raise RuntimeError(
+            "HARD ERROR: 'vixd' key missing from trading_data/manifest.json.\n"
+            f"Need {len(months)} months of 1-min VIXD history: {months[0]} … {months[-1]}.\n"
+            "Download from Barchart.com, place in trading_data/, and add to manifest.json "
+            "under key 'vixd' following the same pattern as 'spx' and 'vix'."
+        )
+    vixd = load_all_bars("vixd")
+    vixd_ts_us = vixd.index.asi8
+    vixd_close = vixd["Close"].values
+    print(f"      SPX {len(spx):,}  VIX {len(vix):,}  VIXD {len(vixd):,}  ({time.time()-t_start:.1f}s)")
+
+    # ── [2/6] Frozen calibration params ──────────────────────────────────────
+    print("\n[2/6] Loading frozen calibration params …")
     calib_path = TOOLS / "calibration_report.json"
-    with open(calib_path, "w") as f:
-        json.dump(calib_report, f, indent=2)
-    print(f"      → {calib_path.relative_to(REPO)}")
+    with open(calib_path) as cf:
+        calib_report = json.load(cf)
+    p          = calib_report["params"]
+    params     = (p["a0"], p["b"], p["c"])
+    model_form = calib_report.get("model_form", "abs_m")
+    use_abs_m  = (model_form == "abs_m")
+    print(f"      [FROZEN from {calib_path.name}]  "
+          f"a0={params[0]:.4f}  b={params[1]:.4f}  c={params[2]:.4f}  form={model_form}")
+    gate_pct = calib_report.get("gate_median_abs_pct_err", float("nan"))
+    print(f"      Calibration gate (px≥$0.50): {gate_pct*100:.1f}%  "
+          f"[{'PASS' if gate_pct <= 0.35 else 'FAIL — Road A bias bands apply'}]")
+    if calib_report.get("biased_days"):
+        print(f"      Biased days: {calib_report['biased_days']}")
 
-    print("\n[3/5] Identifying trading days …")
+    # ── [3/6] Trading days + VIXD coverage check ─────────────────────────────
+    print("\n[3/6] Identifying trading days and validating VIXD coverage …")
     trading_days = []
     for d in sorted(set(spx.index.date)):
         try:
@@ -837,14 +902,23 @@ def main():
         if len(rth) >= 10:
             trading_days.append(pd.Timestamp(str(d), tz="America/New_York"))
 
-    is_days = [d for d in trading_days
-               if pd.Timestamp("2016-01-04", tz="America/New_York") <= d <= IN_SAMPLE_END]
-    ho_days = [d for d in trading_days
-               if HOLDOUT_START <= d <= pd.Timestamp("2026-05-29", tz="America/New_York")]
-    print(f"      In-sample: {len(is_days)}   Holdout: {len(ho_days)}")
+    is_days = [d for d in trading_days if IS_START <= d <= IN_SAMPLE_END]
+    ho_days = [d for d in trading_days if HOLDOUT_START <= d <= HOLDOUT_END]
 
-    print("\n[4/5] Running backtest …")
-    stale_cnt = 0
+    vixd_dates = set(vixd.index.date)
+    missing_vixd = [d for d in is_days + ho_days if d.date() not in vixd_dates]
+    if missing_vixd:
+        raise RuntimeError(
+            f"HARD ERROR: VIXD missing for {len(missing_vixd)} trading days. "
+            f"First: {missing_vixd[0].date()}  Last: {missing_vixd[-1].date()}"
+        )
+    print(f"      In-sample: {len(is_days)} days ({IS_START.date()} → {IN_SAMPLE_END.date()})")
+    print(f"      Holdout:   {len(ho_days)} days ({HOLDOUT_START.date()} → {HOLDOUT_END.date()})")
+    print(f"      VIXD coverage: OK ({len(vixd_dates)} dates loaded)")
+
+    # ── [4/6] Backtest ────────────────────────────────────────────────────────
+    print("\n[4/6] Running backtest …")
+    stale_cnt    = 0
     skipped_rows: list = []
     all_is: list = []
     all_ho: list = []
@@ -853,15 +927,19 @@ def main():
     for label, days, trades in [("in_sample", is_days, all_is), ("holdout", ho_days, all_ho)]:
         for i, date in enumerate(days):
             if (i+1) % 250 == 0:
-                elapsed = time.time()-t2
-                print(f"      {label}: {i+1}/{len(days)}  {elapsed:.0f}s elapsed", flush=True)
+                print(f"      {label}: {i+1}/{len(days)}  {time.time()-t2:.0f}s", flush=True)
             try:
                 day_spx = spx.loc[str(date.date())]
                 if isinstance(day_spx, pd.Series):
                     day_spx = day_spx.to_frame().T
             except KeyError:
                 continue
-            day_trades = simulate_day(date, day_spx, vix_ts_us, vix_close, params, skipped_rows, use_abs_m)
+            day_trades = simulate_day(
+                date, day_spx,
+                vix_ts_us, vix_close,
+                vixd_ts_us, vixd_close,
+                params, skipped_rows, use_abs_m,
+            )
             trades.extend(day_trades)
             stale_cnt += sum(1 for r in day_trades if r.get("stale_entry"))
 
@@ -873,65 +951,104 @@ def main():
     print(f"      HO filled={n_ho_f:,}  skipped={n_ho_s:,}")
     print(f"      Stale entry bars: {stale_cnt}  ({time.time()-t2:.1f}s)")
 
-    print("\n[5/5] Writing outputs …")
+    # ── [5/6] Fog bands + record annotation ──────────────────────────────────
+    print("\n[5/6] Computing fog widths and annotating records …")
+    fog_widths = compute_fog_widths(all_is)
+    is_recs    = aggregate_results(all_is, "in_sample")
+    for rec in is_recs:
+        if rec["split"] == "all":
+            fw  = fog_widths.get(rec["entry_time"], {}).get("fog_width_pct", float("inf"))
+            exp = rec.get("expectancy_pct") or 0.0
+            rec["fog_width_pct"] = round(fw, 4)
+            rec["readable"]      = rec.get("expectancy_pct") is not None and abs(exp) > fw
+    ho_recs = aggregate_results(all_ho, "holdout")
+
+    # ── [6/6] Write outputs ───────────────────────────────────────────────────
+    print("\n[6/6] Writing outputs …")
     skip_path = TOOLS / "skipped_log.csv"
     (pd.DataFrame(skipped_rows) if skipped_rows else
      pd.DataFrame(columns=["date","entry_time","k","K_short","K_long","credit","vix"])
     ).to_csv(skip_path, index=False)
     print(f"      → {skip_path.relative_to(REPO)}")
 
-    is_recs = aggregate_results(all_is, "in_sample")
+    fog_meta = {t: {k: v for k, v in d.items()} for t, d in fog_widths.items()}
     out_path = TOOLS / "results.json"
     with open(out_path, "w") as f:
         json.dump({
             "metadata": {
-                "window": "in_sample", "start": "2016-01-04",
-                "end": str(IN_SAMPLE_END.date()),
+                "road": "A",
+                "window": "in_sample",
+                "start": str(IS_START.date()),
+                "end":   str(IN_SAMPLE_END.date()),
                 "n_trading_days": len(is_days),
                 "n_filled": n_is_f, "n_skipped": n_is_s,
                 "stale_entry_bars": stale_cnt,
                 "calib_params": calib_report["params"],
                 "calib_model_form": model_form,
-                "calib_mae": calib_report["overall_mae"],
-                "calib_median_abs_pct_err": calib_report["overall_median_abs_pct_err"],
+                "calib_gate_pct": round(gate_pct, 4),
+                "fog_widths": fog_meta,
+                "fog_net_scale_approx": FOG_NET_SCALE,
             },
             "records": is_recs,
         }, f, indent=2, default=str)
     print(f"      → {out_path.relative_to(REPO)}")
 
-    ho_recs = aggregate_results(all_ho, "holdout")
     ho_path = TOOLS / "holdout_results.json"
     with open(ho_path, "w") as f:
         json.dump({
             "metadata": {
+                "road": "A",
                 "window": "holdout",
-                "start": str(HOLDOUT_START.date()), "end": "2026-05-29",
+                "start": str(HOLDOUT_START.date()),
+                "end":   str(HOLDOUT_END.date()),
                 "n_trading_days": len(ho_days),
                 "n_filled": n_ho_f, "n_skipped": n_ho_s,
                 "calib_params": calib_report["params"],
+                "fog_widths": fog_meta,
             },
             "records": ho_recs,
         }, f, indent=2, default=str)
     print(f"      → {ho_path.relative_to(REPO)}")
 
-    print("\n"+"="*70)
-    print("SUMMARY")
+    # ── Console summary ───────────────────────────────────────────────────────
+    print("\n" + "="*70)
+    print("ROAD A  IN-SAMPLE SUMMARY")
     print("="*70)
-    print(f"Calibration  MAE=${calib_report['overall_mae']:.4f}  "
-          f"median|%err|={calib_report['overall_median_abs_pct_err']*100:.2f}%")
-    if calib_report["warning_unreliable"]:
-        print("  *** WARNING: median |% err| > 35% — outputs may be unreliable ***")
-    print(f"In-sample:  {n_is_f:,} filled,  {n_is_s:,} skipped")
-    print(f"Holdout:    {n_ho_f:,} filled,  {n_ho_s:,} skipped")
-    regions = find_positive_regions(is_recs)
+    print(f"Window:  {IS_START.date()} → {IN_SAMPLE_END.date()}  ({len(is_days)} days)")
+    print(f"Pricing: IV = (VIXD/100) × max(a0 + b·m + c·|m|, 0.05)  [frozen params]")
+    print(f"         a0={params[0]:.4f}  b={params[1]:.4f}  c={params[2]:.4f}")
+    print(f"         Calibration gate: {gate_pct*100:.1f}%  [bias bands applied per spec]")
+    print(f"Trades:  {n_is_f:,} filled  {n_is_s:,} skipped  {stale_cnt} stale-bar entries")
+    print()
+    print(f"{'Entry':<8}  {'fog_w%':>7}  {'net_bias$':>9}  {'readable':>9}  {'fogged':>7}")
+    print("-"*50)
+    for t_str in ENTRY_TIMES:
+        fw   = fog_widths[t_str]
+        t_recs = [r for r in is_recs if r["entry_time"]==t_str and r["split"]=="all"]
+        n_rd = sum(1 for r in t_recs if r.get("readable"))
+        n_fg = len(t_recs) - n_rd
+        print(f"{t_str:<8}  {fw['fog_width_pct']:>7.2f}%  "
+              f"${fw['net_bias_usd']:>8.3f}  {n_rd:>9}  {n_fg:>7}")
+
+    regions = find_positive_regions(is_recs, fog_widths)
+    print()
     if regions:
-        print(f"\nTop {len(regions)} contiguous positive-expectancy regions (t≥2, in-sample):")
+        print(f"Contiguous READABLE positive regions (t≥2, |exp|>fog, ≥3 cells):")
         for i, reg in enumerate(regions, 1):
             print(f"  {i}. T={reg['entry_time_range'][0]}–{reg['entry_time_range'][1]}"
                   f"  k={reg['k_range'][0]}–{reg['k_range'][1]}"
                   f"  area={reg['area_cells']}  min_t={reg['min_tstat']:.2f}")
     else:
-        print("\nNo contiguous positive-expectancy regions found (t≥2) in-sample.")
+        n_readable_pos = sum(
+            1 for r in is_recs
+            if r["split"]=="all" and r.get("readable") and (r.get("expectancy_pct") or 0) > 0
+        )
+        if n_readable_pos == 0:
+            print("RESULT: Entire surface is FOGGED or flat/negative at this error level.")
+            print("        Model cannot resolve an edge; real option-chain data required.")
+        else:
+            print(f"RESULT: {n_readable_pos} isolated READABLE positive cells found,")
+            print("        but no contiguous region ≥3 cells — flagged as noise.")
     print(f"\nTotal elapsed: {time.time()-t_start:.1f}s")
     print("="*70)
 
