@@ -229,10 +229,13 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         day_mask = (calib["expiry_date"].astype(str) == str(exp)).values
         day_ts   = ts_us[day_mask]
         vi = np.searchsorted(vixd_us, day_ts, side="right") - 1
-        if (vi < 0).any():
-            raise RuntimeError(
-                f"HARD ERROR: No VIXD bar at or before earliest print on {exp}"
-            )
+        n_before = int((vi < 0).sum())
+        if n_before > 0:
+            # Prints before the first VIXD bar (typically 09:30 vs 09:31 open);
+            # clamp to first bar rather than hard-erroring — affects at most 1 min.
+            print(f"      VIXD {exp}: {n_before} print(s) before first VIXD bar "
+                  f"→ clamped to first bar ({pd.Timestamp(vixd_us[0], unit='us', tz='UTC').tz_convert('America/New_York').strftime('%H:%M')})")
+            vi = np.maximum(vi, 0)
         sigma_arr[day_mask] = vixd_cl[vi] / 100.0
         print(f"      VIXD {exp}: {len(vixd_df)} bars  "
               f"range {vixd_cl.min():.2f}–{vixd_cl.max():.2f}  "
@@ -368,7 +371,7 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
             "bias_flag":            biased,
         }
 
-    # Per |m| band: same metrics + signed median
+    # Per |m| band
     per_band: dict = {}
     for lo, hi in [(0, 0.5), (0.5, 1), (1, 2), (2, 3)]:
         mask = (abs_m_f >= lo) & (abs_m_f < hi)
@@ -382,11 +385,30 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
             "signed_median_err":    float(np.nanmedian(signed[mask])) if mask.any() else None,
         }
 
+    # Per intraday time band
+    ts_hm = calib["ts"].dt.hour * 60 + calib["ts"].dt.minute
+    time_bands = [
+        ("09:30–10:30",  9*60+30, 10*60+30),
+        ("10:30–13:00", 10*60+30, 13*60),
+        ("13:00–15:00", 13*60,    15*60),
+        ("15:00–16:00", 15*60,    16*60),
+    ]
+    per_time_band: dict = {}
+    for label, lo_m, hi_m in time_bands:
+        mask = ((ts_hm >= lo_m) & (ts_hm < hi_m)).values
+        gm   = mask & gate_mask
+        per_time_band[label] = {
+            "n":                    int(mask.sum()),
+            "n_gate":               int(gm.sum()),
+            "mae":                  float(np.mean(abs_err[mask])) if mask.any() else None,
+            "median_abs_pct_err":   float(np.nanmedian(pct_err[mask])) if mask.any() else None,
+            "median_abs_pct_err_gate": float(np.nanmedian(pct_err[gm])) if gm.sum() > 0 else None,
+            "signed_median_err":    float(np.nanmedian(signed[mask])) if mask.any() else None,
+        }
+
     overall_mae     = float(np.mean(abs_err))
     overall_med_pct = float(np.nanmedian(pct_err))
-
-    # Any-day bias flag
-    biased_days = [exp for exp, d in per_expiry.items() if d["bias_flag"]]
+    biased_days     = [exp for exp, d in per_expiry.items() if d["bias_flag"]]
 
     report = {
         "params": {"a0": params[0], "b": params[1], "c": params[2]},
@@ -398,6 +420,7 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         "gate_median_abs_pct_err": gate_med_pct,
         "per_expiry": per_expiry,
         "per_m_band": per_band,
+        "per_time_band": per_time_band,
         "biased_days": biased_days,
         "warning_unreliable": gate_med_pct > 0.35,
     }

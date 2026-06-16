@@ -46,6 +46,18 @@ for band, d in report["per_m_band"].items():
           f"{(g*100 if g else float('nan')):>10.1f}% "
           f"${d['signed_median_err']:>9.3f}")
 
+print(f"\n{'─'*60}")
+print(f"{'Time band':<14} {'n':>5} {'n≥0.50':>7} {'MAE':>7} "
+      f"{'med|%|':>8} {'med|%|≥.50':>11} {'signed_med':>11}")
+print(f"{'─'*60}")
+for band, d in report["per_time_band"].items():
+    g = d["median_abs_pct_err_gate"]
+    print(f"{band:<14} {d['n']:>5} {d['n_gate']:>7} "
+          f"${d['mae']:>6.2f} "
+          f"{(d['median_abs_pct_err']*100 if d['median_abs_pct_err'] else float('nan')):>7.1f}% "
+          f"{(g*100 if g else float('nan')):>10.1f}% "
+          f"${d['signed_median_err']:>9.3f}")
+
 if report["biased_days"]:
     print(f"\n*** BIASED DAYS (|signed median| > $1): {report['biased_days']} ***")
 else:
