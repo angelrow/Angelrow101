@@ -1,0 +1,16 @@
+Trade #,Date,Contract,Direction,Entry Price,Exit Price,Contracts,$/Point,Points,P&L $,Entry Time (UK),Exit Time (UK),Mins Held,Win/Loss,Notes
+F1,24/07/2026,/NQU26,Long,28433.50,28437.50,1,20,4,80,16:13,16:13,0,Win,"Same-minute NQ scalp, +4 pts. First futures trade."
+F2,24/07/2026,/ESU26,Short,7451.75,7446.25,1,50,5.50,275,19:28,19:31,3,Win,"3-minute ES short scalp, +5.5 pts."
+F3,24/07/2026,/ESU26,Short,7441,7443,2,50,-2,-200,19:34,19:46,12,Loss,"Scaled short — two fills (7441.75 and 7440.25, avg 7441.00), covered both @7443.00."
+F4,24/07/2026,/MESU26,Long,7443,7435.50,1,5,-7.50,-37.50,20:04,20:15,11,Loss,First micro trade. Long faded 7.5 pts.
+F5,27/07/2026,/MESU26,Short,7512,7506,1,5,6,30,12:45,14:30,105,Win,"Bracket short from pre-market (07:45 ET), covered +6 pts. Longest hold at 105 min."
+F6,27/07/2026,/MESU26,Short,7456,7443.75,10,5,12.25,612.50,16:01,16:17,16,Win,"10-lot short, +12.25 pts in 16 min. Biggest point capture of the set."
+F7,28/07/2026,/MESU26,Short,7468.25,7464,10,5,4.25,212.50,20:52,21:00,8,Win,"Bracket short into US close, +4.25 pts."
+F8,28/07/2026,/MESU26,Short,7463.50,7468.25,20,5,-4.75,-475,21:03,21:37,34,Loss,"20-lot short, -4.75 pts. Ran alongside F9 — 40 micros total exposure briefly (~$1.5M notional)."
+F9,28/07/2026,/MESU26,Short,7472.25,7466.50,20,5,5.75,575,21:30,21:37,7,Win,"Bracket short 20 lots, target leg filled +5.75 pts. Overlapped F8."
+F10,29/07/2026,/MESU26,Short,7411,7419,20,5,-8,-800,18:04,18:13,9,Loss,Pre-FOMC chop. 8 pts adverse in 9 min.
+F11,29/07/2026,/MESU26,Short,7419,7439.25,20,5,-20.25,-2025,18:14,19:00,46,Loss,"Short 20 held INTO the 14:00 ET FOMC announcement. Chain-linked exit fired at 19:00 UK on the spike, -20.25 pts. Largest futures loss (-$2,025). Holding directional size through a binary event — the exact risk the options rules exist to prevent."
+F12,29/07/2026,/MESU26,Long,7439.25,7447.25,20,5,8,800,19:00,19:02,2,Win,"Stop-and-reverse: flipped long 20 at the announcement print, sold +8 pts 2 minutes later. Recovered $800 of the F11 loss."
+F13,04/08/2026,/MESU26,Long,7764.50,7780.25,10,5,15.75,787.50,18:20,18:47,27,Win,"Long 10 micros, +15.75 pts in 27 min — best futures trade to date. Matches the +$787.50 P/L Day on the 4 Aug statement exactly."
+F14,05/08/2026,/MESU26,Long,7801.25,7790,10,5,-11.25,-562.50,13:47,15:40,113,Loss,Long 10 micros faded 11.25 pts — chain-linked bracket stop fired after 113 min. Third-largest futures loss.
+F15,07/08/2026,/ESU26,Long,7761,7771.25,1,50,10.25,512.50,19:34,20:01,27,Win,"1-lot E-mini long, +10.25 pts in 27 min, bracket target leg filled. Note: 1 ES = identical $50/pt exposure to the 10 micros in F14 — same notional, different wrapper."
