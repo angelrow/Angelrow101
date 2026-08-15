@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Drill — Angelrow</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0f14;--panel:#111620;--panel-2:#0d1219;--border:rgba(255,255,255,.08);
+  --border-2:rgba(255,255,255,.16);--text:#eaf0f6;--text-2:#8a95a5;--text-3:#5a6577;
+  --accent:#00d4aa;--accent-dim:rgba(0,212,170,.12);--up:#22c55e;--down:#ef4444;--amber:#ffb020;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+.pd-display{font-family:'Barlow Condensed',system-ui,sans-serif}
+.pd-mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+button{font-family:inherit;cursor:pointer}
+button:disabled{cursor:default}
+.wrap{max-width:480px;margin:0 auto;padding:22px 18px 32px;display:flex;flex-direction:column;gap:18px}
+.wrap.play{gap:12px;padding-top:16px}
+/* in a tall window (popup or full page) sit the fixed-height screens in the middle */
+@media(min-height:760px){.wrap.home,.wrap.play{min-height:100vh;justify-content:center}}
+
+/* ---- home ---- */
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+h1.title{font-size:clamp(38px,12vw,56px);font-weight:800;text-transform:uppercase;line-height:.92;letter-spacing:-.01em;margin-top:4px}
+h1.title span{color:var(--accent)}
+.lede{font-size:14px;color:var(--text-2);line-height:1.45;margin-top:8px}
+.mode-btn{display:block;width:100%;text-align:left;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:16px 18px;color:var(--text);transition:border-color .2s ease,transform .2s ease}
+.mode-btn:hover{border-color:var(--accent);transform:translateY(-2px)}
+.mode-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.mode-name{font-size:24px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.mode-count{font-size:13px;color:var(--accent)}
+.mode-sub{font-size:13px;color:var(--text-3);margin-top:3px}
+.panel{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:16px 18px}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between}
+.panel-label{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2)}
+.panel-value{font-size:18px;color:var(--text)}
+input[type=range]{width:100%;margin-top:14px;accent-color:var(--accent)}
+.range-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:4px}
+.ghost-btn{width:100%;border:1px solid var(--border);background:none;color:var(--text-2);border-radius:14px;padding:13px;font-size:13px;letter-spacing:.16em;text-transform:uppercase;transition:border-color .2s ease,color .2s ease}
+.ghost-btn:hover{border-color:var(--border-2);color:var(--text)}
+.foot-note{font-size:11px;color:var(--text-3);text-align:center;line-height:1.5}
+
+/* ---- board ---- */
+.board{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.board-tabs{display:flex}
+.board-tab{flex:1;padding:9px 0;font-size:13px;letter-spacing:.16em;text-transform:uppercase;border:none;background:var(--panel-2);color:var(--text-3)}
+.board-tab.on{background:#1a212c;color:var(--accent)}
+.board-empty{padding:22px;text-align:center;color:var(--text-3);font-size:13px}
+.board-row{display:flex;align-items:center;gap:12px;padding:8px 14px;border-top:1px solid var(--border)}
+.board-row.alt{background:rgba(255,255,255,.02)}
+.board-row.new{background:rgba(0,212,170,.14)}
+.board-rank{width:22px;font-size:12px;color:var(--text-3)}
+.board-name{flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board-row.new .board-name{color:var(--accent);font-weight:600}
+.board-score{font-size:13px;font-weight:600}
+.board-score i{color:var(--text-3);font-style:normal}
+.board-time{width:44px;text-align:right;font-size:11px;color:var(--text-3)}
+.board-note{padding:9px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text-3);line-height:1.5}
+.screen-head{display:flex;align-items:center;justify-content:space-between}
+.screen-head h2{font-size:38px;font-weight:800;text-transform:uppercase;line-height:1}
+.screen-head h2 span{color:var(--accent)}
+.back-btn{border:1px solid var(--border);background:none;color:var(--text-2);border-radius:9px;padding:6px 13px;font-size:13px}
+.back-btn:hover{border-color:var(--border-2);color:var(--text)}
+
+/* ---- play ---- */
+.play-top{display:flex;align-items:center;justify-content:space-between}
+.quit-btn{border:none;background:none;color:var(--text-3);font-size:17px;padding:2px 6px;line-height:1}
+.quit-btn:hover{color:var(--text)}
+.qcount{font-size:13px;color:var(--text-2)}
+.scorebox{font-size:13px;color:var(--text-3)}
+.scorebox b{color:var(--accent)}
+.timer-track{height:6px;background:#1c222c;border-radius:4px;overflow:hidden}
+.timer-fill{height:100%;width:100%;background:var(--up);transition:width 60ms linear}
+.play-meta{display:flex;justify-content:space-between;align-items:baseline}
+.kind-label{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3)}
+.timer-num{font-size:17px;font-weight:600}
+.chart-box{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:8px}
+.chart-box svg{display:block;width:100%;height:auto;user-select:none}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{min-height:58px;border:1px solid #3f4650;background:var(--panel);color:var(--text);border-radius:12px;padding:8px;font-size:13px;line-height:1.25;transition:border-color .15s ease,background .15s ease}
+.opt:not(:disabled):hover{border-color:var(--accent)}
+.opt.right{border-color:var(--up);background:var(--up);color:#0b0f14;font-weight:600}
+.opt.wrong{border-color:var(--down);background:var(--down);color:#fff;font-weight:600}
+.opt.faded{border-color:var(--border);color:var(--text-3);opacity:.5}
+.reveal{min-height:76px;text-align:center}
+.reveal-verdict{font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:.14em}
+.reveal-blurb{font-size:12px;color:var(--text-2);margin-top:5px;line-height:1.45;padding:0 6px}
+.next-link{margin-top:7px;background:none;border:none;color:var(--text-3);font-size:11px;text-decoration:underline}
+.next-link:hover{color:var(--text-2)}
+
+/* ---- results ---- */
+.res-head{text-align:center}
+.res-mode{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3)}
+.res-score{font-size:56px;font-weight:700;margin-top:6px;line-height:1}
+.res-score b{color:var(--accent);font-weight:700}
+.res-score i{color:var(--text-3);font-style:normal}
+.res-verdict{font-size:22px;text-transform:uppercase;letter-spacing:.03em;color:var(--text-2);margin-top:4px}
+.res-pct{font-size:13px;color:var(--text-3);margin-top:2px}
+.save-box{border:1px solid var(--accent);background:var(--panel);border-radius:14px;padding:16px}
+.save-title{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--accent)}
+.save-sub{font-size:13px;color:var(--text-2);margin-top:4px}
+.save-row{display:flex;gap:8px;margin-top:12px}
+.save-row input{flex:1;background:var(--panel-2);border:1px solid var(--border-2);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--text);font-family:'JetBrains Mono',monospace}
+.save-row input:focus{outline:none;border-color:var(--accent)}
+.save-row button{background:var(--accent);color:#04231d;border:none;border-radius:9px;padding:0 18px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.warn{color:var(--amber);font-size:13px;text-align:center}
+.res-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-primary{background:var(--accent);color:#04231d;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.14em}
+.btn-secondary{border:1px solid var(--border-2);background:none;color:var(--text-2);border-radius:14px;padding:13px;font-size:15px;text-transform:uppercase;letter-spacing:.14em}
+.btn-secondary:hover{color:var(--text)}
+.review{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.review-head{padding:9px 14px;background:var(--panel);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2)}
+.review-row{display:flex;gap:12px;padding:8px 14px;border-top:1px solid var(--border)}
+.review-mark{font-size:13px}
+.review-mark.ok{color:var(--up)}.review-mark.no{color:var(--down)}
+.review-name{font-size:13px;color:var(--text)}
+.review-said{font-size:11px;color:var(--text-3)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   PATTERN DRILL — candlestick + chart pattern speed trainer
+   Patterns recreated from the MATI Trader 24-pattern cheat sheet
+   ============================================================ */
+
+/* ---------- small utils ---------- */
+const mulberry32=(a)=>function(){
+  a|=0;a=(a+0x6d2b79f5)|0;
+  let t=Math.imul(a^(a>>>15),1|a);
+  t=(t+Math.imul(t^(t>>>7),61|t))^t;
+  return((t^(t>>>14))>>>0)/4294967296;
+};
+
+const shuffle=(arr)=>{
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+};
+
+// piecewise interpolation through anchor points
+const interp=(anchors,t,smooth)=>{
+  if(t<=anchors[0][0])return anchors[0][1];
+  if(t>=anchors[anchors.length-1][0])return anchors[anchors.length-1][1];
+  for(let i=0;i<anchors.length-1;i++){
+    const[x0,y0]=anchors[i],[x1,y1]=anchors[i+1];
+    if(t>=x0&&t<=x1){
+      let u=(t-x0)/(x1-x0);
+      if(smooth)u=(1-Math.cos(Math.PI*u))/2;
+      return y0+(y1-y0)*u;
+    }
+  }
+  return anchors[anchors.length-1][1];
+};
+
+const smoothPathD=(pts)=>{
+  if(pts.length<3)return"M "+pts.map(p=>p[0]+" "+p[1]).join(" L ");
+  let d="M "+pts[0][0]+" "+pts[0][1];
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    const c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+    const c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=" C "+c1x+" "+c1y+" "+c2x+" "+c2y+" "+p2[0]+" "+p2[1];
+  }
+  return d;
+};
+
+/* ---------- mirror helpers ---------- */
+const flipAnchors=(a)=>a.map(([x,y])=>[x,1-y]);
+const flipOverlays=(o)=>o.map(ov=>({...ov,pts:ov.pts.map(([x,y])=>[x,1-y])}));
+const flipCandles=(cs)=>{
+  const hi=Math.max(...cs.map(c=>c.h)), lo=Math.min(...cs.map(c=>c.l)), K=hi+lo;
+  return cs.map(c=>({o:K-c.o,c:K-c.c,h:K-c.l,l:K-c.h,dim:c.dim}));
+};
+const swapOC=(cs)=>cs.map(c=>({...c,o:c.c,c:c.o}));
+
+/* ============================================================
+   CHART PATTERN DEFINITIONS (12 bases, bear side derived by flip)
+   anchors are [x, y] in normalised 0..1 space
+   ============================================================ */
+const CHART_BASES=[
+  {
+    id:"asctri",
+    bull:"Ascending Triangle",
+    bear:"Descending Triangle",
+    bBull:"Flat ceiling, rising floor — pressure builds until buyers break through.",
+    bBear:"Flat floor, falling ceiling — sellers grind support until it gives.",
+    anchors:[[0,0.1],[0.08,0.34],[0.15,0.6],[0.23,0.3],[0.32,0.6],[0.41,0.38],[0.5,0.6],[0.58,0.45],[0.66,0.6],[0.72,0.52],[0.78,0.62],[0.86,0.8],[1,0.94]],
+    overlays:[{pts:[[0.13,0.625],[0.79,0.625]]},{pts:[[0.19,0.27],[0.75,0.53]]}],
+  },
+  {
+    id:"flag",
+    bull:"Falling Flag",
+    bear:"Rising Flag",
+    bBull:"Sharp pole up, brief drift down in a channel — continuation higher.",
+    bBear:"Sharp drop, weak drift up in a channel — continuation lower.",
+    anchors:[[0,0.06],[0.1,0.4],[0.18,0.66],[0.26,0.52],[0.33,0.6],[0.4,0.47],[0.47,0.55],[0.54,0.42],[0.61,0.5],[0.68,0.4],[0.78,0.62],[0.88,0.8],[1,0.94]],
+    overlays:[{pts:[[0.235,0.69],[0.7,0.54]]},{pts:[[0.25,0.45],[0.7,0.33]]}],
+  },
+  {
+    id:"pennant",
+    bull:"Falling Pennant",
+    bear:"Rising Pennant",
+    bBull:"Converging coil after a fall — resolves upward here.",
+    bBear:"Converging coil after a rally — resolves downward.",
+    anchors:[[0,0.92],[0.09,0.66],[0.17,0.42],[0.25,0.58],[0.33,0.42],[0.41,0.54],[0.49,0.44],[0.56,0.5],[0.62,0.46],[0.7,0.6],[0.85,0.76],[1,0.9]],
+    overlays:[{pts:[[0.22,0.61],[0.66,0.5]]},{pts:[[0.22,0.4],[0.66,0.45]]}],
+  },
+  {
+    id:"cup",
+    bull:"Cup & Handle",
+    bear:"Inverse Cup & Handle",
+    bBull:"Rounded base plus a small dip for the handle — then breakout up.",
+    bBear:"Rounded top plus a small bounce — then breakdown.",
+    smooth:true,vol:0.011,
+    anchors:[[0,0.58],[0.06,0.63],[0.14,0.4],[0.24,0.22],[0.34,0.17],[0.44,0.25],[0.53,0.45],[0.6,0.62],[0.67,0.5],[0.73,0.45],[0.79,0.56],[0.88,0.78],[1,0.93]],
+    overlays:[
+      {pts:[[0.05,0.64],[0.2,0.28],[0.34,0.16],[0.48,0.3],[0.6,0.63]],smooth:true},
+      {pts:[[0.6,0.63],[0.7,0.44],[0.79,0.57]],smooth:true},
+    ],
+  },
+  {
+    id:"double",
+    bull:"Double Bottom (W)",
+    bear:"Double Top (M)",
+    bBull:"Two equal lows form a W — reversal up.",
+    bBear:"Two equal highs form an M — reversal down.",
+    smooth:true,
+    anchors:[[0,0.78],[0.09,0.52],[0.17,0.25],[0.25,0.38],[0.32,0.55],[0.4,0.36],[0.47,0.24],[0.55,0.42],[0.63,0.58],[0.74,0.72],[0.87,0.82],[1,0.92]],
+    overlays:[{pts:[[0.03,0.75],[0.17,0.23],[0.32,0.57],[0.47,0.23],[0.62,0.6]],smooth:true}],
+  },
+  {
+    id:"wedge",
+    bull:"Falling Wedge",
+    bear:"Rising Wedge",
+    bBull:"Both lines slope down and converge — bullish resolution.",
+    bBear:"Both lines slope up and converge — bearish resolution.",
+    anchors:[[0,0.9],[0.08,0.58],[0.15,0.74],[0.24,0.46],[0.32,0.62],[0.41,0.38],[0.49,0.52],[0.57,0.33],[0.63,0.44],[0.69,0.36],[0.8,0.6],[0.9,0.76],[1,0.9]],
+    overlays:[{pts:[[0.02,0.92],[0.68,0.47]]},{pts:[[0.05,0.54],[0.68,0.31]]}],
+  },
+  {
+    id:"hs",
+    bull:"Inverse Head & Shoulders",
+    bear:"Head & Shoulders",
+    bBull:"Three troughs, deepest in the middle — neckline break up.",
+    bBear:"Three peaks, highest in the middle — neckline break down.",
+    smooth:true,
+    anchors:[[0,0.86],[0.08,0.62],[0.14,0.44],[0.21,0.58],[0.29,0.42],[0.36,0.2],[0.44,0.42],[0.51,0.58],[0.58,0.44],[0.65,0.58],[0.72,0.62],[0.82,0.78],[1,0.94]],
+    overlays:[
+      {pts:[[0.1,0.6],[0.74,0.6]]},
+      {pts:[[0.06,0.7],[0.14,0.42],[0.22,0.58],[0.36,0.18],[0.5,0.58],[0.58,0.41],[0.68,0.68]],smooth:true},
+    ],
+  },
+  {
+    id:"symtri",
+    bull:"Symmetrical Triangle (Bullish)",
+    bear:"Symmetrical Triangle (Bearish)",
+    bBull:"Lower highs meet higher lows in an uptrend — breaks up.",
+    bBear:"Coiling triangle in a downtrend — breaks down.",
+    anchors:[[0,0.08],[0.1,0.42],[0.18,0.74],[0.27,0.32],[0.36,0.66],[0.45,0.38],[0.53,0.6],[0.6,0.44],[0.66,0.55],[0.71,0.49],[0.8,0.72],[0.9,0.84],[1,0.94]],
+    overlays:[{pts:[[0.17,0.76],[0.72,0.52]]},{pts:[[0.17,0.3],[0.72,0.475]]}],
+  },
+  {
+    id:"rect",
+    bull:"Rectangle Formation (Bullish)",
+    bear:"Rectangle Formation (Bearish)",
+    bBull:"Sideways range between two rails — resolved with an upside breakout.",
+    bBear:"Sideways range between two rails — resolved with a downside break.",
+    anchors:[[0,0.44],[0.07,0.6],[0.15,0.37],[0.23,0.6],[0.31,0.37],[0.39,0.6],[0.47,0.37],[0.55,0.6],[0.62,0.4],[0.68,0.55],[0.74,0.47],[0.83,0.72],[1,0.92]],
+    overlays:[{pts:[[0.03,0.615],[0.76,0.615]]},{pts:[[0.03,0.355],[0.76,0.355]]}],
+  },
+  {
+    id:"triple",
+    bull:"Triple Bottom",
+    bear:"Triple Top",
+    bBull:"Three tests of the same low — support holds, price lifts.",
+    bBear:"Three tests of the same high — resistance holds, price drops.",
+    smooth:true,
+    anchors:[[0,0.76],[0.08,0.46],[0.14,0.24],[0.21,0.4],[0.27,0.52],[0.34,0.34],[0.4,0.24],[0.47,0.4],[0.53,0.52],[0.6,0.34],[0.66,0.24],[0.73,0.44],[0.8,0.6],[0.89,0.76],[1,0.9]],
+    overlays:[{pts:[[0.03,0.7],[0.14,0.22],[0.27,0.54],[0.4,0.22],[0.53,0.54],[0.66,0.22],[0.78,0.6]],smooth:true}],
+  },
+  {
+    id:"round",
+    bull:"Rounding Bottom",
+    bear:"Rounding Top",
+    bBull:"Slow saucer base — momentum gradually turns up.",
+    bBear:"Slow dome top — momentum gradually rolls over.",
+    smooth:true,vol:0.01,
+    anchors:[[0,0.74],[0.1,0.52],[0.2,0.33],[0.32,0.2],[0.45,0.15],[0.58,0.2],[0.7,0.33],[0.8,0.52],[0.88,0.68],[1,0.88]],
+    overlays:[{pts:[[0.02,0.72],[0.22,0.3],[0.45,0.13],[0.68,0.3],[0.92,0.76]],smooth:true}],
+  },
+  {
+    id:"broad",
+    bull:"Broadening Bottom (Vuvuzela)",
+    bear:"Broadening Top (Vuvuzela)",
+    bBull:"Expanding megaphone swings after a fall — bullish exit.",
+    bBear:"Expanding megaphone swings after a rally — bearish exit.",
+    anchors:[[0,0.8],[0.1,0.56],[0.18,0.62],[0.26,0.44],[0.34,0.66],[0.43,0.34],[0.52,0.72],[0.62,0.24],[0.72,0.56],[0.83,0.72],[1,0.9]],
+    overlays:[{pts:[[0.15,0.6],[0.66,0.8]]},{pts:[[0.15,0.47],[0.66,0.17]]}],
+  },
+];
+
+/* ============================================================
+   CANDLE PATTERN DEFINITIONS (12 bases + derived bear versions)
+   prices are arbitrary units; renderer autoscales
+   ============================================================ */
+const CANDLE_BASES=[
+  {
+    id:"engulf",
+    candles:[{o:5.3,c:4.8,h:5.55,l:4.6},{o:4.6,c:5.9,h:6.05,l:4.45}],
+    bull:{name:"Bullish Engulfing",blurb:"Green body swallows the prior red body — buyers take over."},
+    bear:{name:"Bearish Engulfing",mode:"mirror",blurb:"Red body swallows the prior green body — sellers take over."},
+  },
+  {
+    id:"maru",
+    candles:[{o:4.1,c:6.0,h:6.0,l:4.1}],
+    bull:{name:"Bullish Marubozu",blurb:"All body, no wicks — one-way buying from open to close."},
+    bear:{name:"Bearish Marubozu",mode:"mirror",blurb:"All body, no wicks — one-way selling from open to close."},
+  },
+  {
+    id:"hammer",
+    candles:[{o:5.55,c:5.95,h:6.05,l:4.1}],
+    bull:{name:"Bullish Hammer",blurb:"Small body up top, long lower tail — the dip got bought."},
+    bear:{name:"Bearish Hammer",mode:"swap",blurb:"Red hammer shape — rejection below, but sellers closed it down."},
+  },
+  {
+    id:"pin",
+    candles:[{o:5.75,c:5.5,h:5.9,l:4.2},{o:5.5,c:5.8,h:5.95,l:4.05}],
+    bull:{name:"Bullish Pin Bar",blurb:"Long lower rejection wicks — bulls defending the level."},
+    bear:{name:"Bearish Pin Bar",mode:"mirror",blurb:"Long upper rejection wicks — bears capping the level."},
+  },
+  {
+    id:"harami",
+    candles:[{o:6.0,c:4.2,h:6.15,l:4.05},{o:4.7,c:5.35,h:5.5,l:4.55}],
+    bull:{name:"Bullish Harami",blurb:"Tiny green inside a big red — selling pressure stalls."},
+    bear:{name:"Bearish Harami",mode:"mirror",blurb:"Tiny red inside a big green — buying pressure stalls."},
+  },
+  {
+    id:"spin",
+    candles:[{o:4.9,c:5.2,h:5.95,l:4.15}],
+    bull:{name:"Bullish Spinning Top",blurb:"Small green body, wicks both sides — indecision leaning up."},
+    bear:{name:"Bearish Spinning Top",mode:"swap",blurb:"Small red body, wicks both sides — indecision leaning down."},
+  },
+  {
+    id:"doji",
+    candles:[{o:5.9,c:5.92,h:5.98,l:4.1}],
+    bull:{name:"Dragonfly Doji",blurb:"Open equals close at the high, long lower shadow — bullish rejection."},
+    bear:{name:"Gravestone Doji",mode:"mirror",blurb:"Open equals close at the low, long upper shadow — bearish rejection."},
+  },
+  {
+    id:"star",
+    candles:[
+      {o:6.7,c:6.25,h:6.8,l:6.15,dim:true},
+      {o:6.3,c:5.3,h:6.4,l:5.15},
+      {o:4.95,c:5.15,h:5.28,l:4.6},
+      {o:5.35,c:6.35,h:6.45,l:5.25},
+      {o:6.3,c:6.75,h:6.85,l:6.2,dim:true},
+    ],
+    bull:{name:"Morning Star",blurb:"Down candle, small star at the low, strong up candle — dawn reversal."},
+    bear:{name:"Evening Star",mode:"mirror",blurb:"Up candle, small star at the high, strong down candle — dusk reversal."},
+  },
+  {
+    id:"hamctx",
+    candles:[
+      {o:6.6,c:6.15,h:6.7,l:6.05,dim:true},
+      {o:6.15,c:5.5,h:6.25,l:5.35},
+      {o:5.45,c:5.7,h:5.78,l:4.35},
+      {o:5.7,c:6.3,h:6.4,l:5.6},
+      {o:6.3,c:6.7,h:6.8,l:6.2,dim:true},
+    ],
+    bull:{name:"Hammer",blurb:"Long lower tail at the bottom of a decline — reversal up."},
+    bear:{
+      name:"Hanging Man",
+      blurb:"Hammer shape at the top of a rally — warning of a drop.",
+      candles:[
+        {o:4.4,c:4.85,h:4.95,l:4.3,dim:true},
+        {o:4.85,c:5.5,h:5.6,l:4.75},
+        {o:5.7,c:5.5,h:5.78,l:4.6},
+        {o:5.55,c:4.95,h:5.65,l:4.8},
+        {o:4.95,c:4.5,h:5.05,l:4.4,dim:true},
+      ],
+    },
+  },
+  {
+    id:"pierce",
+    candles:[{o:6.0,c:4.6,h:6.15,l:4.45},{o:4.25,c:5.45,h:5.6,l:4.1}],
+    bull:{name:"Piercing Line",blurb:"Green opens below and closes past halfway up the red — bullish."},
+    bear:{name:"Dark Cloud Cover",mode:"mirror",blurb:"Red opens above and closes past halfway down the green — bearish."},
+  },
+  {
+    id:"dojistar",
+    candles:[
+      {o:6.7,c:6.25,h:6.8,l:6.15,dim:true},
+      {o:6.3,c:5.3,h:6.4,l:5.15},
+      {o:5.05,c:5.07,h:5.35,l:4.6},
+      {o:5.35,c:6.35,h:6.45,l:5.25},
+      {o:6.3,c:6.75,h:6.85,l:6.2,dim:true},
+    ],
+    bull:{name:"Morning Doji Star",blurb:"Morning star with a doji at the low — stronger reversal signal."},
+    bear:{name:"Evening Doji Star",mode:"mirror",blurb:"Evening star with a doji at the high — stronger reversal signal."},
+  },
+  {
+    id:"soldiers",
+    candles:[
+      {o:6.1,c:5.75,h:6.2,l:5.65,dim:true},
+      {o:5.8,c:5.55,h:5.9,l:5.4,dim:true},
+      {o:5.5,c:6.15,h:6.25,l:5.4},
+      {o:6.0,c:6.7,h:6.8,l:5.9},
+      {o:6.55,c:7.3,h:7.4,l:6.45},
+    ],
+    bull:{name:"Three White Soldiers",blurb:"Three strong greens stepping higher — trend ignition."},
+    bear:{name:"Three Black Crows",mode:"mirror",blurb:"Three strong reds stepping lower — trend breakdown."},
+  },
+];
+
+/* ---------- build the full 48-pattern pool ---------- */
+const buildPatterns=()=>{
+  const out=[];
+  CHART_BASES.forEach(b=>{
+    out.push({id:b.id+"-b",counterpart:b.id+"-s",name:b.bull,kind:"chart",dir:"bull",
+      anchors:b.anchors,overlays:b.overlays,smooth:!!b.smooth,vol:b.vol,blurb:b.bBull});
+    out.push({id:b.id+"-s",counterpart:b.id+"-b",name:b.bear,kind:"chart",dir:"bear",
+      anchors:flipAnchors(b.anchors),overlays:flipOverlays(b.overlays),smooth:!!b.smooth,vol:b.vol,blurb:b.bBear});
+  });
+  CANDLE_BASES.forEach(b=>{
+    out.push({id:b.id+"-b",counterpart:b.id+"-s",name:b.bull.name,kind:"candle",dir:"bull",
+      candles:b.candles,blurb:b.bull.blurb});
+    let bearCandles;
+    if(b.bear.candles)bearCandles=b.bear.candles;
+    else if(b.bear.mode==="swap")bearCandles=swapOC(b.candles);
+    else bearCandles=flipCandles(b.candles);
+    out.push({id:b.id+"-s",counterpart:b.id+"-b",name:b.bear.name,kind:"candle",dir:"bear",
+      candles:bearCandles,blurb:b.bear.blurb});
+  });
+  return out;
+};
+
+const PATTERNS=buildPatterns();
+
+// pairs that are visually identical enough to be unfair as distractors
+const EXCLUDE_PAIRS=[["hammer-b","hamctx-b"],["hammer-s","hamctx-s"]];
+const isExcluded=(a,b)=>EXCLUDE_PAIRS.some(([x,y])=>(a.id===x&&b.id===y)||(a.id===y&&b.id===x));
+
+/* ---------- generate candles for chart patterns ---------- */
+const genChartCandles=(p,seed)=>{
+  const rnd=mulberry32(seed);
+  const N=34, vol=p.vol||0.014, out=[];
+  for(let i=0;i<N;i++){
+    const t0=i/N, t1=(i+1)/N;
+    const o=interp(p.anchors,t0,p.smooth)+(rnd()-0.5)*vol;
+    const c=interp(p.anchors,t1,p.smooth)+(rnd()-0.5)*vol;
+    const h=Math.max(o,c)+rnd()*0.02;
+    const l=Math.min(o,c)-rnd()*0.02;
+    out.push({o,c,h,l});
+  }
+  return out;
+};
+
+/* ---------- question building ---------- */
+const makeOptions=(correct)=>{
+  const cands=PATTERNS.filter(p=>p.id!==correct.id&&p.kind===correct.kind&&!isExcluded(p,correct));
+  const opts=[];
+  const cp=cands.find(p=>p.id===correct.counterpart);
+  if(cp&&Math.random()<0.75)opts.push(cp);
+  while(opts.length<3){
+    const r=cands[Math.floor(Math.random()*cands.length)];
+    if(!opts.includes(r))opts.push(r);
+  }
+  return shuffle([correct,...opts]).map(p=>p.name);
+};
+
+const buildQuestions=(mode)=>{
+  const count=mode==="quick"?10:20;
+  return shuffle(PATTERNS).slice(0,count).map(p=>({
+    p,
+    candles:p.kind==="chart"?genChartCandles(p,Math.floor(Math.random()*1e9)):p.candles,
+    options:makeOptions(p),
+  }));
+};
+
+/* ============================================================
+   CHART RENDERER (returns an SVG string)
+   ============================================================ */
+const UP="#22c55e", DOWN="#ef4444", DOJI="#cbd5e1";
+
+function chartSVG(candles,overlays,kind){
+  const W=360,H=224,m=10;
+  let lo=Math.min(...candles.map(c=>c.l));
+  let hi=Math.max(...candles.map(c=>c.h));
+  if(kind==="chart"&&overlays){
+    overlays.forEach(ov=>ov.pts.forEach(([,y])=>{lo=Math.min(lo,y);hi=Math.max(hi,y);}));
+  }
+  const pad=(hi-lo)*0.08||0.5, LO=lo-pad, HI=hi+pad;
+  const Y=(v)=>m+(1-(v-LO)/(HI-LO))*(H-2*m);
+
+  const N=candles.length, plotW=W-2*m;
+  let centers,cw,wickW;
+  if(kind==="chart"){
+    cw=(plotW/N)*0.62; wickW=1.2;
+    centers=candles.map((_,i)=>m+((i+0.5)/N)*plotW);
+  }else{
+    cw=Math.min(48,Math.max(24,210/N)); wickW=2.4;
+    const gap=cw*0.55, total=N*cw+(N-1)*gap, x0=(W-total)/2;
+    centers=candles.map((_,i)=>x0+i*(cw+gap)+cw/2);
+  }
+
+  let s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  [0.25,0.5,0.75].forEach(f=>{
+    const gy=m+f*(H-2*m);
+    s+='<line x1="'+m+'" x2="'+(W-m)+'" y1="'+gy+'" y2="'+gy+'" stroke="#27272a" stroke-width="1"/>';
+  });
+  if(kind==="chart"&&overlays){
+    overlays.forEach(ov=>{
+      const pts=ov.pts.map(([x,y])=>[m+x*plotW,Y(y)]);
+      const d=ov.smooth?smoothPathD(pts):"M "+pts.map(p=>p[0]+" "+p[1]).join(" L ");
+      s+='<path d="'+d+'" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 5" opacity="0.6" stroke-linecap="round"/>';
+    });
+  }
+  candles.forEach((c,i)=>{
+    const cx=centers[i], up=c.c>=c.o;
+    const yTop=Y(Math.max(c.o,c.c)), yBot=Y(Math.min(c.o,c.c));
+    const bodyH=yBot-yTop, isDoji=bodyH<2;
+    const col=isDoji?DOJI:up?UP:DOWN;
+    const op=c.dim?0.32:1;
+    s+='<g opacity="'+op+'">';
+    s+='<line x1="'+cx+'" x2="'+cx+'" y1="'+Y(c.h)+'" y2="'+Y(c.l)+'" stroke="'+col+'" stroke-width="'+wickW+'"/>';
+    if(isDoji){
+      s+='<line x1="'+(cx-cw/2)+'" x2="'+(cx+cw/2)+'" y1="'+yTop+'" y2="'+yTop+'" stroke="'+col+'" stroke-width="'+(kind==="chart"?2:3.5)+'"/>';
+    }else{
+      s+='<rect x="'+(cx-cw/2)+'" y="'+yTop+'" width="'+cw+'" height="'+Math.max(bodyH,2)+'" fill="'+col+'" rx="1"/>';
+    }
+    s+='</g>';
+  });
+  return s+'</svg>';
+}
+
+/* ============================================================
+   STORAGE — high scores + settings (this browser, via localStorage)
+   ============================================================ */
+const BOARD_KEY="pattern-drill-board-v1";
+const SETTINGS_KEY="pattern-drill-settings-v1";
+const emptyBoards=()=>({quick:[],long:[]});
+const sortScores=(a,b)=>b.score-a.score||a.timer-b.timer||a.ts-b.ts;
+
+function loadBoards(){
+  try{
+    const raw=localStorage.getItem(BOARD_KEY);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      return{quick:parsed.quick||[],long:parsed.long||[]};
+    }
+  }catch(e){/* unreadable or storage unavailable */}
+  return emptyBoards();
+}
+
+function saveBoards(boards){
+  try{localStorage.setItem(BOARD_KEY,JSON.stringify(boards));return true;}
+  catch(e){return false;}
+}
+
+function loadSettings(){
+  try{
+    const raw=localStorage.getItem(SETTINGS_KEY);
+    if(raw)return JSON.parse(raw);
+  }catch(e){/* defaults */}
+  return null;
+}
+
+function saveSettings(s){
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(s));}catch(e){/* non-fatal */}
+}
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+const S={
+  screen:"home",      // home | play | results | board
+  timer:3,
+  playerName:"",
+  mode:"quick",
+  questions:[],
+  qIdx:0,
+  phase:"ask",        // ask | reveal
+  chosen:null,
+  answers:[],
+  remaining:3,
+  boards:emptyBoards(),
+  boardTab:"quick",
+  nameInput:"",
+  saveState:"idle",   // idle | qualified | saved | failed
+  savedTs:null,
+};
+
+let countdownIv=null, revealTo=null, answered=false, deadline=0;
+const app=document.getElementById("app");
+const esc=(s)=>String(s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const score=()=>S.answers.filter(a=>a.correct).length;
+
+(function initSettings(){
+  const s=loadSettings();
+  if(s){
+    if(typeof s.timer==="number")S.timer=Math.min(10,Math.max(0.5,s.timer));
+    if(typeof s.name==="string"){S.playerName=s.name;S.nameInput=s.name;}
+  }
+  S.remaining=S.timer;
+})();
+
+const clearTimers=()=>{
+  if(countdownIv){clearInterval(countdownIv);countdownIv=null;}
+  if(revealTo){clearTimeout(revealTo);revealTo=null;}
+};
+
+/* ============================================================
+   GAME FLOW
+   ============================================================ */
+function startGame(m){
+  clearTimers();
+  S.mode=m;
+  S.questions=buildQuestions(m);
+  S.qIdx=0;S.answers=[];S.chosen=null;S.phase="ask";
+  S.saveState="idle";S.savedTs=null;S.screen="play";
+  render();
+  startCountdown();
+}
+
+function startCountdown(){
+  clearTimers();
+  answered=false;
+  S.remaining=S.timer;
+  deadline=Date.now()+S.timer*1000;
+  countdownIv=setInterval(()=>{
+    const r=(deadline-Date.now())/1000;
+    if(r<=0){
+      clearInterval(countdownIv);countdownIv=null;
+      if(!answered){
+        answered=true;
+        S.answers.push({p:S.questions[S.qIdx].p,chosen:null,correct:false});
+        S.chosen=null;
+        reveal();
+      }
+    }else{
+      S.remaining=r;
+      tickTimer();
+    }
+  },50);
+  tickTimer();
+}
+
+function timerColor(){
+  const f=S.remaining/S.timer;
+  return f>0.5?"#22c55e":f>0.25?"#ffb020":"#ef4444";
+}
+
+function tickTimer(){
+  const fill=document.getElementById("timerFill");
+  const num=document.getElementById("timerNum");
+  if(!fill||!num)return;
+  const col=timerColor();
+  fill.style.width=Math.max(0,(S.remaining/S.timer)*100)+"%";
+  fill.style.background=col;
+  if(S.phase==="ask"){num.textContent=S.remaining.toFixed(1)+"s";num.style.color=col;}
+}
+
+function choose(name){
+  if(S.phase!=="ask"||answered)return;
+  answered=true;
+  const q=S.questions[S.qIdx];
+  S.chosen=name;
+  S.answers.push({p:q.p,chosen:name,correct:name===q.p.name});
+  reveal();
+}
+
+function reveal(){
+  clearTimers();
+  S.phase="reveal";
+  render();
+  revealTo=setTimeout(nextQuestion,2100);
+}
+
+function nextQuestion(){
+  clearTimers();
+  if(S.qIdx+1<S.questions.length){
+    S.chosen=null;S.phase="ask";S.qIdx++;
+    render();
+    startCountdown();
+  }else{
+    finish();
+  }
+}
+
+function finish(){
+  clearTimers();
+  S.screen="results";
+  S.boards=loadBoards();
+  S.boardTab=S.mode;
+  const list=[...S.boards[S.mode]].sort(sortScores);
+  const sc=score();
+  const qualifies=sc>=1&&(list.length<10||sc>list[9].score||(sc===list[9].score&&S.timer<list[9].timer));
+  S.saveState=qualifies?"qualified":"idle";
+  render();
+}
+
+function submitScore(){
+  const nm=(S.nameInput||"").trim().slice(0,14)||"ANON";
+  const ts=Date.now();
+  const fresh=loadBoards();
+  const list=[...fresh[S.mode],{name:nm,score:score(),total:S.questions.length,timer:S.timer,ts}]
+    .sort(sortScores).slice(0,10);
+  const next={...fresh,[S.mode]:list};
+  if(saveBoards(next)){
+    S.boards=next;S.savedTs=ts;S.saveState="saved";S.playerName=nm;
+    saveSettings({timer:S.timer,name:nm});
+  }else{
+    S.saveState="failed";
+  }
+  render();
+}
+
+function goHome(){
+  clearTimers();
+  S.screen="home";S.phase="ask";S.chosen=null;
+  render();
+}
+
+function openBoard(){
+  S.boards=loadBoards();
+  S.boardTab=S.mode;
+  S.screen="board";
+  render();
+}
+
+function setTab(t){S.boardTab=t;render();}
+
+function onTimerChange(v){
+  S.timer=v;S.remaining=v;
+  const out=document.getElementById("timerOut");
+  if(out)out.textContent=v.toFixed(1)+"s";
+  saveSettings({timer:v,name:S.playerName});
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+function leaderboardHTML(highlightTs){
+  const tab=S.boardTab;
+  const list=[...(S.boards[tab]||[])].sort(sortScores);
+  let rows;
+  if(!list.length){
+    rows='<div class="board-empty">No scores yet — set the first one.</div>';
+  }else{
+    rows=list.map((e,i)=>{
+      const isNew=highlightTs&&e.ts===highlightTs;
+      const cls="board-row"+(isNew?" new":(i%2?" alt":""));
+      return '<div class="'+cls+'">'
+        +'<span class="board-rank pd-mono">'+(i+1)+'</span>'
+        +'<span class="board-name">'+esc(e.name)+'</span>'
+        +'<span class="board-score pd-mono">'+e.score+'<i>/'+e.total+'</i></span>'
+        +'<span class="board-time pd-mono">'+Number(e.timer).toFixed(1)+'s</span>'
+        +'</div>';
+    }).join("");
+  }
+  return '<div class="board">'
+    +'<div class="board-tabs">'
+    +'<button class="board-tab pd-display'+(tab==="quick"?" on":"")+'" data-tab="quick">Quick · 10</button>'
+    +'<button class="board-tab pd-display'+(tab==="long"?" on":"")+'" data-tab="long">Full · 20</button>'
+    +'</div>'+rows
+    +'<div class="board-note">Scores are saved in this browser on this device. Ties rank the faster timer higher.</div>'
+    +'</div>';
+}
+
+function bindBoard(){
+  app.querySelectorAll(".board-tab").forEach(b=>{
+    b.addEventListener("click",()=>setTab(b.dataset.tab));
+  });
+}
+
+function renderHome(){
+  app.innerHTML='<div class="wrap home">'
+    +'<div>'
+      +'<div class="eyebrow pd-mono">Angelrow · Training Module</div>'
+      +'<h1 class="title pd-display">Pattern<span>Drill</span></h1>'
+      +'<p class="lede">A candlestick or chart pattern is drawn — name it before the clock runs out. No answer counts as a miss.</p>'
+    +'</div>'
+    +'<div style="display:grid;gap:12px">'
+      +'<button class="mode-btn" data-mode="quick">'
+        +'<div class="mode-row"><span class="mode-name pd-display">Quick Drill</span><span class="mode-count pd-mono">10 patterns</span></div>'
+        +'<div class="mode-sub">Fast warm-up round.</div></button>'
+      +'<button class="mode-btn" data-mode="long">'
+        +'<div class="mode-row"><span class="mode-name pd-display">Full Session</span><span class="mode-count pd-mono">20 patterns</span></div>'
+        +'<div class="mode-sub">The complete workout.</div></button>'
+    +'</div>'
+    +'<div class="panel">'
+      +'<div class="panel-head"><span class="panel-label pd-display">Settings</span>'
+      +'<span class="panel-value pd-mono" id="timerOut">'+S.timer.toFixed(1)+'s</span></div>'
+      +'<input type="range" min="0.5" max="10" step="0.5" value="'+S.timer+'" id="timerRange">'
+      +'<div class="range-legend pd-mono"><span>0.5s</span><span>time per question</span><span>10s</span></div>'
+    +'</div>'
+    +'<button class="ghost-btn pd-display" id="boardBtn">High Scores</button>'
+    +'<div class="foot-note">48 patterns, redrawn from the MATI Trader cheat sheet.</div>'
+    +'</div>';
+  app.querySelectorAll(".mode-btn").forEach(b=>b.addEventListener("click",()=>startGame(b.dataset.mode)));
+  app.querySelector("#timerRange").addEventListener("input",e=>onTimerChange(parseFloat(e.target.value)));
+  app.querySelector("#boardBtn").addEventListener("click",openBoard);
+}
+
+function renderBoard(){
+  app.innerHTML='<div class="wrap">'
+    +'<div class="screen-head"><h2 class="pd-display">High <span>Scores</span></h2>'
+    +'<button class="back-btn" id="backBtn">Back</button></div>'
+    +leaderboardHTML(null)
+    +'</div>';
+  app.querySelector("#backBtn").addEventListener("click",goHome);
+  bindBoard();
+}
+
+function renderPlay(){
+  const q=S.questions[S.qIdx];
+  if(!q){goHome();return;}
+  const last=S.answers[S.answers.length-1];
+  const optsHTML=q.options.map(name=>{
+    let cls="opt";
+    if(S.phase==="reveal"){
+      if(name===q.p.name)cls+=" right";
+      else if(name===S.chosen)cls+=" wrong";
+      else cls+=" faded";
+    }
+    return '<button class="'+cls+'"'+(S.phase==="ask"?"":" disabled")+' data-opt="'+esc(name)+'">'+esc(name)+'</button>';
+  }).join("");
+
+  let revealHTML="";
+  if(S.phase==="reveal"){
+    const ok=last&&last.correct;
+    const col=ok?"#22c55e":S.chosen?"#ef4444":"#ffb020";
+    const verdict=ok?"Correct":S.chosen?"Wrong — "+q.p.name:"Time up — "+q.p.name;
+    revealHTML='<div class="reveal-verdict pd-display" style="color:'+col+'">'+esc(verdict)+'</div>'
+      +'<div class="reveal-blurb">'+esc(q.p.blurb)+'</div>'
+      +'<button class="next-link pd-mono" id="nextBtn">next ▸</button>';
+  }
+
+  app.innerHTML='<div class="wrap play">'
+    +'<div class="play-top">'
+      +'<button class="quit-btn" id="quitBtn" aria-label="Quit">✕</button>'
+      +'<span class="qcount pd-mono">Q '+String(S.qIdx+1).padStart(2,"0")+'/'+S.questions.length+'</span>'
+      +'<span class="scorebox pd-mono">SCORE <b>'+score()+'</b></span>'
+    +'</div>'
+    +'<div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>'
+    +'<div class="play-meta">'
+      +'<span class="kind-label pd-display">'+(q.p.kind==="chart"?"Chart Pattern":"Candle Pattern")+'</span>'
+      +'<span class="timer-num pd-mono" id="timerNum" style="color:'+(S.phase==="ask"?timerColor():"#5a6577")+'">'
+      +(S.phase==="ask"?S.remaining.toFixed(1)+"s":"—")+'</span>'
+    +'</div>'
+    +'<div class="chart-box">'+chartSVG(q.candles,q.p.overlays,q.p.kind)+'</div>'
+    +'<div class="opts">'+optsHTML+'</div>'
+    +'<div class="reveal">'+revealHTML+'</div>'
+    +'</div>';
+
+  app.querySelector("#quitBtn").addEventListener("click",goHome);
+  app.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>choose(b.dataset.opt)));
+  const nb=app.querySelector("#nextBtn");
+  if(nb)nb.addEventListener("click",nextQuestion);
+  tickTimer();
+}
+
+function renderResults(){
+  const total=S.questions.length, sc=score();
+  const pct=total?Math.round((sc/total)*100):0;
+  const verdict=pct===100?"Flawless read.":pct>=80?"Sharp eyes.":pct>=60?"Solid — keep drilling.":pct>=40?"Getting there.":"Back to the cheat sheet.";
+
+  let saveHTML="";
+  if(S.saveState==="qualified"){
+    saveHTML='<div class="save-box">'
+      +'<div class="save-title pd-display">New high score</div>'
+      +'<div class="save-sub">You made the top 10. Sign it:</div>'
+      +'<div class="save-row"><input id="nameInput" maxlength="14" placeholder="Your name" value="'+esc(S.nameInput)+'">'
+      +'<button class="pd-display" id="saveBtn">Save</button></div></div>';
+  }else if(S.saveState==="failed"){
+    saveHTML='<div class="warn">Could not save the score — browser storage is unavailable.</div>';
+  }
+
+  const review=S.answers.map(a=>'<div class="review-row">'
+    +'<span class="review-mark pd-mono '+(a.correct?"ok":"no")+'">'+(a.correct?"✓":"✗")+'</span>'
+    +'<div><div class="review-name">'+esc(a.p.name)+'</div>'
+    +(a.correct?"":'<div class="review-said">'+(a.chosen?"you said: "+esc(a.chosen):"no answer")+'</div>')
+    +'</div></div>').join("");
+
+  app.innerHTML='<div class="wrap">'
+    +'<div class="res-head">'
+      +'<div class="res-mode pd-display">'+(S.mode==="quick"?"Quick Drill":"Full Session")+' · '+S.timer.toFixed(1)+'s per question</div>'
+      +'<div class="res-score pd-mono"><b>'+sc+'</b><i>/'+total+'</i></div>'
+      +'<div class="res-verdict pd-display">'+esc(verdict)+'</div>'
+      +'<div class="res-pct pd-mono">'+pct+'% accuracy</div>'
+    +'</div>'
+    +saveHTML
+    +leaderboardHTML(S.savedTs)
+    +'<div class="res-actions">'
+      +'<button class="btn-primary pd-display" id="againBtn">Play again</button>'
+      +'<button class="btn-secondary pd-display" id="menuBtn">Menu</button>'
+    +'</div>'
+    +'<div class="review"><div class="review-head pd-display">Review</div>'+review+'</div>'
+    +'</div>';
+
+  const ni=app.querySelector("#nameInput");
+  if(ni){
+    ni.addEventListener("input",e=>{S.nameInput=e.target.value;});
+    ni.addEventListener("keydown",e=>{if(e.key==="Enter")submitScore();});
+    app.querySelector("#saveBtn").addEventListener("click",submitScore);
+  }
+  app.querySelector("#againBtn").addEventListener("click",()=>startGame(S.mode));
+  app.querySelector("#menuBtn").addEventListener("click",goHome);
+  bindBoard();
+}
+
+function render(){
+  if(S.screen==="home")renderHome();
+  else if(S.screen==="board")renderBoard();
+  else if(S.screen==="play")renderPlay();
+  else if(S.screen==="results")renderResults();
+}
+
+/* Escape: quit to menu, or ask the host page to close the popup */
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  if(S.screen==="play"||S.screen==="results"||S.screen==="board"){goHome();}
+  else if(window.parent!==window){window.parent.postMessage({type:"pattern-drill-close"},"*");}
+});
+
+render();
+</script>
+</body>
+</html>
