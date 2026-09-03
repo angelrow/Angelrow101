@@ -1,0 +1,2474 @@
+{
+  "stage": "walk_forward_k_of_T",
+  "trailing_months": 12,
+  "k_divisor": 0.6745,
+  "smooth_form": "natural_cubic_spline",
+  "clamp_policy": "k held at endpoint value outside 09:35\u201315:30",
+  "warmup_months": [
+    "2023-04",
+    "2023-05",
+    "2023-06",
+    "2023-07",
+    "2023-08",
+    "2023-09",
+    "2023-10",
+    "2023-11",
+    "2023-12",
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04"
+  ],
+  "curves": {
+    "2024-05": {
+      "fit_start": "2023-05-01",
+      "fit_end": "2024-04-30",
+      "n_obs": 3266,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 252,
+          "median_z": 0.608779,
+          "k": 0.902563
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 252,
+          "median_z": 0.571276,
+          "k": 0.846963
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 252,
+          "median_z": 0.519494,
+          "k": 0.770191
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 252,
+          "median_z": 0.508991,
+          "k": 0.75462
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 252,
+          "median_z": 0.482339,
+          "k": 0.715106
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 252,
+          "median_z": 0.481055,
+          "k": 0.713202
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 252,
+          "median_z": 0.506735,
+          "k": 0.751276
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 252,
+          "median_z": 0.436209,
+          "k": 0.646715
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 250,
+          "median_z": 0.408054,
+          "k": 0.604972
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 250,
+          "median_z": 0.423628,
+          "k": 0.628062
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 250,
+          "median_z": 0.411277,
+          "k": 0.609751
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 250,
+          "median_z": 0.419158,
+          "k": 0.621435
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 250,
+          "median_z": 0.429392,
+          "k": 0.636608
+        }
+      ]
+    },
+    "2024-06": {
+      "fit_start": "2023-06-01",
+      "fit_end": "2024-05-31",
+      "n_obs": 3264,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 252,
+          "median_z": 0.597647,
+          "k": 0.88606
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 252,
+          "median_z": 0.575888,
+          "k": 0.8538
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 252,
+          "median_z": 0.526677,
+          "k": 0.78084
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.509063,
+          "k": 0.754726
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.482847,
+          "k": 0.715859
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 252,
+          "median_z": 0.500484,
+          "k": 0.742008
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 252,
+          "median_z": 0.523138,
+          "k": 0.775594
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 252,
+          "median_z": 0.449493,
+          "k": 0.666409
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 250,
+          "median_z": 0.42465,
+          "k": 0.629577
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 250,
+          "median_z": 0.418032,
+          "k": 0.619765
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 250,
+          "median_z": 0.416426,
+          "k": 0.617385
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 250,
+          "median_z": 0.421433,
+          "k": 0.624807
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 250,
+          "median_z": 0.433227,
+          "k": 0.642293
+        }
+      ]
+    },
+    "2024-07": {
+      "fit_start": "2023-07-01",
+      "fit_end": "2024-06-30",
+      "n_obs": 3238,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 250,
+          "median_z": 0.581203,
+          "k": 0.86168
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.570651,
+          "k": 0.846036
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.52343,
+          "k": 0.776026
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.511256,
+          "k": 0.757977
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.482847,
+          "k": 0.715859
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.516375,
+          "k": 0.765566
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.540031,
+          "k": 0.80064
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.456217,
+          "k": 0.676378
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 248,
+          "median_z": 0.438374,
+          "k": 0.649924
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 248,
+          "median_z": 0.419205,
+          "k": 0.621505
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 248,
+          "median_z": 0.422083,
+          "k": 0.625771
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 248,
+          "median_z": 0.419158,
+          "k": 0.621435
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 248,
+          "median_z": 0.440925,
+          "k": 0.653706
+        }
+      ]
+    },
+    "2024-08": {
+      "fit_start": "2023-08-01",
+      "fit_end": "2024-07-31",
+      "n_obs": 3264,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 252,
+          "median_z": 0.591094,
+          "k": 0.876344
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 252,
+          "median_z": 0.58786,
+          "k": 0.871549
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 252,
+          "median_z": 0.533064,
+          "k": 0.79031
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.539491,
+          "k": 0.799839
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.506308,
+          "k": 0.750641
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 252,
+          "median_z": 0.533297,
+          "k": 0.790656
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 252,
+          "median_z": 0.544929,
+          "k": 0.8079
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 252,
+          "median_z": 0.46689,
+          "k": 0.692201
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 250,
+          "median_z": 0.42774,
+          "k": 0.634159
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 250,
+          "median_z": 0.412723,
+          "k": 0.611895
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 250,
+          "median_z": 0.422083,
+          "k": 0.625771
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 250,
+          "median_z": 0.443644,
+          "k": 0.657738
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 250,
+          "median_z": 0.487667,
+          "k": 0.723005
+        }
+      ]
+    },
+    "2024-09": {
+      "fit_start": "2023-09-01",
+      "fit_end": "2024-08-31",
+      "n_obs": 3251,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 251,
+          "median_z": 0.587996,
+          "k": 0.87175
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.575185,
+          "k": 0.852757
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.513913,
+          "k": 0.761916
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.524348,
+          "k": 0.777387
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.482339,
+          "k": 0.715106
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.494742,
+          "k": 0.733494
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.547477,
+          "k": 0.811679
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.457302,
+          "k": 0.677987
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 249,
+          "median_z": 0.410368,
+          "k": 0.608403
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 249,
+          "median_z": 0.404342,
+          "k": 0.599469
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 249,
+          "median_z": 0.412393,
+          "k": 0.611406
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 249,
+          "median_z": 0.416635,
+          "k": 0.617695
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 249,
+          "median_z": 0.487106,
+          "k": 0.722173
+        }
+      ]
+    },
+    "2024-10": {
+      "fit_start": "2023-10-01",
+      "fit_end": "2024-09-30",
+      "n_obs": 3251,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 251,
+          "median_z": 0.578032,
+          "k": 0.856979
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.566056,
+          "k": 0.839222
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.512143,
+          "k": 0.759292
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.547759,
+          "k": 0.812097
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.478874,
+          "k": 0.709969
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.46839,
+          "k": 0.694425
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.512035,
+          "k": 0.759133
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.439119,
+          "k": 0.651029
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 249,
+          "median_z": 0.395091,
+          "k": 0.585754
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 249,
+          "median_z": 0.385218,
+          "k": 0.571117
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 249,
+          "median_z": 0.412393,
+          "k": 0.611406
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 249,
+          "median_z": 0.413917,
+          "k": 0.613665
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 249,
+          "median_z": 0.473102,
+          "k": 0.701412
+        }
+      ]
+    },
+    "2024-11": {
+      "fit_start": "2023-11-01",
+      "fit_end": "2024-10-31",
+      "n_obs": 3264,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 252,
+          "median_z": 0.568158,
+          "k": 0.84234
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 252,
+          "median_z": 0.563511,
+          "k": 0.83545
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 252,
+          "median_z": 0.510962,
+          "k": 0.757542
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.524524,
+          "k": 0.777649
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.469213,
+          "k": 0.695646
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 252,
+          "median_z": 0.456653,
+          "k": 0.677024
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 252,
+          "median_z": 0.46262,
+          "k": 0.685871
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 252,
+          "median_z": 0.429479,
+          "k": 0.636736
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 250,
+          "median_z": 0.394314,
+          "k": 0.584602
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 250,
+          "median_z": 0.386789,
+          "k": 0.573445
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 250,
+          "median_z": 0.399513,
+          "k": 0.59231
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 250,
+          "median_z": 0.421433,
+          "k": 0.624807
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 250,
+          "median_z": 0.486443,
+          "k": 0.72119
+        }
+      ]
+    },
+    "2024-12": {
+      "fit_start": "2023-12-01",
+      "fit_end": "2024-11-30",
+      "n_obs": 3251,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 251,
+          "median_z": 0.574876,
+          "k": 0.852299
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.566056,
+          "k": 0.839222
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.512143,
+          "k": 0.759292
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.527246,
+          "k": 0.781684
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.465273,
+          "k": 0.689805
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.448149,
+          "k": 0.664416
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.466054,
+          "k": 0.690962
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.426063,
+          "k": 0.631672
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 249,
+          "median_z": 0.389726,
+          "k": 0.5778
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 249,
+          "median_z": 0.376708,
+          "k": 0.5585
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 249,
+          "median_z": 0.396112,
+          "k": 0.587268
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 249,
+          "median_z": 0.436547,
+          "k": 0.647215
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 249,
+          "median_z": 0.464681,
+          "k": 0.688927
+        }
+      ]
+    },
+    "2025-01": {
+      "fit_start": "2024-01-01",
+      "fit_end": "2024-12-31",
+      "n_obs": 3259,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 252,
+          "median_z": 0.584932,
+          "k": 0.867209
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 252,
+          "median_z": 0.577799,
+          "k": 0.856632
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 252,
+          "median_z": 0.513028,
+          "k": 0.760604
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.532224,
+          "k": 0.789065
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.462559,
+          "k": 0.685781
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 252,
+          "median_z": 0.457832,
+          "k": 0.678772
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 252,
+          "median_z": 0.479903,
+          "k": 0.711495
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 252,
+          "median_z": 0.423377,
+          "k": 0.62769
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 249,
+          "median_z": 0.393537,
+          "k": 0.58345
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 249,
+          "median_z": 0.376708,
+          "k": 0.5585
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 249,
+          "median_z": 0.399012,
+          "k": 0.591566
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 249,
+          "median_z": 0.453612,
+          "k": 0.672516
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 249,
+          "median_z": 0.464681,
+          "k": 0.688927
+        }
+      ]
+    },
+    "2025-02": {
+      "fit_start": "2024-02-01",
+      "fit_end": "2025-01-31",
+      "n_obs": 3245,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 250,
+          "median_z": 0.576454,
+          "k": 0.854639
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.575185,
+          "k": 0.852757
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.517426,
+          "k": 0.767126
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.513809,
+          "k": 0.761762
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.468601,
+          "k": 0.694738
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.471496,
+          "k": 0.69903
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.485822,
+          "k": 0.72027
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.42168,
+          "k": 0.625174
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 248,
+          "median_z": 0.389314,
+          "k": 0.577189
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 248,
+          "median_z": 0.36584,
+          "k": 0.542387
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 248,
+          "median_z": 0.388473,
+          "k": 0.575942
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 248,
+          "median_z": 0.454625,
+          "k": 0.674018
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 248,
+          "median_z": 0.457355,
+          "k": 0.678065
+        }
+      ]
+    },
+    "2025-03": {
+      "fit_start": "2024-03-01",
+      "fit_end": "2025-02-28",
+      "n_obs": 3232,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.58237,
+          "k": 0.863409
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.606942,
+          "k": 0.89984
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.520075,
+          "k": 0.771052
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.509257,
+          "k": 0.755014
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.467988,
+          "k": 0.693829
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.460899,
+          "k": 0.683319
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.479903,
+          "k": 0.711495
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.419651,
+          "k": 0.622166
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.38919,
+          "k": 0.577006
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.377419,
+          "k": 0.559554
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.389757,
+          "k": 0.577846
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.460887,
+          "k": 0.683302
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.450029,
+          "k": 0.667203
+        }
+      ]
+    },
+    "2025-04": {
+      "fit_start": "2024-04-01",
+      "fit_end": "2025-03-31",
+      "n_obs": 3245,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 250,
+          "median_z": 0.589766,
+          "k": 0.874374
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.578388,
+          "k": 0.857506
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.553561,
+          "k": 0.820698
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.523165,
+          "k": 0.775633
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.472736,
+          "k": 0.700869
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.45818,
+          "k": 0.679288
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.474672,
+          "k": 0.703739
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.415773,
+          "k": 0.616416
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 248,
+          "median_z": 0.375293,
+          "k": 0.556402
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 248,
+          "median_z": 0.3786,
+          "k": 0.561304
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 248,
+          "median_z": 0.390793,
+          "k": 0.579382
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 248,
+          "median_z": 0.461029,
+          "k": 0.683512
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 248,
+          "median_z": 0.447326,
+          "k": 0.663197
+        }
+      ]
+    },
+    "2025-05": {
+      "fit_start": "2024-05-01",
+      "fit_end": "2025-04-30",
+      "n_obs": 3232,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.616781,
+          "k": 0.914427
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.591554,
+          "k": 0.877025
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.559119,
+          "k": 0.828938
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.510225,
+          "k": 0.756449
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.471415,
+          "k": 0.69891
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.457832,
+          "k": 0.678772
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.475954,
+          "k": 0.70564
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.409708,
+          "k": 0.607425
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.389438,
+          "k": 0.577372
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.385218,
+          "k": 0.571117
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.396819,
+          "k": 0.588316
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.455638,
+          "k": 0.675519
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.450029,
+          "k": 0.667203
+        }
+      ]
+    },
+    "2025-06": {
+      "fit_start": "2024-06-01",
+      "fit_end": "2025-05-31",
+      "n_obs": 3221,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 248,
+          "median_z": 0.608521,
+          "k": 0.902181
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 249,
+          "median_z": 0.578388,
+          "k": 0.857506
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 249,
+          "median_z": 0.553561,
+          "k": 0.820698
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.508262,
+          "k": 0.753539
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.469213,
+          "k": 0.695646
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 249,
+          "median_z": 0.45614,
+          "k": 0.676263
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 249,
+          "median_z": 0.457524,
+          "k": 0.678316
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 249,
+          "median_z": 0.391327,
+          "k": 0.580174
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 246,
+          "median_z": 0.365122,
+          "k": 0.541322
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 246,
+          "median_z": 0.375962,
+          "k": 0.557393
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 246,
+          "median_z": 0.400885,
+          "k": 0.594344
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 246,
+          "median_z": 0.460894,
+          "k": 0.683312
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 246,
+          "median_z": 0.464704,
+          "k": 0.688961
+        }
+      ]
+    },
+    "2025-07": {
+      "fit_start": "2024-07-01",
+      "fit_end": "2025-06-30",
+      "n_obs": 3234,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.616781,
+          "k": 0.914427
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.578507,
+          "k": 0.857682
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.540763,
+          "k": 0.801725
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.500125,
+          "k": 0.741475
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.463852,
+          "k": 0.687697
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.43912,
+          "k": 0.65103
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.443879,
+          "k": 0.658086
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.37004,
+          "k": 0.548613
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.356878,
+          "k": 0.529099
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.356557,
+          "k": 0.528625
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.389757,
+          "k": 0.577846
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.413917,
+          "k": 0.613665
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.442496,
+          "k": 0.656035
+        }
+      ]
+    },
+    "2025-08": {
+      "fit_start": "2024-08-01",
+      "fit_end": "2025-07-31",
+      "n_obs": 3233,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 248,
+          "median_z": 0.607312,
+          "k": 0.900389
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.569786,
+          "k": 0.844754
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.534901,
+          "k": 0.793033
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.4914,
+          "k": 0.72854
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.44318,
+          "k": 0.657049
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.415784,
+          "k": 0.616434
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.398914,
+          "k": 0.591422
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.360789,
+          "k": 0.534899
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.354677,
+          "k": 0.525836
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.36663,
+          "k": 0.543558
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.389757,
+          "k": 0.577846
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.392477,
+          "k": 0.581878
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.43514,
+          "k": 0.645129
+        }
+      ]
+    },
+    "2025-09": {
+      "fit_start": "2024-09-01",
+      "fit_end": "2025-08-31",
+      "n_obs": 3220,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 247,
+          "median_z": 0.600262,
+          "k": 0.889936
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 249,
+          "median_z": 0.561443,
+          "k": 0.832385
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 249,
+          "median_z": 0.530425,
+          "k": 0.786398
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.476866,
+          "k": 0.706993
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.444191,
+          "k": 0.658549
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 249,
+          "median_z": 0.399953,
+          "k": 0.592962
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 249,
+          "median_z": 0.379842,
+          "k": 0.563145
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 249,
+          "median_z": 0.345408,
+          "k": 0.512095
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 246,
+          "median_z": 0.355777,
+          "k": 0.527468
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 246,
+          "median_z": 0.36584,
+          "k": 0.542387
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 246,
+          "median_z": 0.383025,
+          "k": 0.567865
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 246,
+          "median_z": 0.408272,
+          "k": 0.605296
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 246,
+          "median_z": 0.426157,
+          "k": 0.631812
+        }
+      ]
+    },
+    "2025-10": {
+      "fit_start": "2024-10-01",
+      "fit_end": "2025-09-30",
+      "n_obs": 3233,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 248,
+          "median_z": 0.615601,
+          "k": 0.912677
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.557947,
+          "k": 0.827201
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.535371,
+          "k": 0.79373
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.449265,
+          "k": 0.666071
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.442446,
+          "k": 0.655961
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.400509,
+          "k": 0.593786
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.389218,
+          "k": 0.577047
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.338561,
+          "k": 0.501944
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.351133,
+          "k": 0.520583
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.377419,
+          "k": 0.559554
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.39008,
+          "k": 0.578325
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.4297,
+          "k": 0.637065
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.436954,
+          "k": 0.647819
+        }
+      ]
+    },
+    "2025-11": {
+      "fit_start": "2024-11-01",
+      "fit_end": "2025-10-31",
+      "n_obs": 3233,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 248,
+          "median_z": 0.598152,
+          "k": 0.886809
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.556341,
+          "k": 0.82482
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.526206,
+          "k": 0.780143
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.458696,
+          "k": 0.680053
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.438337,
+          "k": 0.64987
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.380516,
+          "k": 0.564145
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.375654,
+          "k": 0.556937
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.338561,
+          "k": 0.501944
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.346475,
+          "k": 0.513677
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.351197,
+          "k": 0.520677
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.396819,
+          "k": 0.588316
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.402627,
+          "k": 0.596926
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.43514,
+          "k": 0.645129
+        }
+      ]
+    },
+    "2025-12": {
+      "fit_start": "2024-12-01",
+      "fit_end": "2025-11-30",
+      "n_obs": 3220,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 247,
+          "median_z": 0.616839,
+          "k": 0.914513
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 249,
+          "median_z": 0.557331,
+          "k": 0.826288
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 249,
+          "median_z": 0.542151,
+          "k": 0.803782
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 249,
+          "median_z": 0.466266,
+          "k": 0.691276
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 249,
+          "median_z": 0.442369,
+          "k": 0.655847
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 249,
+          "median_z": 0.390954,
+          "k": 0.57962
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 249,
+          "median_z": 0.385871,
+          "k": 0.572085
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 249,
+          "median_z": 0.339141,
+          "k": 0.502804
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 246,
+          "median_z": 0.345372,
+          "k": 0.512041
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 246,
+          "median_z": 0.363197,
+          "k": 0.538469
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 246,
+          "median_z": 0.398603,
+          "k": 0.590961
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 246,
+          "median_z": 0.401684,
+          "k": 0.595529
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 246,
+          "median_z": 0.434917,
+          "k": 0.644799
+        }
+      ]
+    },
+    "2026-01": {
+      "fit_start": "2025-01-01",
+      "fit_end": "2025-12-31",
+      "n_obs": 3233,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 248,
+          "median_z": 0.58454,
+          "k": 0.866627
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.539688,
+          "k": 0.800131
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.533483,
+          "k": 0.790932
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.449073,
+          "k": 0.665787
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.44328,
+          "k": 0.657198
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.380516,
+          "k": 0.564145
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.368234,
+          "k": 0.545937
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.32504,
+          "k": 0.481897
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.341115,
+          "k": 0.50573
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.351197,
+          "k": 0.520677
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.373487,
+          "k": 0.553724
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.393213,
+          "k": 0.582969
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.425372,
+          "k": 0.630648
+        }
+      ]
+    },
+    "2026-02": {
+      "fit_start": "2025-02-01",
+      "fit_end": "2026-01-31",
+      "n_obs": 3234,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.583251,
+          "k": 0.864716
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.526025,
+          "k": 0.779875
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.506031,
+          "k": 0.750232
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.444005,
+          "k": 0.658272
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.423891,
+          "k": 0.628452
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.353822,
+          "k": 0.52457
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.349107,
+          "k": 0.517578
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.322778,
+          "k": 0.478544
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.355272,
+          "k": 0.526718
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.356557,
+          "k": 0.528625
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.377452,
+          "k": 0.559603
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.375838,
+          "k": 0.55721
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.411693,
+          "k": 0.610368
+        }
+      ]
+    },
+    "2026-03": {
+      "fit_start": "2025-03-01",
+      "fit_end": "2026-02-28",
+      "n_obs": 3234,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.581801,
+          "k": 0.862567
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 250,
+          "median_z": 0.526025,
+          "k": 0.779875
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 250,
+          "median_z": 0.498995,
+          "k": 0.7398
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 250,
+          "median_z": 0.437003,
+          "k": 0.647891
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 250,
+          "median_z": 0.413246,
+          "k": 0.61267
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 250,
+          "median_z": 0.341237,
+          "k": 0.505911
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 250,
+          "median_z": 0.346435,
+          "k": 0.513617
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 250,
+          "median_z": 0.323601,
+          "k": 0.479765
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 247,
+          "median_z": 0.356534,
+          "k": 0.52859
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 247,
+          "median_z": 0.350435,
+          "k": 0.519548
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 247,
+          "median_z": 0.39008,
+          "k": 0.578325
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 247,
+          "median_z": 0.379839,
+          "k": 0.563142
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 247,
+          "median_z": 0.399705,
+          "k": 0.592594
+        }
+      ]
+    },
+    "2026-04": {
+      "fit_start": "2025-04-01",
+      "fit_end": "2026-03-31",
+      "n_obs": 3246,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.583221,
+          "k": 0.864671
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.543381,
+          "k": 0.805606
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.490575,
+          "k": 0.727316
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.430947,
+          "k": 0.638913
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.406607,
+          "k": 0.602827
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.344132,
+          "k": 0.510202
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.34887,
+          "k": 0.517228
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.329074,
+          "k": 0.487879
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 248,
+          "median_z": 0.353436,
+          "k": 0.523997
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 248,
+          "median_z": 0.352103,
+          "k": 0.522021
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 248,
+          "median_z": 0.39017,
+          "k": 0.578459
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 248,
+          "median_z": 0.375019,
+          "k": 0.555996
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 248,
+          "median_z": 0.398395,
+          "k": 0.590652
+        }
+      ]
+    },
+    "2026-05": {
+      "fit_start": "2025-05-01",
+      "fit_end": "2026-04-30",
+      "n_obs": 3246,
+      "points": [
+        {
+          "entry_time": "09:35",
+          "minute_of_day": 575,
+          "n": 249,
+          "median_z": 0.572,
+          "k": 0.848035
+        },
+        {
+          "entry_time": "10:00",
+          "minute_of_day": 600,
+          "n": 251,
+          "median_z": 0.53084,
+          "k": 0.787012
+        },
+        {
+          "entry_time": "10:30",
+          "minute_of_day": 630,
+          "n": 251,
+          "median_z": 0.488835,
+          "k": 0.724737
+        },
+        {
+          "entry_time": "11:00",
+          "minute_of_day": 660,
+          "n": 251,
+          "median_z": 0.423568,
+          "k": 0.627973
+        },
+        {
+          "entry_time": "11:30",
+          "minute_of_day": 690,
+          "n": 251,
+          "median_z": 0.406607,
+          "k": 0.602827
+        },
+        {
+          "entry_time": "12:00",
+          "minute_of_day": 720,
+          "n": 251,
+          "median_z": 0.337853,
+          "k": 0.500895
+        },
+        {
+          "entry_time": "12:30",
+          "minute_of_day": 750,
+          "n": 251,
+          "median_z": 0.337367,
+          "k": 0.500173
+        },
+        {
+          "entry_time": "13:00",
+          "minute_of_day": 780,
+          "n": 251,
+          "median_z": 0.339141,
+          "k": 0.502804
+        },
+        {
+          "entry_time": "13:30",
+          "minute_of_day": 810,
+          "n": 248,
+          "median_z": 0.340415,
+          "k": 0.504693
+        },
+        {
+          "entry_time": "14:00",
+          "minute_of_day": 840,
+          "n": 248,
+          "median_z": 0.341323,
+          "k": 0.506038
+        },
+        {
+          "entry_time": "14:30",
+          "minute_of_day": 870,
+          "n": 248,
+          "median_z": 0.389429,
+          "k": 0.577359
+        },
+        {
+          "entry_time": "15:00",
+          "minute_of_day": 900,
+          "n": 248,
+          "median_z": 0.365319,
+          "k": 0.541614
+        },
+        {
+          "entry_time": "15:30",
+          "minute_of_day": 930,
+          "n": 248,
+          "median_z": 0.393698,
+          "k": 0.583689
+        }
+      ]
+    }
+  }
+}

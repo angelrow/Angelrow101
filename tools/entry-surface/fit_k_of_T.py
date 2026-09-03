@@ -91,7 +91,9 @@ def make_k_fn(x_knots, y_knots):
     cs = CubicSpline(x_knots, y_knots, bc_type="natural")
     lo, hi = float(x_knots[0]), float(x_knots[-1])
 
-    def k_fn(mod):
+    def k_fn(mod, ts=None):
+        # ts is accepted for interface compatibility with walk-forward curves;
+        # a frozen curve depends only on minute-of-day, never on the date.
         mod = np.asarray(mod, dtype=float)
         k_fn.n_clamp_lo += int((mod < lo).sum())
         k_fn.n_clamp_hi += int((mod > hi).sum())

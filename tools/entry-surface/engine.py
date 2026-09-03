@@ -185,9 +185,11 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame, k_fn=None) -> tuple:
     σ_base = VIXD/100 — most recent 1-min VIXD bar at or before each print.
 
     k_fn : callable or None
-        Optional intraday conversion factor.  Called with an array of
-        minute-of-day values and must return the multiplier k applied to
-        σ_base, i.e.  σ_base(t) = (VIXD_t/100) × k(t).
+        Optional intraday conversion factor.  Called as k_fn(mod, ts) where
+        mod is an array of minute-of-day values and ts the matching tz-aware
+        timestamp Series (needed by walk-forward curves that vary by month).
+        Must return the multiplier k applied to σ_base, i.e.
+        σ_base(t) = (VIXD_t/100) × k(t).
         None (default) reproduces the uncorrected VIXD model exactly.
 
     VIXD files must exist at VIXD_DIR/{expiry_date}.csv; hard error if any missing.
@@ -266,7 +268,7 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame, k_fn=None) -> tuple:
     k_info = None
     if k_fn is not None:
         mod_arr = (calib["ts"].dt.hour * 60 + calib["ts"].dt.minute).values.astype(float)
-        k_vals  = np.asarray(k_fn(mod_arr), dtype=float)
+        k_vals  = np.asarray(k_fn(mod_arr, calib["ts"]), dtype=float)
         if k_vals.shape != sigma_arr.shape:
             raise RuntimeError(
                 f"HARD ERROR: k_fn returned shape {k_vals.shape}, "
