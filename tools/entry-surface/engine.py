@@ -179,10 +179,17 @@ def settlement_time(day_spx: pd.DataFrame) -> pd.Timestamp | None:
 
 # ── Calibration ───────────────────────────────────────────────────────────────
 
-def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
+def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame, k_fn=None) -> tuple:
     """
-    3-parameter model: IV = (VIXD/100) × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0.
+    3-parameter model: IV = σ_base × max(a0 + b·m + c·|m|, 0.05),  c ≥ 0.
     σ_base = VIXD/100 — most recent 1-min VIXD bar at or before each print.
+
+    k_fn : callable or None
+        Optional intraday conversion factor.  Called with an array of
+        minute-of-day values and must return the multiplier k applied to
+        σ_base, i.e.  σ_base(t) = (VIXD_t/100) × k(t).
+        None (default) reproduces the uncorrected VIXD model exactly.
+
     VIXD files must exist at VIXD_DIR/{expiry_date}.csv; hard error if any missing.
     Returns (params, model_form, report).  params = (a0, b, c).  model_form = "abs_m".
     """
@@ -254,6 +261,29 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         print(f"      VIXD {exp}: {len(vixd_df)} bars  "
               f"range {vixd_cl.min():.2f}–{vixd_cl.max():.2f}  "
               f"({day_mask.sum()} prints mapped)")
+
+    # ── Optional intraday conversion factor:  σ_base(t) = (VIXD_t/100) × k(t) ──
+    k_info = None
+    if k_fn is not None:
+        mod_arr = (calib["ts"].dt.hour * 60 + calib["ts"].dt.minute).values.astype(float)
+        k_vals  = np.asarray(k_fn(mod_arr), dtype=float)
+        if k_vals.shape != sigma_arr.shape:
+            raise RuntimeError(
+                f"HARD ERROR: k_fn returned shape {k_vals.shape}, "
+                f"expected {sigma_arr.shape}."
+            )
+        if not np.all(np.isfinite(k_vals)) or np.any(k_vals <= 0):
+            raise RuntimeError("HARD ERROR: k_fn returned non-finite or non-positive values.")
+        sigma_arr = sigma_arr * k_vals
+        k_info = {
+            "applied":  True,
+            "k_min":    float(k_vals.min()),
+            "k_max":    float(k_vals.max()),
+            "k_median": float(np.median(k_vals)),
+        }
+        print(f"      k(T) applied to σ_base: "
+              f"min {k_vals.min():.4f}  median {np.median(k_vals):.4f}  "
+              f"max {k_vals.max():.4f}")
 
     expiry_us = np.array([
         _ts_to_us(
@@ -437,6 +467,7 @@ def run_calibration(spx: pd.DataFrame, vix: pd.DataFrame) -> tuple:
         "per_time_band": per_time_band,
         "biased_days": biased_days,
         "warning_unreliable": gate_med_pct > 0.35,
+        "k_of_T": k_info if k_info is not None else {"applied": False},
     }
     return params, model_form, report
 
