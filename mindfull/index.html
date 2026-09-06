@@ -270,6 +270,19 @@ body {
   .idea { line-height: 1.62; }
 }
 
+/* --- short phones ------------------------------------------------------- */
+/* The longest ideas (~270 chars) overrun a 320x568 card. Trim the chrome
+   spacing rather than the idea text, so one card still fills one screen. */
+
+@media (max-width: 699px) and (max-height: 640px) {
+  .card {
+    padding-top: var(--s-4);
+    padding-bottom: calc(var(--s-4) + env(safe-area-inset-bottom));
+  }
+  .tag { margin-bottom: var(--s-3); }
+  .source { margin-top: var(--s-4); padding-top: var(--s-3); }
+}
+
 /* --- motion ------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
